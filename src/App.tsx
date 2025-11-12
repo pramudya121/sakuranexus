@@ -7,8 +7,8 @@ import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import Mint from "./pages/Mint";
 import Activity from "./pages/Activity";
-import Collection from "./pages/Collection";
 import Profile from "./pages/Profile";
+import NFTDetail from "./pages/NFTDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,7 +24,7 @@ const App = () => (
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/mint" element={<Mint />} />
           <Route path="/activity" element={<Activity />} />
-          <Route path="/collection" element={<Collection />} />
+          <Route path="/nft/:tokenId" element={<NFTDetail />} />
           <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

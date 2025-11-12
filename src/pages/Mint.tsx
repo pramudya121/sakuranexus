@@ -65,18 +65,13 @@ const Mint = () => {
         setTokenId(result.tokenId || null);
         toast({
           title: 'NFT Minted Successfully! 🎉',
-          description: `Your NFT #${result.tokenId} has been created`,
+          description: 'Redirecting to your profile...',
         });
         
-        // Reset form
+        // Redirect to profile after 2 seconds
         setTimeout(() => {
-          setFile(null);
-          setPreview('');
-          setName('');
-          setDescription('');
-          setMintSuccess(false);
-          setTokenId(null);
-        }, 3000);
+          navigate('/profile');
+        }, 2000);
       } else {
         toast({
           title: 'Minting Failed',

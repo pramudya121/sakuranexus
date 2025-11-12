@@ -1,7 +1,8 @@
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Button } from './ui/button';
-import { ShoppingCart, Tag, Heart } from 'lucide-react';
+import { ShoppingCart, Tag, Heart, Eye } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatAddress } from '@/lib/web3/wallet';
 
 interface NFTCardProps {
@@ -11,6 +12,7 @@ interface NFTCardProps {
   price?: string;
   owner: string;
   isListed?: boolean;
+  showListButton?: boolean;
   onBuy?: () => void;
   onList?: () => void;
   onMakeOffer?: () => void;
@@ -23,12 +25,14 @@ const NFTCard = ({
   price, 
   owner, 
   isListed = false,
+  showListButton = false,
   onBuy,
   onList,
   onMakeOffer 
 }: NFTCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <Card className="card-hover overflow-hidden group">
@@ -82,32 +86,32 @@ const NFTCard = ({
       </CardContent>
 
       <CardFooter className="p-4 pt-0 gap-2">
+        <Button 
+          onClick={() => navigate(`/nft/${tokenId}`)}
+          variant="outline"
+          className="flex-1"
+        >
+          <Eye className="w-4 h-4 mr-2" />
+          View
+        </Button>
+        
         {isListed && onBuy && (
-          <>
-            <Button 
-              onClick={onBuy}
-              className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Buy Now
-            </Button>
-            <Button 
-              onClick={onMakeOffer}
-              variant="outline"
-              className="flex-1"
-            >
-              <Tag className="w-4 h-4 mr-2" />
-              Make Offer
-            </Button>
-          </>
+          <Button 
+            onClick={onBuy}
+            className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
+          >
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            Buy
+          </Button>
         )}
-        {!isListed && onList && (
+        
+        {showListButton && onList && (
           <Button 
             onClick={onList}
-            className="w-full bg-gradient-sakura hover:shadow-sakura font-semibold"
+            className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
           >
             <Tag className="w-4 h-4 mr-2" />
-            List for Sale
+            List
           </Button>
         )}
       </CardFooter>

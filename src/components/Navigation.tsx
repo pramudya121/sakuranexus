@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Store, Palette, Activity, Grid, User } from 'lucide-react';
+import { Home, Store, Palette, Activity, User } from 'lucide-react';
 import ConnectWallet from './ConnectWallet';
 
 const Navigation = () => {
@@ -10,7 +10,6 @@ const Navigation = () => {
     { path: '/marketplace', label: 'Marketplace', icon: Store },
     { path: '/mint', label: 'Mint NFT', icon: Palette },
     { path: '/activity', label: 'Activity', icon: Activity },
-    { path: '/collection', label: 'Collection', icon: Grid },
     { path: '/profile', label: 'Profile', icon: User },
   ];
 

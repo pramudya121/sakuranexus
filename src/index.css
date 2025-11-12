@@ -139,12 +139,13 @@ All colors MUST be HSL.
     position: fixed;
     width: 20px;
     height: 20px;
-    background: radial-gradient(ellipse at center, hsl(328 85% 65%), hsl(328 85% 55%));
+    background: radial-gradient(ellipse at center, hsl(328 100% 70%), hsl(328 95% 55%));
     border-radius: 100% 0% 100% 0%;
-    opacity: 0.8;
+    opacity: 0.95;
     pointer-events: none;
     z-index: 1;
     animation: fall linear infinite, sway ease-in-out infinite;
+    box-shadow: 0 2px 8px hsl(328 85% 55% / 0.4);
   }
   
   /* Smooth Scroll */
