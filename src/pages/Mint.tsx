@@ -91,36 +91,48 @@ const Mint = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-sakura-soft">
+    <div className="min-h-screen relative">
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(328 85% 55% / 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(320 90% 60% / 0.15) 0%, transparent 50%)',
+        }}
+      />
       <SakuraFalling />
       <Navigation />
       
-      <div className="container mx-auto px-4 pt-24 pb-12">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
+      <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
+        <div className="max-w-5xl mx-auto">
+          {/* Header with enhanced styling */}
           <div className="text-center mb-12">
-            <h1 className="text-5xl font-bold mb-4">
+            <div className="inline-block px-6 py-2 rounded-full bg-gradient-sakura text-white font-medium shadow-elegant mb-4">
+              <Sparkles className="inline-block mr-2 h-4 w-4" />
+              Create NFT
+            </div>
+            <h1 className="text-6xl font-bold mb-4">
               <span className="gradient-text">Mint Your NFT</span>
             </h1>
-            <p className="text-xl text-muted-foreground">
-              Transform your digital art into a unique NFT on NEXUSLABS
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Transform your digital art into a unique NFT on NEXUSLABS Testnet
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Upload Section */}
-            <Card className="card-hover">
+            {/* Upload Section with enhanced styling */}
+            <Card className="card-hover shadow-elegant">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-2xl">
+                  <Upload className="w-6 h-6" />
                   Upload Your Artwork
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {!preview ? (
-                  <label className="flex flex-col items-center justify-center h-80 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors bg-gradient-sakura-soft">
-                    <Upload className="w-12 h-12 text-muted-foreground mb-4" />
-                    <span className="text-lg font-medium mb-2">Click to upload</span>
+                  <label className="flex flex-col items-center justify-center h-96 border-2 border-dashed border-border rounded-2xl cursor-pointer hover:border-primary hover:bg-gradient-sakura-soft transition-all bg-gradient-card shadow-card group">
+                    <div className="w-20 h-20 rounded-full bg-gradient-sakura flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-glow">
+                      <Upload className="w-10 h-10 text-white" />
+                    </div>
+                    <span className="text-xl font-medium mb-2 gradient-text">Click to upload</span>
                     <span className="text-sm text-muted-foreground">PNG, JPG, GIF (Max 10MB)</span>
                     <input
                       type="file"
@@ -134,14 +146,14 @@ const Mint = () => {
                     <img
                       src={preview}
                       alt="Preview"
-                      className="w-full h-80 object-cover rounded-xl"
+                      className="w-full h-96 object-cover rounded-2xl shadow-elegant"
                     />
                     <button
                       onClick={() => {
                         setFile(null);
                         setPreview('');
                       }}
-                      className="absolute top-3 right-3 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-4 right-4 px-6 py-3 bg-destructive text-destructive-foreground rounded-xl opacity-0 group-hover:opacity-100 transition-all font-medium shadow-elegant hover:scale-105"
                     >
                       Change Image
                     </button>

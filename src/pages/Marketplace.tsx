@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, Search, SlidersHorizontal } from 'lucide-react';
+import { Loader2, Search, SlidersHorizontal, Package } from 'lucide-react';
 
 interface NFTListing {
   id: string;
@@ -203,35 +203,45 @@ const Marketplace = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-sakura-soft">
+    <div className="min-h-screen relative">
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(328 85% 55% / 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(320 90% 60% / 0.15) 0%, transparent 50%)',
+        }}
+      />
       <SakuraFalling />
       <Navigation />
       
-      <div className="container mx-auto px-4 pt-24 pb-12">
-        {/* Header */}
+      <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
+        {/* Header with enhanced styling */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4">
-            <span className="gradient-text">NFT Marketplace</span>
+          <div className="inline-block px-6 py-2 rounded-full bg-gradient-sakura text-white font-medium shadow-elegant mb-4">
+            <Package className="inline-block mr-2 h-4 w-4" />
+            NFT Marketplace
+          </div>
+          <h1 className="text-6xl font-bold mb-4">
+            <span className="gradient-text">Explore Collections</span>
           </h1>
-          <p className="text-xl text-muted-foreground">
-            Discover and collect extraordinary NFTs on NEXUSLABS
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Discover and collect extraordinary NFTs on NEXUSLABS Testnet
           </p>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search and Filters with enhanced design */}
         <div className="max-w-2xl mx-auto mb-12">
           <div className="flex gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 placeholder="Search by name or token ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-12 h-12 text-lg border-2 focus:border-primary shadow-card"
               />
             </div>
-            <Button variant="outline" className="gap-2">
-              <SlidersHorizontal className="w-4 h-4" />
+            <Button variant="outline" className="gap-2 h-12 px-6 shadow-card hover:shadow-elegant transition-all">
+              <SlidersHorizontal className="w-5 h-5" />
               Filters
             </Button>
           </div>

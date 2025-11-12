@@ -21,12 +21,12 @@ const SakuraFalling = () => {
       }, 12000);
     };
 
-    // Create petals more frequently for more visible effect
-    const interval = setInterval(createPetal, 150);
+    // Create petals more frequently for dramatic effect
+    const interval = setInterval(createPetal, 100);
     
-    // Create initial burst of petals
-    for (let i = 0; i < 30; i++) {
-      setTimeout(createPetal, i * 50);
+    // Create initial burst of 50 petals
+    for (let i = 0; i < 50; i++) {
+      setTimeout(createPetal, i * 40);
     }
 
     return () => {

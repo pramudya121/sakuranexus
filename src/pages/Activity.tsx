@@ -146,22 +146,32 @@ const Activity = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-sakura-soft">
+    <div className="min-h-screen relative">
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(328 85% 55% / 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(320 90% 60% / 0.15) 0%, transparent 50%)',
+        }}
+      />
       <SakuraFalling />
       <Navigation />
       
-      <div className="container mx-auto px-4 pt-24 pb-12">
-        {/* Header */}
+      <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
+        {/* Header with enhanced styling */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4">
-            <span className="gradient-text">Activity Feed</span>
+          <div className="inline-block px-6 py-2 rounded-full bg-gradient-sakura text-white font-medium shadow-elegant mb-4">
+            <ArrowRight className="inline-block mr-2 h-4 w-4" />
+            Recent Activity
+          </div>
+          <h1 className="text-6xl font-bold mb-4">
+            <span className="gradient-text">Marketplace Activity</span>
           </h1>
-          <p className="text-xl text-muted-foreground">
-            Track all marketplace activities in real-time
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Track all NFT transactions and activities on NEXUSLABS Testnet
           </p>
         </div>
 
-        {/* Activity List */}
+        {/* Activity Feed */}
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[400px]">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />

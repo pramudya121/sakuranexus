@@ -47,15 +47,19 @@ All colors MUST be HSL.
 
     --radius: 1rem;
 
-    /* Sakura Gradients */
-    --gradient-sakura: linear-gradient(135deg, hsl(328 85% 55%), hsl(320 90% 60%));
-    --gradient-sakura-soft: linear-gradient(180deg, hsl(340 100% 97%), hsl(0 0% 100%));
-    --gradient-hero: linear-gradient(135deg, hsl(328 85% 55%) 0%, hsl(320 90% 60%) 50%, hsl(340 100% 97%) 100%);
+    /* Enhanced Sakura Gradients with depth */
+    --gradient-sakura: linear-gradient(135deg, hsl(328 85% 55%) 0%, hsl(320 90% 60%) 100%);
+    --gradient-sakura-soft: linear-gradient(180deg, hsl(340 100% 98%) 0%, hsl(340 85% 92%) 50%, hsl(335 80% 90%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(340 90% 95%) 0%, hsl(335 85% 90%) 50%, hsl(330 80% 85%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(340 100% 99%) 0%, hsl(340 90% 96%) 100%);
+    --gradient-sakura-overlay: linear-gradient(135deg, hsl(328 85% 55% / 0.3) 0%, hsl(320 90% 60% / 0.4) 100%);
     
-    /* Shadows with pink glow */
+    /* Enhanced Shadows with pink glow */
     --shadow-sakura: 0 10px 40px -10px hsl(328 85% 55% / 0.3);
     --shadow-sakura-strong: 0 20px 60px -15px hsl(328 85% 55% / 0.5);
     --shadow-card: 0 4px 20px -2px hsl(328 50% 80% / 0.2);
+    --shadow-elegant: 0 15px 50px -10px hsl(328 85% 55% / 0.4);
+    --shadow-glow: 0 0 40px hsl(328 90% 60% / 0.5);
     
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -137,15 +141,15 @@ All colors MUST be HSL.
   
   .sakura-petal {
     position: fixed;
-    width: 20px;
-    height: 20px;
-    background: radial-gradient(ellipse at center, hsl(328 100% 70%), hsl(328 95% 55%));
+    width: 24px;
+    height: 24px;
+    background: radial-gradient(ellipse at center, hsl(335 95% 65%), hsl(328 90% 50%));
     border-radius: 100% 0% 100% 0%;
-    opacity: 0.95;
+    opacity: 0.9;
     pointer-events: none;
     z-index: 1;
     animation: fall linear infinite, sway ease-in-out infinite;
-    box-shadow: 0 2px 8px hsl(328 85% 55% / 0.4);
+    box-shadow: 0 3px 12px hsl(328 85% 55% / 0.6), 0 0 8px hsl(335 90% 60% / 0.4);
   }
   
   /* Smooth Scroll */

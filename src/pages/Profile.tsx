@@ -273,12 +273,18 @@ const ProfileNew = () => {
   };
 
   if (!account) {
-    return (
-      <div className="min-h-screen bg-gradient-sakura-soft">
-        <SakuraFalling />
-        <Navigation />
-        
-        <div className="container mx-auto px-4 pt-24 pb-12">
+  return (
+    <div className="min-h-screen relative">
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(328 85% 55% / 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(320 90% 60% / 0.15) 0%, transparent 50%)',
+        }}
+      />
+      <SakuraFalling />
+      <Navigation />
+      
+      <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🔒</div>
             <h3 className="text-2xl font-bold mb-2">Connect Your Wallet</h3>
@@ -295,60 +301,68 @@ const ProfileNew = () => {
   const listedNFTs = nfts.filter(nft => nft.listing);
 
   return (
-    <div className="min-h-screen bg-gradient-sakura-soft">
+    <div className="min-h-screen relative">
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(328 85% 55% / 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(320 90% 60% / 0.15) 0%, transparent 50%)',
+        }}
+      />
       <SakuraFalling />
       <Navigation />
       
-      <div className="container mx-auto px-4 pt-24 pb-12">
-        {/* Profile Header */}
-        <Card className="card-hover mb-8">
-          <CardContent className="p-8">
+      <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
+        {/* Profile Header with enhanced design */}
+        <Card className="card-hover mb-8 shadow-elegant overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-sakura" />
+          <CardContent className="p-8 relative">
             <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-4xl">
+              <div className="w-28 h-28 rounded-2xl bg-white shadow-glow flex items-center justify-center text-5xl border-4 border-white">
                 🌸
               </div>
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold mb-2">My Profile</h1>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <span className="font-mono">{formatAddress(account)}</span>
+              <div className="flex-1 mt-16">
+                <h1 className="text-4xl font-bold mb-2 gradient-text">My Profile</h1>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-lg px-4 py-1 rounded-lg bg-gradient-sakura-soft">{formatAddress(account)}</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleCopyAddress}
+                    className="hover:bg-primary/10"
                   >
                     {copied ? (
-                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <CheckCircle2 className="w-5 h-5 text-primary" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-5 h-5" />
                     )}
                   </Button>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-sm text-muted-foreground mb-1">Total NFTs</div>
-                <div className="text-3xl font-bold gradient-text">{nfts.length}</div>
+              <div className="text-right mt-16">
+                <div className="text-sm text-muted-foreground mb-1">Total Collection</div>
+                <div className="text-4xl font-bold gradient-text">{nfts.length}</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Tabs */}
+        {/* Tabs with enhanced styling */}
         <Tabs defaultValue="owned" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4">
-            <TabsTrigger value="owned" className="gap-2">
-              <Package className="w-4 h-4" />
+          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-4 h-14 bg-gradient-card shadow-elegant">
+            <TabsTrigger value="owned" className="gap-2 text-base data-[state=active]:bg-gradient-sakura data-[state=active]:text-white">
+              <Package className="w-5 h-5" />
               Owned
             </TabsTrigger>
-            <TabsTrigger value="received" className="gap-2">
-              <Gift className="w-4 h-4" />
+            <TabsTrigger value="received" className="gap-2 text-base data-[state=active]:bg-gradient-sakura data-[state=active]:text-white">
+              <Gift className="w-5 h-5" />
               Offers ({receivedOffers.length})
             </TabsTrigger>
-            <TabsTrigger value="sent" className="gap-2">
-              <Tag className="w-4 h-4" />
+            <TabsTrigger value="sent" className="gap-2 text-base data-[state=active]:bg-gradient-sakura data-[state=active]:text-white">
+              <Tag className="w-5 h-5" />
               My Offers ({sentOffers.length})
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2">
-              <TrendingUp className="w-4 h-4" />
+            <TabsTrigger value="analytics" className="gap-2 text-base data-[state=active]:bg-gradient-sakura data-[state=active]:text-white">
+              <TrendingUp className="w-5 h-5" />
               Analytics
             </TabsTrigger>
           </TabsList>

@@ -318,8 +318,11 @@ export const acceptOffer = async (
       return { success: false, error: 'Failed to connect to offer contract' };
     }
 
-    const tx = await contract.acceptOffer(CONTRACTS.SakuraNFT, tokenId);
+    // Accept offer with offerer address parameter
+    const tx = await contract.acceptOffer(CONTRACTS.SakuraNFT, tokenId, offererAddress);
     const receipt = await tx.wait();
+    
+    console.log('Offer accepted successfully:', receipt.hash);
 
     // Update database
     await supabase
