@@ -9,6 +9,7 @@ import Marketplace from "./pages/Marketplace";
 import Mint from "./pages/Mint";
 import Activity from "./pages/Activity";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 import NFTDetail from "./pages/NFTDetail";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/activity" element={<Activity />} />
           <Route path="/nft/:tokenId" element={<NFTDetail />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

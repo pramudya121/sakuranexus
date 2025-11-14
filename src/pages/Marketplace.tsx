@@ -16,7 +16,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, Search, SlidersHorizontal, Package } from 'lucide-react';
+import { Loader2, Search, SlidersHorizontal, Package, X } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface NFTListing {
   id: string;
@@ -37,6 +45,10 @@ const Marketplace = () => {
   const [offerPrice, setOfferPrice] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,16 +76,43 @@ const Marketplace = () => {
   }, []);
 
   useEffect(() => {
+    let filtered = [...listings];
+
+    // Apply search filter
     if (searchQuery) {
-      const filtered = listings.filter((nft) =>
+      filtered = filtered.filter((nft) =>
         nft.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         nft.token_id.toString().includes(searchQuery)
       );
-      setFilteredListings(filtered);
-    } else {
-      setFilteredListings(listings);
     }
-  }, [searchQuery, listings]);
+
+    // Apply price range filter
+    if (priceMin) {
+      filtered = filtered.filter((nft) => parseFloat(nft.price) >= parseFloat(priceMin));
+    }
+    if (priceMax) {
+      filtered = filtered.filter((nft) => parseFloat(nft.price) <= parseFloat(priceMax));
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'price-low':
+        filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+        break;
+      case 'price-high':
+        filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => a.token_id - b.token_id);
+        break;
+      case 'newest':
+      default:
+        filtered.sort((a, b) => b.token_id - a.token_id);
+        break;
+    }
+
+    setFilteredListings(filtered);
+  }, [searchQuery, listings, sortBy, priceMin, priceMax]);
 
   const fetchListings = async () => {
     try {
@@ -229,7 +268,7 @@ const Marketplace = () => {
         </div>
 
         {/* Search and Filters with enhanced design */}
-        <div className="max-w-2xl mx-auto mb-12">
+        <div className="max-w-4xl mx-auto mb-12 space-y-4">
           <div className="flex gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -240,11 +279,91 @@ const Marketplace = () => {
                 className="pl-12 h-12 text-lg border-2 focus:border-primary shadow-card"
               />
             </div>
-            <Button variant="outline" className="gap-2 h-12 px-6 shadow-card hover:shadow-elegant transition-all">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[200px] h-12 shadow-card">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button 
+              variant={showFilters ? "default" : "outline"} 
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2 h-12 px-6 shadow-card hover:shadow-elegant transition-all"
+            >
               <SlidersHorizontal className="w-5 h-5" />
               Filters
             </Button>
           </div>
+
+          {/* Advanced Filters Panel */}
+          {showFilters && (
+            <div className="glass p-6 rounded-xl shadow-card border-2 border-primary/20">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-lg">Advanced Filters</h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setPriceMin('');
+                    setPriceMax('');
+                  }}
+                >
+                  Clear All
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price-min">Min Price (NEX)</Label>
+                  <Input
+                    id="price-min"
+                    type="number"
+                    step="0.01"
+                    placeholder="0"
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                    className="border-2 focus:border-primary"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price-max">Max Price (NEX)</Label>
+                  <Input
+                    id="price-max"
+                    type="number"
+                    step="0.01"
+                    placeholder="Any"
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                    className="border-2 focus:border-primary"
+                  />
+                </div>
+              </div>
+              {(priceMin || priceMax) && (
+                <div className="mt-4 flex gap-2 flex-wrap">
+                  {priceMin && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full text-sm">
+                      Min: {priceMin} NEX
+                      <button onClick={() => setPriceMin('')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  {priceMax && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full text-sm">
+                      Max: {priceMax} NEX
+                      <button onClick={() => setPriceMax('')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Listings Grid */}

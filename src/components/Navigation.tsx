@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Store, Palette, Activity, User } from 'lucide-react';
 import ConnectWallet from './ConnectWallet';
+import NotificationBell from './NotificationBell';
 
 const Navigation = () => {
   const location = useLocation();
@@ -47,8 +48,11 @@ const Navigation = () => {
             })}
           </div>
 
-          {/* Connect Wallet Button */}
-          <ConnectWallet />
+          {/* Notifications & Connect Wallet */}
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <ConnectWallet />
+          </div>
         </div>
 
         {/* Mobile Navigation */}
