@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import NFTCard from '@/components/NFTCard';
@@ -7,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
 import { acceptOffer, cancelOffer, listNFT } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Copy, CheckCircle2, Package, Tag, Gift, TrendingUp, DollarSign, Activity as ActivityIcon, Eye } from 'lucide-react';
+import { Loader2, Copy, CheckCircle2, Package, Tag, Gift, TrendingUp, DollarSign, Activity as ActivityIcon, Eye, User, Edit, Twitter, Instagram, Globe, MessageCircle } from 'lucide-react';
 
 interface NFT {
   id: string;
@@ -42,8 +44,20 @@ interface Offer {
   };
 }
 
+interface UserProfile {
+  username: string;
+  bio: string;
+  avatar_url: string;
+  twitter_handle: string;
+  instagram_handle: string;
+  discord_handle: string;
+  website_url: string;
+}
+
 const ProfileNew = () => {
+  const navigate = useNavigate();
   const [account, setAccount] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nfts, setNfts] = useState<NFTWithListing[]>([]);
   const [receivedOffers, setReceivedOffers] = useState<Offer[]>([]);
   const [sentOffers, setSentOffers] = useState<Offer[]>([]);
@@ -74,6 +88,7 @@ const ProfileNew = () => {
         fetchNFTs(currentAccount),
         fetchOffers(currentAccount),
         fetchAnalytics(currentAccount),
+        fetchUserProfile(currentAccount),
       ]);
     }
     
@@ -171,6 +186,26 @@ const ProfileNew = () => {
 
     if (listingsData && listingsData.length > 0) {
       setFloorPrice(listingsData[0].price);
+    }
+  };
+
+  const fetchUserProfile = async (walletAddress: string) => {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('wallet_address', walletAddress.toLowerCase())
+      .single();
+
+    if (data) {
+      setUserProfile({
+        username: data.username || '',
+        bio: data.bio || '',
+        avatar_url: data.avatar_url || '',
+        twitter_handle: data.twitter_handle || '',
+        instagram_handle: data.instagram_handle || '',
+        discord_handle: data.discord_handle || '',
+        website_url: data.website_url || '',
+      });
     }
   };
 
@@ -316,28 +351,92 @@ const ProfileNew = () => {
         <Card className="card-hover mb-8 shadow-elegant overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-sakura" />
           <CardContent className="p-8 relative">
-            <div className="flex items-center gap-6">
-              <div className="w-28 h-28 rounded-2xl bg-white shadow-glow flex items-center justify-center text-5xl border-4 border-white">
-                🌸
-              </div>
-              <div className="flex-1 mt-16">
-                <h1 className="text-4xl font-bold mb-2 gradient-text">My Profile</h1>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-lg px-4 py-1 rounded-lg bg-gradient-sakura-soft">{formatAddress(account)}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCopyAddress}
-                    className="hover:bg-primary/10"
-                  >
-                    {copied ? (
-                      <CheckCircle2 className="w-5 h-5 text-primary" />
-                    ) : (
-                      <Copy className="w-5 h-5" />
-                    )}
-                  </Button>
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+              {/* Avatar & User Info */}
+              <div className="flex items-center gap-6 flex-1">
+                <Avatar className="w-28 h-28 border-4 border-white shadow-glow mt-16">
+                  <AvatarImage src={userProfile?.avatar_url} />
+                  <AvatarFallback className="bg-gradient-sakura text-white text-4xl">
+                    {userProfile?.username ? userProfile.username[0].toUpperCase() : <User className="w-12 h-12" />}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 mt-16">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-4xl font-bold gradient-text">
+                      {userProfile?.username || 'Anonymous'}
+                    </h1>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/profile/edit')}
+                      className="gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit Profile
+                    </Button>
+                  </div>
+                  {userProfile?.bio && (
+                    <p className="text-muted-foreground mb-3 max-w-xl">{userProfile.bio}</p>
+                  )}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="font-mono text-sm px-3 py-1 rounded-lg bg-gradient-sakura-soft">{formatAddress(account)}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCopyAddress}
+                      className="hover:bg-primary/10"
+                    >
+                      {copied ? (
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                  {/* Social Links */}
+                  {(userProfile?.twitter_handle || userProfile?.instagram_handle || userProfile?.discord_handle || userProfile?.website_url) && (
+                    <div className="flex items-center gap-2">
+                      {userProfile.twitter_handle && (
+                        <a 
+                          href={`https://twitter.com/${userProfile.twitter_handle.replace('@', '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
+                        >
+                          <Twitter className="w-4 h-4" />
+                        </a>
+                      )}
+                      {userProfile.instagram_handle && (
+                        <a 
+                          href={`https://instagram.com/${userProfile.instagram_handle.replace('@', '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
+                        >
+                          <Instagram className="w-4 h-4" />
+                        </a>
+                      )}
+                      {userProfile.discord_handle && (
+                        <div className="p-2 bg-primary/5 rounded-lg text-sm flex items-center gap-1">
+                          <MessageCircle className="w-4 h-4" />
+                          {userProfile.discord_handle}
+                        </div>
+                      )}
+                      {userProfile.website_url && (
+                        <a 
+                          href={userProfile.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
+                        >
+                          <Globe className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
+              {/* Stats */}
               <div className="text-right mt-16">
                 <div className="text-sm text-muted-foreground mb-1">Total Collection</div>
                 <div className="text-4xl font-bold gradient-text">{nfts.length}</div>
