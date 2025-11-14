@@ -150,6 +150,60 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          nft_id: string | null
+          notification_type: string
+          offer_id: string | null
+          read: boolean
+          recipient_address: string
+          sender_address: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          nft_id?: string | null
+          notification_type: string
+          offer_id?: string | null
+          read?: boolean
+          recipient_address: string
+          sender_address?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          nft_id?: string | null
+          notification_type?: string
+          offer_id?: string | null
+          read?: boolean
+          recipient_address?: string
+          sender_address?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_nft_id_fkey"
+            columns: ["nft_id"]
+            isOneToOne: false
+            referencedRelation: "nfts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offers: {
         Row: {
           contract_address: string
@@ -193,6 +247,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          discord_handle: string | null
+          id: string
+          instagram_handle: string | null
+          twitter_handle: string | null
+          updated_at: string
+          username: string | null
+          wallet_address: string
+          website_url: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          discord_handle?: string | null
+          id?: string
+          instagram_handle?: string | null
+          twitter_handle?: string | null
+          updated_at?: string
+          username?: string | null
+          wallet_address: string
+          website_url?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          discord_handle?: string | null
+          id?: string
+          instagram_handle?: string | null
+          twitter_handle?: string | null
+          updated_at?: string
+          username?: string | null
+          wallet_address?: string
+          website_url?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
