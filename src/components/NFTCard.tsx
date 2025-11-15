@@ -1,9 +1,10 @@
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Button } from './ui/button';
-import { ShoppingCart, Tag, Heart, Eye } from 'lucide-react';
+import { ShoppingCart, Tag, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatAddress } from '@/lib/web3/wallet';
+import WatchlistButton from './WatchlistButton';
 
 interface NFTCardProps {
   tokenId: number;
@@ -13,6 +14,8 @@ interface NFTCardProps {
   owner: string;
   isListed?: boolean;
   showListButton?: boolean;
+  nftId?: string;
+  walletAddress?: string | null;
   onBuy?: () => void;
   onList?: () => void;
   onMakeOffer?: () => void;
@@ -26,11 +29,12 @@ const NFTCard = ({
   owner, 
   isListed = false,
   showListButton = false,
+  nftId,
+  walletAddress,
   onBuy,
   onList,
   onMakeOffer 
 }: NFTCardProps) => {
-  const [isLiked, setIsLiked] = useState(false);
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
 
@@ -50,15 +54,12 @@ const NFTCard = ({
           </div>
         )}
         
-        {/* Like Button */}
-        <button
-          onClick={() => setIsLiked(!isLiked)}
-          className="absolute top-3 right-3 p-2 rounded-full glass hover:scale-110 transition-transform"
-        >
-          <Heart 
-            className={`w-5 h-5 ${isLiked ? 'fill-primary text-primary' : 'text-foreground'}`}
-          />
-        </button>
+        {/* Watchlist Button */}
+        {nftId && (
+          <div className="absolute top-3 right-3">
+            <WatchlistButton nftId={nftId} walletAddress={walletAddress} />
+          </div>
+        )}
 
         {/* Token ID Badge */}
         <div className="absolute top-3 left-3 px-3 py-1 rounded-full glass text-xs font-semibold">
