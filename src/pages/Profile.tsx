@@ -376,6 +376,10 @@ const ProfileNew = () => {
                       Edit Profile
                     </Button>
                   </div>
+                  {/* User Badges */}
+                  <div className="mb-3">
+                    <UserBadges walletAddress={account} />
+                  </div>
                   {userProfile?.bio && (
                     <p className="text-muted-foreground mb-3 max-w-xl">{userProfile.bio}</p>
                   )}

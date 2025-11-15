@@ -49,7 +49,16 @@ const Marketplace = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const loadWallet = async () => {
+      const account = await getCurrentAccount();
+      setWalletAddress(account);
+    };
+    loadWallet();
+  }, []);
 
   useEffect(() => {
     fetchListings();
@@ -390,6 +399,8 @@ const Marketplace = () => {
                 price={nft.price}
                 owner={nft.owner_address}
                 isListed={true}
+                nftId={nft.id}
+                walletAddress={walletAddress}
                 onBuy={() => handleBuy(nft)}
                 onMakeOffer={() => {
                   setSelectedNFT(nft);
