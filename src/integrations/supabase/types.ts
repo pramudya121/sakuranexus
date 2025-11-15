@@ -248,6 +248,30 @@ export type Database = {
           },
         ]
       }
+      user_badges: {
+        Row: {
+          badge_type: string
+          created_at: string | null
+          earned_at: string | null
+          id: string
+          wallet_address: string
+        }
+        Insert: {
+          badge_type: string
+          created_at?: string | null
+          earned_at?: string | null
+          id?: string
+          wallet_address: string
+        }
+        Update: {
+          badge_type?: string
+          created_at?: string | null
+          earned_at?: string | null
+          id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           avatar_url: string | null
@@ -289,6 +313,35 @@ export type Database = {
           website_url?: string | null
         }
         Relationships: []
+      }
+      watchlist: {
+        Row: {
+          created_at: string | null
+          id: string
+          nft_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nft_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nft_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_nft_id_fkey"
+            columns: ["nft_id"]
+            isOneToOne: false
+            referencedRelation: "nfts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
