@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Store, Palette, Activity, User } from 'lucide-react';
+import { Home, Store, Palette, Activity, User, Trophy, BarChart3 } from 'lucide-react';
 import ConnectWallet from './ConnectWallet';
 import NotificationBell from './NotificationBell';
+import sakuraLogo from '@/assets/sakura-logo.png';
 
 const Navigation = () => {
   const location = useLocation();
@@ -11,6 +12,8 @@ const Navigation = () => {
     { path: '/marketplace', label: 'Marketplace', icon: Store },
     { path: '/mint', label: 'Mint NFT', icon: Palette },
     { path: '/activity', label: 'Activity', icon: Activity },
+    { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+    { path: '/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/profile', label: 'Profile', icon: User },
   ];
 
@@ -20,9 +23,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center">
-              <span className="text-white font-bold text-lg">🌸</span>
-            </div>
+            <img src={sakuraLogo} alt="Sakura Logo" className="w-10 h-10 rounded-full" />
             <span className="text-xl font-bold gradient-text">SakuraNFT</span>
           </Link>
 

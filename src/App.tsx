@@ -11,6 +11,8 @@ import Activity from "./pages/Activity";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import NFTDetail from "./pages/NFTDetail";
+import Leaderboard from "./pages/Leaderboard";
+import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +29,8 @@ const App = () => (
           <Route path="/mint" element={<Mint />} />
           <Route path="/activity" element={<Activity />} />
           <Route path="/nft/:tokenId" element={<NFTDetail />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
