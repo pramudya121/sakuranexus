@@ -250,7 +250,7 @@ export const makeOffer = async (
   tokenId: number,
   offerPrice: string,
   offererAddress: string
-): Promise<{ success: boolean; error?: string }> => {
+): Promise<{ success: boolean; offerId?: number; error?: string }> => {
   try {
     const contract = await getOfferContract();
     if (!contract) {
@@ -260,6 +260,22 @@ export const makeOffer = async (
     const priceInWei = parsePrice(offerPrice);
     const tx = await contract.makeOffer(CONTRACTS.SakuraNFT, tokenId, { value: priceInWei });
     const receipt = await tx.wait();
+
+    // Get offerId from OfferMade event
+    const offerMadeEvent = receipt.logs.find((log: any) => {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        return parsed?.name === 'OfferMade';
+      } catch {
+        return false;
+      }
+    });
+
+    let offerId = 0;
+    if (offerMadeEvent) {
+      const parsed = contract.interface.parseLog(offerMadeEvent);
+      offerId = Number(parsed?.args?.offerId || 0);
+    }
 
     // Save offer to database
     const { data: nft } = await supabase
@@ -277,6 +293,7 @@ export const makeOffer = async (
         token_id: tokenId,
         offer_price: offerPrice,
         status: 'pending',
+        offer_id: offerId,
       });
     }
 
@@ -290,7 +307,7 @@ export const makeOffer = async (
       transaction_hash: receipt.hash,
     });
 
-    return { success: true };
+    return { success: true, offerId };
   } catch (error: any) {
     console.error('Error making offer:', error);
     return { success: false, error: error.message || 'Failed to make offer' };
@@ -299,6 +316,7 @@ export const makeOffer = async (
 
 // Accept offer on NFT
 export const acceptOffer = async (
+  offerId: number,
   tokenId: number,
   offererAddress: string
 ): Promise<{ success: boolean; error?: string }> => {
@@ -318,8 +336,8 @@ export const acceptOffer = async (
       return { success: false, error: 'Failed to connect to offer contract' };
     }
 
-    // Accept offer with offerer address parameter
-    const tx = await contract.acceptOffer(CONTRACTS.SakuraNFT, tokenId, offererAddress);
+    // Accept offer using offerId
+    const tx = await contract.acceptOffer(offerId);
     const receipt = await tx.wait();
     
     console.log('Offer accepted successfully:', receipt.hash);
@@ -328,8 +346,7 @@ export const acceptOffer = async (
     await supabase
       .from('offers')
       .update({ status: 'accepted' })
-      .eq('token_id', tokenId)
-      .eq('offerer_address', offererAddress.toLowerCase())
+      .eq('offer_id', offerId)
       .eq('status', 'pending');
 
     await supabase
@@ -342,8 +359,7 @@ export const acceptOffer = async (
     const { data: offer } = await supabase
       .from('offers')
       .select('offer_price')
-      .eq('token_id', tokenId)
-      .eq('offerer_address', offererAddress.toLowerCase())
+      .eq('offer_id', offerId)
       .single();
 
     await supabase.from('activities').insert({
@@ -364,8 +380,7 @@ export const acceptOffer = async (
 
 // Cancel offer
 export const cancelOffer = async (
-  tokenId: number,
-  offererAddress: string
+  offerId: number
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     const contract = await getOfferContract();
@@ -373,15 +388,14 @@ export const cancelOffer = async (
       return { success: false, error: 'Failed to connect to offer contract' };
     }
 
-    const tx = await contract.cancelOffer(CONTRACTS.SakuraNFT, tokenId);
+    const tx = await contract.cancelOffer(offerId);
     await tx.wait();
 
     // Update database
     await supabase
       .from('offers')
       .update({ status: 'cancelled' })
-      .eq('token_id', tokenId)
-      .eq('offerer_address', offererAddress.toLowerCase())
+      .eq('offer_id', offerId)
       .eq('status', 'pending');
 
     return { success: true };
