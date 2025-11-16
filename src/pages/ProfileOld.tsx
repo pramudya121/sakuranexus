@@ -22,6 +22,7 @@ interface NFT {
 interface Offer {
   id: string;
   token_id: number;
+  offer_id: number;
   offerer_address: string;
   offer_price: string;
   status: string;
@@ -110,10 +111,10 @@ const Profile = () => {
   };
 
   const handleAcceptOffer = async (offer: Offer) => {
-    if (!account) return;
+    if (!account || !offer.offer_id) return;
 
     try {
-      const result = await acceptOffer(offer.token_id, offer.offerer_address);
+      const result = await acceptOffer(offer.offer_id, offer.token_id, offer.offerer_address);
       
       if (result.success) {
         toast({
@@ -138,10 +139,10 @@ const Profile = () => {
   };
 
   const handleCancelOffer = async (offer: Offer) => {
-    if (!account) return;
+    if (!account || !offer.offer_id) return;
 
     try {
-      const result = await cancelOffer(offer.token_id, account);
+      const result = await cancelOffer(offer.offer_id);
       
       if (result.success) {
         toast({

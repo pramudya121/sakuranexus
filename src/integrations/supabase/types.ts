@@ -210,6 +210,7 @@ export type Database = {
           created_at: string
           id: string
           nft_id: string | null
+          offer_id: number | null
           offer_price: string
           offerer_address: string
           status: string
@@ -221,6 +222,7 @@ export type Database = {
           created_at?: string
           id?: string
           nft_id?: string | null
+          offer_id?: number | null
           offer_price: string
           offerer_address: string
           status?: string
@@ -232,6 +234,7 @@ export type Database = {
           created_at?: string
           id?: string
           nft_id?: string | null
+          offer_id?: number | null
           offer_price?: string
           offerer_address?: string
           status?: string

@@ -16,7 +16,7 @@ export const NEXUS_TESTNET = {
 export const CONTRACTS = {
   SakuraNFT: '0x1C1D9c4F5e56315A7b67819680EF6E716F749E7c',
   SakuraMarketplace: '0xA0a0be9650dE3aA37b15C6c4BB6Ac9c30399F585',
-  OfferContract: '0xe5e6A3d08F67315B289Cb4ac7945c0f19A19370c',
+  OfferContract: '0x629B82D3ff9cCbC5714a778fe58098c50cbB3e36',
 };
 
 // Contract ABIs
@@ -529,13 +529,8 @@ export const OFFER_CONTRACT_ABI = [
   {
     inputs: [
       {
-        internalType: 'address',
-        name: 'nft',
-        type: 'address',
-      },
-      {
         internalType: 'uint256',
-        name: 'tokenId',
+        name: 'offerId',
         type: 'uint256',
       },
     ],
@@ -547,13 +542,8 @@ export const OFFER_CONTRACT_ABI = [
   {
     inputs: [
       {
-        internalType: 'address',
-        name: 'nft',
-        type: 'address',
-      },
-      {
         internalType: 'uint256',
-        name: 'tokenId',
+        name: 'offerId',
         type: 'uint256',
       },
     ],
@@ -576,7 +566,13 @@ export const OFFER_CONTRACT_ABI = [
       },
     ],
     name: 'makeOffer',
-    outputs: [],
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
     stateMutability: 'payable',
     type: 'function',
   },
@@ -585,26 +581,32 @@ export const OFFER_CONTRACT_ABI = [
     inputs: [
       {
         indexed: true,
-        internalType: 'address',
-        name: 'nft',
-        type: 'address',
-      },
-      {
-        indexed: true,
         internalType: 'uint256',
-        name: 'tokenId',
+        name: 'offerId',
         type: 'uint256',
       },
       {
         indexed: true,
         internalType: 'address',
-        name: 'buyer',
+        name: 'seller',
+        type: 'address',
+      },
+      {
+        indexed: false,
+        internalType: 'address',
+        name: 'nft',
         type: 'address',
       },
       {
         indexed: false,
         internalType: 'uint256',
-        name: 'price',
+        name: 'tokenId',
+        type: 'uint256',
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'amount',
         type: 'uint256',
       },
     ],
@@ -616,20 +618,14 @@ export const OFFER_CONTRACT_ABI = [
     inputs: [
       {
         indexed: true,
-        internalType: 'address',
-        name: 'nft',
-        type: 'address',
-      },
-      {
-        indexed: true,
         internalType: 'uint256',
-        name: 'tokenId',
+        name: 'offerId',
         type: 'uint256',
       },
       {
         indexed: true,
         internalType: 'address',
-        name: 'offerer',
+        name: 'offeror',
         type: 'address',
       },
     ],
@@ -641,26 +637,32 @@ export const OFFER_CONTRACT_ABI = [
     inputs: [
       {
         indexed: true,
-        internalType: 'address',
-        name: 'nft',
-        type: 'address',
-      },
-      {
-        indexed: true,
         internalType: 'uint256',
-        name: 'tokenId',
+        name: 'offerId',
         type: 'uint256',
       },
       {
         indexed: true,
         internalType: 'address',
-        name: 'offerer',
+        name: 'offeror',
+        type: 'address',
+      },
+      {
+        indexed: false,
+        internalType: 'address',
+        name: 'nft',
         type: 'address',
       },
       {
         indexed: false,
         internalType: 'uint256',
-        name: 'price',
+        name: 'tokenId',
+        type: 'uint256',
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'amount',
         type: 'uint256',
       },
     ],
@@ -668,12 +670,24 @@ export const OFFER_CONTRACT_ABI = [
     type: 'event',
   },
   {
-    inputs: [
+    stateMutability: 'payable',
+    type: 'receive',
+  },
+  {
+    inputs: [],
+    name: 'offerCount',
+    outputs: [
       {
-        internalType: 'address',
+        internalType: 'uint256',
         name: '',
-        type: 'address',
+        type: 'uint256',
       },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
       {
         internalType: 'uint256',
         name: '',
@@ -684,13 +698,28 @@ export const OFFER_CONTRACT_ABI = [
     outputs: [
       {
         internalType: 'address',
-        name: 'offerer',
+        name: 'offeror',
+        type: 'address',
+      },
+      {
+        internalType: 'address',
+        name: 'nft',
         type: 'address',
       },
       {
         internalType: 'uint256',
-        name: 'price',
+        name: 'tokenId',
         type: 'uint256',
+      },
+      {
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256',
+      },
+      {
+        internalType: 'bool',
+        name: 'active',
+        type: 'bool',
       },
     ],
     stateMutability: 'view',
