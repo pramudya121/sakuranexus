@@ -94,6 +94,7 @@ const NFTDetail = () => {
       .select('*')
       .eq('token_id', token_id)
       .eq('status', 'pending')
+      .not('offer_id', 'is', null)
       .order('offer_price', { ascending: false });
 
     setOffers(data || []);
@@ -163,7 +164,14 @@ const NFTDetail = () => {
   };
 
   const handleAcceptOffer = async (offer: Offer) => {
-    if (!account || !nft || !offer.offer_id) return;
+    if (!account || !nft || !offer.offer_id) {
+      toast({
+        title: 'Error',
+        description: 'Invalid offer. Please refresh and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsProcessing(true);
     try {
@@ -194,7 +202,14 @@ const NFTDetail = () => {
   };
 
   const handleCancelOffer = async (offer: Offer) => {
-    if (!account || !nft || !offer.offer_id) return;
+    if (!account || !nft || !offer.offer_id) {
+      toast({
+        title: 'Error',
+        description: 'Invalid offer. Please refresh and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsProcessing(true);
     try {

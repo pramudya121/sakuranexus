@@ -83,7 +83,8 @@ const Profile = () => {
         )
       `)
       .eq('nfts.owner_address', address.toLowerCase())
-      .eq('status', 'pending');
+      .eq('status', 'pending')
+      .not('offer_id', 'is', null);
 
     // Sent offers (offers I made)
     const { data: sent } = await supabase
@@ -96,7 +97,8 @@ const Profile = () => {
         )
       `)
       .eq('offerer_address', address.toLowerCase())
-      .eq('status', 'pending');
+      .eq('status', 'pending')
+      .not('offer_id', 'is', null);
 
     setReceivedOffers(received || []);
     setSentOffers(sent || []);
@@ -111,7 +113,14 @@ const Profile = () => {
   };
 
   const handleAcceptOffer = async (offer: Offer) => {
-    if (!account || !offer.offer_id) return;
+    if (!account || !offer.offer_id) {
+      toast({
+        title: 'Error',
+        description: 'Invalid offer. Please refresh and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       const result = await acceptOffer(offer.offer_id, offer.token_id, offer.offerer_address);
@@ -139,7 +148,14 @@ const Profile = () => {
   };
 
   const handleCancelOffer = async (offer: Offer) => {
-    if (!account || !offer.offer_id) return;
+    if (!account || !offer.offer_id) {
+      toast({
+        title: 'Error',
+        description: 'Invalid offer. Please refresh and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       const result = await cancelOffer(offer.offer_id);
