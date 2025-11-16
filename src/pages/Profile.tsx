@@ -143,7 +143,8 @@ const ProfileNew = () => {
           )
         `)
         .in('token_id', tokenIds)
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .not('offer_id', 'is', null);
 
       setReceivedOffers(received || []);
     }
@@ -159,7 +160,8 @@ const ProfileNew = () => {
         )
       `)
       .eq('offerer_address', address.toLowerCase())
-      .eq('status', 'pending');
+      .eq('status', 'pending')
+      .not('offer_id', 'is', null);
 
     setSentOffers(sent || []);
   };
@@ -254,7 +256,14 @@ const ProfileNew = () => {
   };
 
   const handleAcceptOffer = async (offer: Offer) => {
-    if (!account || !offer.offer_id) return;
+    if (!account || !offer.offer_id) {
+      toast({
+        title: 'Error',
+        description: 'Invalid offer. Please refresh and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       const result = await acceptOffer(offer.offer_id, offer.token_id, offer.offerer_address);
@@ -282,7 +291,14 @@ const ProfileNew = () => {
   };
 
   const handleCancelOffer = async (offer: Offer) => {
-    if (!account || !offer.offer_id) return;
+    if (!account || !offer.offer_id) {
+      toast({
+        title: 'Error',
+        description: 'Invalid offer. Please refresh and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       const result = await cancelOffer(offer.offer_id);
