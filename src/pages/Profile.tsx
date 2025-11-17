@@ -7,14 +7,12 @@ import UserBadges from '@/components/UserBadges';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
-import { acceptOffer, cancelOffer, listNFT } from '@/lib/web3/nft';
+import { acceptOffer, cancelOffer } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Copy, CheckCircle2, Package, Tag, Gift, TrendingUp, DollarSign, Activity as ActivityIcon, Eye, User, Edit, Twitter, Instagram, Globe, MessageCircle } from 'lucide-react';
+import { Loader2, Copy, CheckCircle2, Package, Tag, Gift, TrendingUp, DollarSign, Activity as ActivityIcon, Eye, Edit, Twitter, Instagram, Globe, MessageCircle, Calendar } from 'lucide-react';
 
 interface NFT {
   id: string;
@@ -23,6 +21,7 @@ interface NFT {
   image_url: string;
   owner_address: string;
   description: string | null;
+  created_at: string;
 }
 
 interface NFTWithListing extends NFT {
@@ -40,6 +39,7 @@ interface Offer {
   offerer_address: string;
   offer_price: string;
   status: string;
+  created_at: string;
   nfts?: {
     name: string;
     image_url: string;
@@ -50,30 +50,47 @@ interface UserProfile {
   username: string;
   bio: string;
   avatar_url: string;
+  banner_url: string;
   twitter_handle: string;
   instagram_handle: string;
   discord_handle: string;
   website_url: string;
+  created_at: string;
 }
 
-const ProfileNew = () => {
+interface ActivityItem {
+  id: string;
+  activity_type: string;
+  from_address: string | null;
+  to_address: string | null;
+  price: string | null;
+  created_at: string;
+  nfts?: {
+    name: string;
+    image_url: string;
+  };
+}
+
+const Profile = () => {
   const navigate = useNavigate();
   const [account, setAccount] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nfts, setNfts] = useState<NFTWithListing[]>([]);
+  const [createdNfts, setCreatedNfts] = useState<NFT[]>([]);
+  const [watchlist, setWatchlist] = useState<NFT[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [receivedOffers, setReceivedOffers] = useState<Offer[]>([]);
   const [sentOffers, setSentOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [showListDialog, setShowListDialog] = useState(false);
-  const [selectedNFT, setSelectedNFT] = useState<NFT | null>(null);
-  const [listPrice, setListPrice] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
   
-  // Analytics
-  const [totalVolume, setTotalVolume] = useState('0');
-  const [totalSales, setTotalSales] = useState(0);
-  const [floorPrice, setFloorPrice] = useState('0');
+  // Stats
+  const [stats, setStats] = useState({
+    totalOwned: 0,
+    totalCreated: 0,
+    totalVolume: '0',
+    floorPrice: '0',
+  });
   
   const { toast } = useToast();
 
@@ -88,8 +105,11 @@ const ProfileNew = () => {
     if (currentAccount) {
       await Promise.all([
         fetchNFTs(currentAccount),
+        fetchCreatedNFTs(currentAccount),
+        fetchWatchlist(currentAccount),
+        fetchActivities(currentAccount),
         fetchOffers(currentAccount),
-        fetchAnalytics(currentAccount),
+        fetchStats(currentAccount),
         fetchUserProfile(currentAccount),
       ]);
     }
@@ -97,8 +117,19 @@ const ProfileNew = () => {
     setIsLoading(false);
   };
 
+  const fetchUserProfile = async (address: string) => {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('wallet_address', address.toLowerCase())
+      .single();
+
+    if (data) {
+      setUserProfile(data);
+    }
+  };
+
   const fetchNFTs = async (ownerAddress: string) => {
-    // Fetch NFTs with their listings
     const { data: nftData } = await supabase
       .from('nfts')
       .select('*')
@@ -106,7 +137,6 @@ const ProfileNew = () => {
       .order('created_at', { ascending: false });
 
     if (nftData) {
-      // Fetch listings for these NFTs
       const nftIds = nftData.map(nft => nft.token_id);
       const { data: listingData } = await supabase
         .from('listings')
@@ -114,7 +144,6 @@ const ProfileNew = () => {
         .in('token_id', nftIds)
         .eq('active', true);
 
-      // Merge NFTs with listings
       const nftsWithListings = nftData.map(nft => ({
         ...nft,
         listing: listingData?.find(l => l.token_id === nft.token_id),
@@ -124,23 +153,68 @@ const ProfileNew = () => {
     }
   };
 
+  const fetchCreatedNFTs = async (address: string) => {
+    const { data: mintActivities } = await supabase
+      .from('activities')
+      .select('token_id')
+      .eq('to_address', address.toLowerCase())
+      .eq('activity_type', 'mint');
+
+    if (mintActivities) {
+      const tokenIds = mintActivities.map(a => a.token_id);
+      const { data: nftData } = await supabase
+        .from('nfts')
+        .select('*')
+        .in('token_id', tokenIds)
+        .order('created_at', { ascending: false });
+
+      setCreatedNfts(nftData || []);
+    }
+  };
+
+  const fetchWatchlist = async (address: string) => {
+    const { data } = await supabase
+      .from('watchlist')
+      .select(`
+        nft_id,
+        nfts (*)
+      `)
+      .eq('wallet_address', address.toLowerCase());
+
+    if (data) {
+      const watchedNfts = data.map(w => w.nfts).filter(Boolean);
+      setWatchlist(watchedNfts as NFT[]);
+    }
+  };
+
+  const fetchActivities = async (address: string) => {
+    const { data } = await supabase
+      .from('activities')
+      .select(`
+        *,
+        nfts (name, image_url)
+      `)
+      .or(`from_address.eq.${address.toLowerCase()},to_address.eq.${address.toLowerCase()}`)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    setActivities(data || []);
+  };
+
   const fetchOffers = async (address: string) => {
-    // Received offers
     const { data: nftData } = await supabase
       .from('nfts')
       .select('token_id')
       .eq('owner_address', address.toLowerCase());
 
     if (nftData) {
-      const tokenIds = nftData.map(n => n.token_id);
+      const tokenIds = nftData.map(nft => nft.token_id);
+      
       const { data: received } = await supabase
         .from('offers')
         .select(`
           *,
-          nfts (
-            name,
-            image_url
-          )
+          nfts (name, image_url)
         `)
         .in('token_id', tokenIds)
         .eq('status', 'pending')
@@ -149,15 +223,11 @@ const ProfileNew = () => {
       setReceivedOffers(received || []);
     }
 
-    // Sent offers
     const { data: sent } = await supabase
       .from('offers')
       .select(`
         *,
-        nfts (
-          name,
-          image_url
-        )
+        nfts (name, image_url)
       `)
       .eq('offerer_address', address.toLowerCase())
       .eq('status', 'pending')
@@ -166,51 +236,45 @@ const ProfileNew = () => {
     setSentOffers(sent || []);
   };
 
-  const fetchAnalytics = async (address: string) => {
-    // Get total sales volume
+  const fetchStats = async (address: string) => {
+    const { data: nftData } = await supabase
+      .from('nfts')
+      .select('token_id')
+      .eq('owner_address', address.toLowerCase());
+
+    const totalOwned = nftData?.length || 0;
+
+    const { data: mintData } = await supabase
+      .from('activities')
+      .select('token_id')
+      .eq('to_address', address.toLowerCase())
+      .eq('activity_type', 'mint');
+
+    const totalCreated = mintData?.length || 0;
+
     const { data: salesData } = await supabase
       .from('activities')
       .select('price')
       .eq('from_address', address.toLowerCase())
       .eq('activity_type', 'sale');
 
-    if (salesData) {
-      const volume = salesData.reduce((sum, item) => sum + parseFloat(item.price || '0'), 0);
-      setTotalVolume(volume.toFixed(2));
-      setTotalSales(salesData.length);
-    }
+    const totalVolume = salesData?.reduce((sum, s) => sum + parseFloat(s.price || '0'), 0) || 0;
 
-    // Get floor price from active listings
-    const { data: listingsData } = await supabase
+    const { data: floorData } = await supabase
       .from('listings')
       .select('price')
       .eq('active', true)
       .order('price', { ascending: true })
       .limit(1);
 
-    if (listingsData && listingsData.length > 0) {
-      setFloorPrice(listingsData[0].price);
-    }
-  };
+    const floorPrice = floorData?.[0]?.price || '0';
 
-  const fetchUserProfile = async (walletAddress: string) => {
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('wallet_address', walletAddress.toLowerCase())
-      .single();
-
-    if (data) {
-      setUserProfile({
-        username: data.username || '',
-        bio: data.bio || '',
-        avatar_url: data.avatar_url || '',
-        twitter_handle: data.twitter_handle || '',
-        instagram_handle: data.instagram_handle || '',
-        discord_handle: data.discord_handle || '',
-        website_url: data.website_url || '',
-      });
-    }
+    setStats({
+      totalOwned,
+      totalCreated,
+      totalVolume: totalVolume.toFixed(2),
+      floorPrice,
+    });
   };
 
   const handleCopyAddress = () => {
@@ -221,70 +285,28 @@ const ProfileNew = () => {
     }
   };
 
-  const handleListForSale = async () => {
-    if (!selectedNFT || !listPrice || !account) return;
-
-    setIsProcessing(true);
-    try {
-      const result = await listNFT(selectedNFT.token_id, listPrice, account);
-      
-      if (result.success) {
-        toast({
-          title: 'Listed Successfully!',
-          description: 'Your NFT is now available in the marketplace',
-        });
-        setShowListDialog(false);
-        setListPrice('');
-        setSelectedNFT(null);
-        checkAndFetchData();
-      } else {
-        toast({
-          title: 'Listing Failed',
-          description: result.error || 'Failed to list NFT',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An error occurred while listing',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const handleAcceptOffer = async (offer: Offer) => {
     if (!account || !offer.offer_id) {
       toast({
         title: 'Error',
-        description: 'Invalid offer. Please refresh and try again.',
+        description: 'Invalid offer',
         variant: 'destructive',
       });
       return;
     }
 
-    try {
-      const result = await acceptOffer(offer.offer_id, offer.token_id, offer.offerer_address);
-      
-      if (result.success) {
-        toast({
-          title: 'Offer Accepted!',
-          description: 'NFT transferred successfully',
-        });
-        checkAndFetchData();
-      } else {
-        toast({
-          title: 'Failed',
-          description: result.error,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
+    const result = await acceptOffer(offer.offer_id, offer.token_id, offer.offerer_address);
+    
+    if (result.success) {
       toast({
-        title: 'Error',
-        description: 'Failed to accept offer',
+        title: 'Success!',
+        description: 'Offer accepted successfully',
+      });
+      checkAndFetchData();
+    } else {
+      toast({
+        title: 'Failed',
+        description: result.error,
         variant: 'destructive',
       });
     }
@@ -294,50 +316,47 @@ const ProfileNew = () => {
     if (!account || !offer.offer_id) {
       toast({
         title: 'Error',
-        description: 'Invalid offer. Please refresh and try again.',
+        description: 'Invalid offer',
         variant: 'destructive',
       });
       return;
     }
 
-    try {
-      const result = await cancelOffer(offer.offer_id);
-      
-      if (result.success) {
-        toast({
-          title: 'Offer Cancelled',
-          description: 'Your offer has been withdrawn',
-        });
-        checkAndFetchData();
-      } else {
-        toast({
-          title: 'Failed',
-          description: result.error,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
+    const result = await cancelOffer(offer.offer_id);
+    
+    if (result.success) {
       toast({
-        title: 'Error',
-        description: 'Failed to cancel offer',
+        title: 'Success!',
+        description: 'Offer cancelled',
+      });
+      checkAndFetchData();
+    } else {
+      toast({
+        title: 'Failed',
+        description: result.error,
         variant: 'destructive',
       });
     }
   };
 
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+    return `${Math.floor(diffMins / 1440)}d ago`;
+  };
+
   if (!account) {
-  return (
-    <div className="min-h-screen relative">
-      <div 
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(328 85% 55% / 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(320 90% 60% / 0.15) 0%, transparent 50%)',
-        }}
-      />
-      <SakuraFalling />
-      <Navigation />
-      
-      <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
+    return (
+      <div className="min-h-screen bg-gradient-sakura-soft">
+        <SakuraFalling />
+        <Navigation />
+        
+        <div className="container mx-auto px-4 pt-24 pb-12">
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🔒</div>
             <h3 className="text-2xl font-bold mb-2">Connect Your Wallet</h3>
@@ -350,146 +369,214 @@ const ProfileNew = () => {
     );
   }
 
-  const unlistedNFTs = nfts.filter(nft => !nft.listing);
-  const listedNFTs = nfts.filter(nft => nft.listing);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-sakura-soft">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen relative">
-      <div 
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(328 85% 55% / 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(320 90% 60% / 0.15) 0%, transparent 50%)',
-        }}
-      />
+    <div className="min-h-screen bg-gradient-sakura-soft">
       <SakuraFalling />
       <Navigation />
       
-      <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
-        {/* Profile Header with enhanced design */}
-        <Card className="card-hover mb-8 shadow-elegant overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-sakura" />
-          <CardContent className="p-8 relative">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              {/* Avatar & User Info */}
-              <div className="flex items-center gap-6 flex-1">
-                <Avatar className="w-28 h-28 border-4 border-white shadow-glow mt-16">
-                  <AvatarImage src={userProfile?.avatar_url} />
-                  <AvatarFallback className="bg-gradient-sakura text-white text-4xl">
-                    {userProfile?.username ? userProfile.username[0].toUpperCase() : <User className="w-12 h-12" />}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 mt-16">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-4xl font-bold gradient-text">
-                      {userProfile?.username || 'Anonymous'}
-                    </h1>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/profile/edit')}
-                      className="gap-2"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit Profile
-                    </Button>
-                  </div>
-                  {/* User Badges */}
-                  <div className="mb-3">
-                    <UserBadges walletAddress={account} />
-                  </div>
-                  {userProfile?.bio && (
-                    <p className="text-muted-foreground mb-3 max-w-xl">{userProfile.bio}</p>
-                  )}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="font-mono text-sm px-3 py-1 rounded-lg bg-gradient-sakura-soft">{formatAddress(account)}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCopyAddress}
-                      className="hover:bg-primary/10"
-                    >
-                      {copied ? (
-                        <CheckCircle2 className="w-4 h-4 text-primary" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                  {/* Social Links */}
-                  {(userProfile?.twitter_handle || userProfile?.instagram_handle || userProfile?.discord_handle || userProfile?.website_url) && (
-                    <div className="flex items-center gap-2">
-                      {userProfile.twitter_handle && (
-                        <a 
-                          href={`https://twitter.com/${userProfile.twitter_handle.replace('@', '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                        >
-                          <Twitter className="w-4 h-4" />
-                        </a>
-                      )}
-                      {userProfile.instagram_handle && (
-                        <a 
-                          href={`https://instagram.com/${userProfile.instagram_handle.replace('@', '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                        >
-                          <Instagram className="w-4 h-4" />
-                        </a>
-                      )}
-                      {userProfile.discord_handle && (
-                        <div className="p-2 bg-primary/5 rounded-lg text-sm flex items-center gap-1">
-                          <MessageCircle className="w-4 h-4" />
-                          {userProfile.discord_handle}
-                        </div>
-                      )}
-                      {userProfile.website_url && (
-                        <a 
-                          href={userProfile.website_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                        >
-                          <Globe className="w-4 h-4" />
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
+      {/* Banner Section */}
+      <div className="relative h-64 bg-gradient-hero overflow-hidden">
+        {userProfile?.banner_url ? (
+          <img 
+            src={userProfile.banner_url} 
+            alt="Profile Banner" 
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+      </div>
+
+      <div className="container mx-auto px-4 relative">
+        {/* Profile Header with Avatar */}
+        <div className="relative -mt-20 mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+            {/* Avatar */}
+            <Avatar className="w-32 h-32 border-4 border-background shadow-sakura-strong">
+              <AvatarImage src={userProfile?.avatar_url} />
+              <AvatarFallback className="bg-gradient-sakura text-white text-4xl">
+                {userProfile?.username?.[0]?.toUpperCase() || '🌸'}
+              </AvatarFallback>
+            </Avatar>
+
+            {/* Profile Info */}
+            <div className="flex-1 md:mb-4">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold">
+                  {userProfile?.username || 'Unnamed User'}
+                </h1>
+                <UserBadges walletAddress={account} />
               </div>
-              {/* Stats */}
-              <div className="text-right mt-16">
-                <div className="text-sm text-muted-foreground mb-1">Total Collection</div>
-                <div className="text-4xl font-bold gradient-text">{nfts.length}</div>
+              
+              <div className="flex items-center gap-2 text-muted-foreground mb-3">
+                <span className="font-mono text-sm">{formatAddress(account)}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyAddress}
+                  className="h-6 w-6 p-0"
+                >
+                  {copied ? (
+                    <CheckCircle2 className="w-3 h-3 text-primary" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </Button>
+              </div>
+
+              {userProfile?.bio && (
+                <p className="text-foreground mb-3 max-w-2xl">{userProfile.bio}</p>
+              )}
+
+              {/* Social Links */}
+              <div className="flex items-center gap-3">
+                {userProfile?.twitter_handle && (
+                  <a 
+                    href={`https://twitter.com/${userProfile.twitter_handle.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Twitter className="w-4 h-4" />
+                  </a>
+                )}
+                {userProfile?.instagram_handle && (
+                  <a 
+                    href={`https://instagram.com/${userProfile.instagram_handle.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                )}
+                {userProfile?.discord_handle && (
+                  <span className="text-muted-foreground flex items-center gap-1 text-sm">
+                    <MessageCircle className="w-4 h-4" />
+                    {userProfile.discord_handle}
+                  </span>
+                )}
+                {userProfile?.website_url && (
+                  <a 
+                    href={userProfile.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Globe className="w-4 h-4" />
+                  </a>
+                )}
+                {userProfile?.created_at && (
+                  <span className="text-muted-foreground flex items-center gap-1 text-sm ml-auto">
+                    <Calendar className="w-4 h-4" />
+                    Joined {new Date(userProfile.created_at).toLocaleDateString()}
+                  </span>
+                )}
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Tabs with enhanced styling */}
-        <Tabs defaultValue="owned" className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-4 h-14 bg-gradient-card shadow-elegant">
-            <TabsTrigger value="owned" className="gap-2 text-base data-[state=active]:bg-gradient-sakura data-[state=active]:text-white">
-              <Package className="w-5 h-5" />
-              Owned
+            {/* Edit Button */}
+            <Button
+              onClick={() => navigate('/profile/edit')}
+              variant="outline"
+              className="md:mb-4"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit Profile
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card className="card-hover">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Owned</p>
+                  <p className="text-2xl font-bold">{stats.totalOwned}</p>
+                </div>
+                <Package className="w-8 h-8 text-primary/50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Created</p>
+                  <p className="text-2xl font-bold">{stats.totalCreated}</p>
+                </div>
+                <Eye className="w-8 h-8 text-accent/50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Volume</p>
+                  <p className="text-2xl font-bold">{stats.totalVolume}</p>
+                  <p className="text-xs text-muted-foreground">NEX</p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-primary/50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Floor</p>
+                  <p className="text-2xl font-bold">{stats.floorPrice}</p>
+                  <p className="text-xs text-muted-foreground">NEX</p>
+                </div>
+                <DollarSign className="w-8 h-8 text-accent/50" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="collected" className="space-y-6">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 md:grid-cols-5">
+            <TabsTrigger value="collected" className="gap-2">
+              <Package className="w-4 h-4" />
+              <span className="hidden sm:inline">Collected</span>
+              <span className="sm:hidden">Items</span>
             </TabsTrigger>
-            <TabsTrigger value="received" className="gap-2 text-base data-[state=active]:bg-gradient-sakura data-[state=active]:text-white">
-              <Gift className="w-5 h-5" />
-              Offers ({receivedOffers.length})
+            <TabsTrigger value="created" className="gap-2">
+              <Eye className="w-4 h-4" />
+              <span className="hidden sm:inline">Created</span>
             </TabsTrigger>
-            <TabsTrigger value="sent" className="gap-2 text-base data-[state=active]:bg-gradient-sakura data-[state=active]:text-white">
-              <Tag className="w-5 h-5" />
-              My Offers ({sentOffers.length})
+            <TabsTrigger value="favorited" className="gap-2">
+              <Gift className="w-4 h-4" />
+              <span className="hidden sm:inline">Favorited</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2 text-base data-[state=active]:bg-gradient-sakura data-[state=active]:text-white">
-              <TrendingUp className="w-5 h-5" />
-              Analytics
+            <TabsTrigger value="activity" className="gap-2">
+              <ActivityIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">Activity</span>
+            </TabsTrigger>
+            <TabsTrigger value="offers" className="gap-2">
+              <Tag className="w-4 h-4" />
+              <span className="hidden sm:inline">Offers</span>
             </TabsTrigger>
           </TabsList>
 
-          {/* Owned NFTs */}
-          <TabsContent value="owned">
+          {/* Collected NFTs */}
+          <TabsContent value="collected">
             {nfts.length === 0 ? (
               <div className="text-center py-20">
                 <div className="text-6xl mb-4">📦</div>
@@ -497,94 +584,97 @@ const ProfileNew = () => {
                 <p className="text-muted-foreground">Start collecting NFTs!</p>
               </div>
             ) : (
-              <div className="space-y-8">
-                {/* Unlisted NFTs */}
-                {unlistedNFTs.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-bold mb-4">Unlisted ({unlistedNFTs.length})</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {unlistedNFTs.map((nft) => (
-                        <NFTCard
-                          key={nft.id}
-                          tokenId={nft.token_id}
-                          name={nft.name}
-                          imageUrl={nft.image_url}
-                          owner={nft.owner_address}
-                          showListButton={true}
-                          onList={() => {
-                            setSelectedNFT(nft);
-                            setShowListDialog(true);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Listed NFTs */}
-                {listedNFTs.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-bold mb-4">Listed ({listedNFTs.length})</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {listedNFTs.map((nft) => (
-                        <NFTCard
-                          key={nft.id}
-                          tokenId={nft.token_id}
-                          name={nft.name}
-                          imageUrl={nft.image_url}
-                          owner={nft.owner_address}
-                          price={nft.listing?.price}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {nfts.map((nft) => (
+                  <NFTCard
+                    key={nft.id}
+                    tokenId={nft.token_id}
+                    name={nft.name}
+                    imageUrl={nft.image_url}
+                    owner={nft.owner_address}
+                  />
+                ))}
               </div>
             )}
           </TabsContent>
 
-          {/* Received Offers */}
-          <TabsContent value="received">
-            {receivedOffers.length === 0 ? (
+          {/* Created NFTs */}
+          <TabsContent value="created">
+            {createdNfts.length === 0 ? (
               <div className="text-center py-20">
-                <div className="text-6xl mb-4">💌</div>
-                <h3 className="text-2xl font-bold mb-2">No Offers Received</h3>
-                <p className="text-muted-foreground">Offers on your NFTs will appear here</p>
+                <div className="text-6xl mb-4">🎨</div>
+                <h3 className="text-2xl font-bold mb-2">No Creations Yet</h3>
+                <p className="text-muted-foreground">Start minting your NFTs!</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {receivedOffers.map((offer) => (
-                  <Card key={offer.id} className="card-hover">
-                    <CardContent className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {createdNfts.map((nft) => (
+                  <NFTCard
+                    key={nft.id}
+                    tokenId={nft.token_id}
+                    name={nft.name}
+                    imageUrl={nft.image_url}
+                    owner={nft.owner_address}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Favorited NFTs */}
+          <TabsContent value="favorited">
+            {watchlist.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="text-6xl mb-4">⭐</div>
+                <h3 className="text-2xl font-bold mb-2">No Favorites Yet</h3>
+                <p className="text-muted-foreground">Add NFTs to your watchlist!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {watchlist.map((nft) => (
+                  <NFTCard
+                    key={nft.id}
+                    tokenId={nft.token_id}
+                    name={nft.name}
+                    imageUrl={nft.image_url}
+                    owner={nft.owner_address}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Activity */}
+          <TabsContent value="activity">
+            {activities.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="text-6xl mb-4">📊</div>
+                <h3 className="text-2xl font-bold mb-2">No Activity Yet</h3>
+                <p className="text-muted-foreground">Your activity will appear here</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activities.map((activity) => (
+                  <Card key={activity.id} className="card-hover">
+                    <CardContent className="p-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-sakura-soft flex-shrink-0">
-                          {offer.nfts?.image_url && (
-                            <img src={offer.nfts.image_url} alt={offer.nfts.name} className="w-full h-full object-cover" />
-                          )}
-                        </div>
+                        {activity.nfts && (
+                          <img 
+                            src={activity.nfts.image_url} 
+                            alt={activity.nfts.name}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                        )}
                         <div className="flex-1">
-                          <h3 className="font-bold">{offer.nfts?.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Offer by {formatAddress(offer.offerer_address)}
+                          <p className="font-medium">{activity.nfts?.name}</p>
+                          <p className="text-sm text-muted-foreground capitalize">
+                            {activity.activity_type.replace('_', ' ')}
+                            {activity.price && ` - ${activity.price} NEX`}
                           </p>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-2xl font-bold gradient-text">{offer.offer_price}</div>
-                          <div className="text-sm text-muted-foreground">NEX</div>
-                        </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <Button 
-                            onClick={() => window.location.href = `/nft/${offer.token_id}`}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View
-                          </Button>
-                          <Button onClick={() => handleAcceptOffer(offer)} className="btn-hero" size="sm">
-                            Accept
-                          </Button>
-                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {formatTime(activity.created_at)}
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -593,175 +683,100 @@ const ProfileNew = () => {
             )}
           </TabsContent>
 
-          {/* Sent Offers */}
-          <TabsContent value="sent">
-            {sentOffers.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="text-6xl mb-4">📤</div>
-                <h3 className="text-2xl font-bold mb-2">No Offers Made</h3>
-                <p className="text-muted-foreground">Offers you make will appear here</p>
+          {/* Offers */}
+          <TabsContent value="offers">
+            <div className="space-y-6">
+              {/* Received Offers */}
+              <div>
+                <h3 className="text-xl font-bold mb-4">Received Offers ({receivedOffers.length})</h3>
+                {receivedOffers.length === 0 ? (
+                  <div className="text-center py-10 bg-muted/20 rounded-lg">
+                    <p className="text-muted-foreground">No offers received</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {receivedOffers.map((offer) => (
+                      <Card key={offer.id} className="card-hover">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-4">
+                            {offer.nfts && (
+                              <img 
+                                src={offer.nfts.image_url} 
+                                alt={offer.nfts.name}
+                                className="w-12 h-12 rounded-lg object-cover"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <p className="font-medium">{offer.nfts?.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                by {formatAddress(offer.offerer_address)}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold gradient-text">{offer.offer_price} NEX</p>
+                              <p className="text-xs text-muted-foreground">{formatTime(offer.created_at)}</p>
+                            </div>
+                            <Button 
+                              onClick={() => handleAcceptOffer(offer)}
+                              className="btn-hero"
+                            >
+                              Accept
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="space-y-4">
-                {sentOffers.map((offer) => (
-                  <Card key={offer.id} className="card-hover">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-sakura-soft flex-shrink-0">
-                          {offer.nfts?.image_url && (
-                            <img src={offer.nfts.image_url} alt={offer.nfts.name} className="w-full h-full object-cover" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold">{offer.nfts?.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Pending acceptance
-                          </p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-2xl font-bold gradient-text">{offer.offer_price}</div>
-                          <div className="text-sm text-muted-foreground">NEX</div>
-                        </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <Button 
-                            onClick={() => window.location.href = `/nft/${offer.token_id}`}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View
-                          </Button>
-                          <Button onClick={() => handleCancelOffer(offer)} variant="outline" size="sm">
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+
+              {/* Sent Offers */}
+              <div>
+                <h3 className="text-xl font-bold mb-4">Sent Offers ({sentOffers.length})</h3>
+                {sentOffers.length === 0 ? (
+                  <div className="text-center py-10 bg-muted/20 rounded-lg">
+                    <p className="text-muted-foreground">No offers sent</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {sentOffers.map((offer) => (
+                      <Card key={offer.id} className="card-hover">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-4">
+                            {offer.nfts && (
+                              <img 
+                                src={offer.nfts.image_url} 
+                                alt={offer.nfts.name}
+                                className="w-12 h-12 rounded-lg object-cover"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <p className="font-medium">{offer.nfts?.name}</p>
+                              <p className="text-sm text-muted-foreground">Pending acceptance</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold gradient-text">{offer.offer_price} NEX</p>
+                              <p className="text-xs text-muted-foreground">{formatTime(offer.created_at)}</p>
+                            </div>
+                            <Button 
+                              onClick={() => handleCancelOffer(offer)}
+                              variant="outline"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics">
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <Card className="card-hover">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-sakura flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Total Volume</div>
-                      <div className="text-2xl font-bold gradient-text">{totalVolume} NEX</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="card-hover">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-sakura flex items-center justify-center">
-                      <ActivityIcon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Total Sales</div>
-                      <div className="text-2xl font-bold gradient-text">{totalSales}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="card-hover">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-sakura flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Floor Price</div>
-                      <div className="text-2xl font-bold gradient-text">{floorPrice} NEX</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
-
-            <Card className="card-hover">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-4">Activity Summary</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-sakura-soft">
-                    <span className="text-muted-foreground">NFTs Owned</span>
-                    <span className="font-bold">{nfts.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-sakura-soft">
-                    <span className="text-muted-foreground">Listed NFTs</span>
-                    <span className="font-bold">{listedNFTs.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-sakura-soft">
-                    <span className="text-muted-foreground">Offers Received</span>
-                    <span className="font-bold">{receivedOffers.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-sakura-soft">
-                    <span className="text-muted-foreground">Offers Made</span>
-                    <span className="font-bold">{sentOffers.length}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* List for Sale Dialog */}
-      <Dialog open={showListDialog} onOpenChange={setShowListDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>List NFT for Sale</DialogTitle>
-            <DialogDescription>
-              Set a price for {selectedNFT?.name}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Price (NEX)
-              </label>
-              <Input
-                type="number"
-                step="0.001"
-                placeholder="Enter price in NEX"
-                value={listPrice}
-                onChange={(e) => setListPrice(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                A 2.5% platform fee will be deducted from the sale
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={handleListForSale}
-              disabled={!listPrice || isProcessing}
-              className="btn-hero w-full"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Listing...
-                </>
-              ) : (
-                'List for Sale'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
 
-export default ProfileNew;
+export default Profile;

@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Users, TrendingUp } from 'lucide-react';
+import { Loader2, Users, TrendingUp, Search, ArrowUpDown } from 'lucide-react';
 
 interface Collection {
   contract_address: string;
@@ -18,12 +20,57 @@ interface Collection {
 
 const Collections = () => {
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [filteredCollections, setFilteredCollections] = useState<Collection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('volume');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchCollections();
   }, []);
+
+  useEffect(() => {
+    applyFiltersAndSort();
+  }, [collections, searchQuery, sortBy]);
+
+  const applyFiltersAndSort = () => {
+    let filtered = [...collections];
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter((col) =>
+        col.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        col.contract_address.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'volume':
+        filtered.sort((a, b) => parseFloat(b.total_volume) - parseFloat(a.total_volume));
+        break;
+      case 'floor-high':
+        filtered.sort((a, b) => {
+          const aFloor = a.floor_price === '—' ? 0 : parseFloat(a.floor_price);
+          const bFloor = b.floor_price === '—' ? 0 : parseFloat(b.floor_price);
+          return bFloor - aFloor;
+        });
+        break;
+      case 'floor-low':
+        filtered.sort((a, b) => {
+          const aFloor = a.floor_price === '—' ? Infinity : parseFloat(a.floor_price);
+          const bFloor = b.floor_price === '—' ? Infinity : parseFloat(b.floor_price);
+          return aFloor - bFloor;
+        });
+        break;
+      case 'items':
+        filtered.sort((a, b) => b.total_nfts - a.total_nfts);
+        break;
+    }
+
+    setFilteredCollections(filtered);
+  };
 
   const fetchCollections = async () => {
     try {
@@ -118,23 +165,57 @@ const Collections = () => {
 
       <div className="container mx-auto px-4 pt-24 pb-12">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-5xl font-bold gradient-text mb-4">Collections</h1>
           <p className="text-muted-foreground text-lg">
             Explore NFT collections on Sakura Marketplace
           </p>
         </div>
 
+        {/* Search and Filter */}
+        <Card className="p-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search collections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Sort */}
+            <div className="relative">
+              <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="pl-10">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="volume">Volume: High to Low</SelectItem>
+                  <SelectItem value="floor-high">Floor: High to Low</SelectItem>
+                  <SelectItem value="floor-low">Floor: Low to High</SelectItem>
+                  <SelectItem value="items">Items: Most to Least</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
+
         {/* Collections Grid */}
-        {collections.length === 0 ? (
+        {filteredCollections.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">📦</div>
-            <h3 className="text-2xl font-bold mb-2">No Collections Yet</h3>
-            <p className="text-muted-foreground">Collections will appear here once NFTs are minted</p>
+            <h3 className="text-2xl font-bold mb-2">No Collections Found</h3>
+            <p className="text-muted-foreground">
+              {searchQuery ? 'Try adjusting your search' : 'Collections will appear here once NFTs are minted'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {collections.map((collection) => (
+            {filteredCollections.map((collection) => (
               <Card
                 key={collection.contract_address}
                 className="card-hover cursor-pointer overflow-hidden group"
