@@ -297,6 +297,16 @@ export const makeOffer = async (
       });
     }
 
+    // Log to offer_logs
+    await supabase.from('offer_logs').insert({
+      offer_id: offerId,
+      action: 'make',
+      user_address: offererAddress.toLowerCase(),
+      token_id: tokenId,
+      amount: offerPrice,
+      transaction_hash: receipt.hash,
+    });
+
     // Record activity
     await supabase.from('activities').insert({
       activity_type: 'offer',
@@ -355,6 +365,15 @@ export const acceptOffer = async (
       .eq('token_id', tokenId)
       .eq('contract_address', CONTRACTS.SakuraNFT);
 
+    // Log to offer_logs
+    await supabase.from('offer_logs').insert({
+      offer_id: offerId,
+      action: 'accept',
+      user_address: offererAddress.toLowerCase(),
+      token_id: tokenId,
+      transaction_hash: receipt.hash,
+    });
+
     // Record activity
     const { data: offer } = await supabase
       .from('offers')
@@ -388,8 +407,15 @@ export const cancelOffer = async (
       return { success: false, error: 'Failed to connect to offer contract' };
     }
 
+    // Get offer details for logging
+    const { data: offerData } = await supabase
+      .from('offers')
+      .select('token_id, offerer_address')
+      .eq('offer_id', offerId)
+      .single();
+
     const tx = await contract.cancelOffer(offerId);
-    await tx.wait();
+    const receipt = await tx.wait();
 
     // Update database
     await supabase
@@ -397,6 +423,17 @@ export const cancelOffer = async (
       .update({ status: 'cancelled' })
       .eq('offer_id', offerId)
       .eq('status', 'pending');
+
+    // Log to offer_logs
+    if (offerData) {
+      await supabase.from('offer_logs').insert({
+        offer_id: offerId,
+        action: 'cancel',
+        user_address: offerData.offerer_address.toLowerCase(),
+        token_id: offerData.token_id,
+        transaction_hash: receipt.hash,
+      });
+    }
 
     return { success: true };
   } catch (error: any) {

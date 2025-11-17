@@ -10,6 +10,7 @@ const Navigation = () => {
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/marketplace', label: 'Marketplace', icon: Store },
+    { path: '/collections', label: 'Collections', icon: Store },
     { path: '/mint', label: 'Mint NFT', icon: Palette },
     { path: '/activity', label: 'Activity', icon: Activity },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },

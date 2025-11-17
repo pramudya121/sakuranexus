@@ -17,6 +17,7 @@ interface UserProfile {
   username: string;
   bio: string;
   avatar_url: string;
+  banner_url: string;
   twitter_handle: string;
   instagram_handle: string;
   discord_handle: string;
@@ -28,6 +29,7 @@ const EditProfile = () => {
     username: '',
     bio: '',
     avatar_url: '',
+    banner_url: '',
     twitter_handle: '',
     instagram_handle: '',
     discord_handle: '',
@@ -37,6 +39,8 @@ const EditProfile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -67,12 +71,14 @@ const EditProfile = () => {
         username: data.username || '',
         bio: data.bio || '',
         avatar_url: data.avatar_url || '',
+        banner_url: data.banner_url || '',
         twitter_handle: data.twitter_handle || '',
         instagram_handle: data.instagram_handle || '',
         discord_handle: data.discord_handle || '',
         website_url: data.website_url || '',
       });
       setAvatarPreview(data.avatar_url || '');
+      setBannerPreview(data.banner_url || '');
     }
 
     setIsLoading(false);
@@ -85,6 +91,18 @@ const EditProfile = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBannerFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBannerPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -120,6 +138,36 @@ const EditProfile = () => {
     }
   };
 
+  const uploadBanner = async (walletAddress: string): Promise<string | null> => {
+    if (!bannerFile) return profile.banner_url;
+
+    try {
+      const fileExt = bannerFile.name.split('.').pop();
+      const fileName = `banner-${walletAddress}-${Date.now()}.${fileExt}`;
+      const filePath = `banners/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('nft-images')
+        .upload(filePath, bannerFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('nft-images')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading banner:', error);
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload banner image',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const account = await getCurrentAccount();
@@ -134,6 +182,12 @@ const EditProfile = () => {
         if (uploadedUrl) avatarUrl = uploadedUrl;
       }
 
+      let bannerUrl = profile.banner_url;
+      if (bannerFile) {
+        const uploadedUrl = await uploadBanner(account);
+        if (uploadedUrl) bannerUrl = uploadedUrl;
+      }
+
       const { error } = await supabase
         .from('user_profiles')
         .upsert({
@@ -141,6 +195,7 @@ const EditProfile = () => {
           username: profile.username,
           bio: profile.bio,
           avatar_url: avatarUrl,
+          banner_url: bannerUrl,
           twitter_handle: profile.twitter_handle,
           instagram_handle: profile.instagram_handle,
           discord_handle: profile.discord_handle,

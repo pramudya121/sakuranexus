@@ -14,6 +14,7 @@ import EditProfile from "./pages/EditProfile";
 import NFTDetail from "./pages/NFTDetail";
 import Leaderboard from "./pages/Leaderboard";
 import Analytics from "./pages/Analytics";
+import Collections from "./pages/Collections";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/collections" element={<Collections />} />
             <Route path="/mint" element={<Mint />} />
             <Route path="/activity" element={<Activity />} />
             <Route path="/nft/:tokenId" element={<NFTDetail />} />
