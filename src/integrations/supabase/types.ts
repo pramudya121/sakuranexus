@@ -204,6 +204,39 @@ export type Database = {
           },
         ]
       }
+      offer_logs: {
+        Row: {
+          action: string
+          amount: string | null
+          created_at: string | null
+          id: string
+          offer_id: number | null
+          token_id: number
+          transaction_hash: string | null
+          user_address: string
+        }
+        Insert: {
+          action: string
+          amount?: string | null
+          created_at?: string | null
+          id?: string
+          offer_id?: number | null
+          token_id: number
+          transaction_hash?: string | null
+          user_address: string
+        }
+        Update: {
+          action?: string
+          amount?: string | null
+          created_at?: string | null
+          id?: string
+          offer_id?: number | null
+          token_id?: number
+          transaction_hash?: string | null
+          user_address?: string
+        }
+        Relationships: []
+      }
       offers: {
         Row: {
           contract_address: string
@@ -278,6 +311,7 @@ export type Database = {
       user_profiles: {
         Row: {
           avatar_url: string | null
+          banner_url: string | null
           bio: string | null
           created_at: string
           discord_handle: string | null
@@ -291,6 +325,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           created_at?: string
           discord_handle?: string | null
@@ -304,6 +339,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           created_at?: string
           discord_handle?: string | null
@@ -351,7 +387,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_notification: {
+        Args: {
+          p_message: string
+          p_nft_id?: string
+          p_notification_type: string
+          p_offer_id?: string
+          p_recipient_address: string
+          p_sender_address: string
+          p_title: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
