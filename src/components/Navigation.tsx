@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, Store, Palette, Activity, User, Trophy, BarChart3 } from 'lucide-react';
 import ConnectWallet from './ConnectWallet';
 import NotificationBell from './NotificationBell';
+import { ThemeToggle } from './ThemeToggle';
 import sakuraLogo from '@/assets/sakura-logo.png';
 
 const Navigation = () => {
@@ -50,8 +51,9 @@ const Navigation = () => {
             })}
           </div>
 
-          {/* Notifications & Connect Wallet */}
+          {/* Theme Toggle, Notifications & Connect Wallet */}
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <NotificationBell />
             <ConnectWallet />
           </div>

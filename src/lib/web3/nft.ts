@@ -441,3 +441,47 @@ export const cancelOffer = async (
     return { success: false, error: error.message || 'Failed to cancel offer' };
   }
 };
+
+// Transfer NFT
+export const transferNFT = async (
+  tokenId: number,
+  fromAddress: string,
+  toAddress: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const contract = await getSakuraNFTContract();
+    if (!contract) {
+      return { success: false, error: 'Failed to connect to NFT contract' };
+    }
+
+    // Transfer using safeTransferFrom
+    const tx = await contract['safeTransferFrom(address,address,uint256)'](
+      fromAddress,
+      toAddress,
+      tokenId
+    );
+    const receipt = await tx.wait();
+
+    // Update database
+    await supabase
+      .from('nfts')
+      .update({ owner_address: toAddress.toLowerCase() })
+      .eq('token_id', tokenId)
+      .eq('contract_address', CONTRACTS.SakuraNFT);
+
+    // Record activity
+    await supabase.from('activities').insert({
+      activity_type: 'transfer',
+      from_address: fromAddress.toLowerCase(),
+      to_address: toAddress.toLowerCase(),
+      contract_address: CONTRACTS.SakuraNFT,
+      token_id: tokenId,
+      transaction_hash: receipt.hash,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error transferring NFT:', error);
+    return { success: false, error: error.message || 'Failed to transfer NFT' };
+  }
+};
