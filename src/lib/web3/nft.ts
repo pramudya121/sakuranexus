@@ -462,6 +462,14 @@ export const transferNFT = async (
     );
     const receipt = await tx.wait();
 
+    // Get NFT details for notification
+    const { data: nft } = await supabase
+      .from('nfts')
+      .select('id, name')
+      .eq('token_id', tokenId)
+      .eq('contract_address', CONTRACTS.SakuraNFT)
+      .single();
+
     // Update database
     await supabase
       .from('nfts')
@@ -478,6 +486,18 @@ export const transferNFT = async (
       token_id: tokenId,
       transaction_hash: receipt.hash,
     });
+
+    // Create notification for recipient
+    if (nft) {
+      await supabase.rpc('create_notification', {
+        p_recipient_address: toAddress.toLowerCase(),
+        p_sender_address: fromAddress.toLowerCase(),
+        p_notification_type: 'transfer',
+        p_title: 'NFT Received!',
+        p_message: `You received ${nft.name} from ${fromAddress.slice(0, 6)}...${fromAddress.slice(-4)}`,
+        p_nft_id: nft.id,
+      });
+    }
 
     return { success: true };
   } catch (error: any) {
