@@ -665,6 +665,7 @@ const Profile = () => {
                     isListed={!!nft.listing?.active}
                     showListButton={!nft.listing?.active}
                     showTransferButton={!nft.listing?.active}
+                    isOwner={true}
                     nftId={nft.id}
                     walletAddress={account}
                     onList={() => handleListNFT(nft)}
