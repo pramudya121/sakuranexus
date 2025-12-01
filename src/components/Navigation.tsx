@@ -24,9 +24,9 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <img src={sakuraLogo} alt="Sakura Logo" className="w-10 h-10 rounded-full" />
-            <span className="text-xl font-bold gradient-text">SakuraNFT</span>
+          <Link to="/" className="flex items-center gap-3">
+            <img src={sakuraLogo} alt="NEXUSAKURA" className="w-10 h-10 rounded-full" />
+            <span className="text-xl font-bold gradient-text">NEXUSAKURA</span>
           </Link>
 
           {/* Navigation Links */}

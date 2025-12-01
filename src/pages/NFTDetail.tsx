@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
 import { buyNFT, makeOffer, acceptOffer, cancelOffer } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Tag, ShoppingCart, Clock, CheckCircle2, X } from 'lucide-react';
+import { Loader2, ArrowLeft, Tag, ShoppingCart, Clock, CheckCircle2, X, Activity, TrendingUp } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface NFT {
   id: string;
@@ -36,12 +38,29 @@ interface Offer {
   created_at: string;
 }
 
+interface ActivityItem {
+  id: string;
+  activity_type: string;
+  from_address: string | null;
+  to_address: string | null;
+  price: string | null;
+  created_at: string;
+  transaction_hash: string | null;
+}
+
+interface PricePoint {
+  date: string;
+  price: number;
+}
+
 const NFTDetail = () => {
   const { tokenId } = useParams();
   const navigate = useNavigate();
   const [nft, setNft] = useState<NFT | null>(null);
   const [listing, setListing] = useState<Listing | null>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [priceHistory, setPriceHistory] = useState<PricePoint[]>([]);
   const [account, setAccount] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -61,6 +80,7 @@ const NFTDetail = () => {
         fetchNFTDetails(parseInt(tokenId)),
         fetchListing(parseInt(tokenId)),
         fetchOffers(parseInt(tokenId)),
+        fetchActivities(parseInt(tokenId)),
       ]);
     }
     
@@ -98,6 +118,30 @@ const NFTDetail = () => {
       .order('offer_price', { ascending: false });
 
     setOffers(data || []);
+  };
+
+  const fetchActivities = async (token_id: number) => {
+    const { data } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('token_id', token_id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    setActivities(data || []);
+
+    // Generate price history from sales and offers
+    const salesData = (data || [])
+      .filter((activity) => 
+        (activity.activity_type === 'sale' || activity.activity_type === 'offer_accepted') 
+        && activity.price
+      )
+      .map((activity) => ({
+        date: new Date(activity.created_at).toLocaleDateString(),
+        price: parseFloat(activity.price || '0'),
+      }));
+
+    setPriceHistory(salesData);
   };
 
   const handleBuy = async () => {
@@ -380,7 +424,7 @@ const NFTDetail = () => {
                 <CardContent className="p-6">
                   <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                     <Clock className="w-5 h-5" />
-                    Offers ({offers.length})
+                    Active Offers ({offers.length})
                   </h3>
                   <div className="space-y-3">
                     {offers.map((offer) => (
@@ -409,6 +453,132 @@ const NFTDetail = () => {
               </Card>
             )}
           </div>
+        </div>
+
+        {/* Tabs for History and Analytics */}
+        <div className="mt-8">
+          <Tabs defaultValue="activity" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="activity">
+                <Activity className="w-4 h-4 mr-2" />
+                Activity
+              </TabsTrigger>
+              <TabsTrigger value="analytics">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Price History
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="activity">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Activity History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {activities.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No activity yet</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {activities.map((activity) => (
+                        <div key={activity.id} className="flex items-start gap-4 p-4 rounded-lg bg-gradient-sakura-soft">
+                          <div className="flex-1">
+                            <div className="font-medium capitalize">
+                              {activity.activity_type.replace('_', ' ')}
+                            </div>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              {activity.from_address && (
+                                <span>From: {formatAddress(activity.from_address)}</span>
+                              )}
+                              {activity.to_address && (
+                                <>
+                                  {activity.from_address && ' → '}
+                                  <span>To: {formatAddress(activity.to_address)}</span>
+                                </>
+                              )}
+                            </div>
+                            {activity.price && (
+                              <div className="text-sm font-semibold mt-1">
+                                Price: {activity.price} NEX
+                              </div>
+                            )}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {new Date(activity.created_at).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="analytics">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Price History & Analytics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {priceHistory.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No sales data yet</p>
+                  ) : (
+                    <>
+                      <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={priceHistory}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                            <XAxis 
+                              dataKey="date" 
+                              className="text-xs"
+                              stroke="hsl(var(--muted-foreground))"
+                            />
+                            <YAxis 
+                              className="text-xs"
+                              stroke="hsl(var(--muted-foreground))"
+                              label={{ value: 'Price (NEX)', angle: -90, position: 'insideLeft' }}
+                            />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '0.5rem'
+                              }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="price" 
+                              stroke="hsl(var(--primary))" 
+                              strokeWidth={2}
+                              dot={{ fill: 'hsl(var(--primary))' }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4 mt-6">
+                        <div className="p-4 rounded-lg bg-gradient-sakura-soft text-center">
+                          <div className="text-sm text-muted-foreground">Total Sales</div>
+                          <div className="text-2xl font-bold mt-1">{priceHistory.length}</div>
+                        </div>
+                        <div className="p-4 rounded-lg bg-gradient-sakura-soft text-center">
+                          <div className="text-sm text-muted-foreground">Avg Price</div>
+                          <div className="text-2xl font-bold mt-1">
+                            {(priceHistory.reduce((sum, p) => sum + p.price, 0) / priceHistory.length).toFixed(2)} NEX
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-lg bg-gradient-sakura-soft text-center">
+                          <div className="text-sm text-muted-foreground">Last Sale</div>
+                          <div className="text-2xl font-bold mt-1">
+                            {priceHistory[0]?.price.toFixed(2)} NEX
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

@@ -27,8 +27,8 @@ export const OfferNotificationListener = ({ walletAddress }: OfferNotificationLi
         (payload: RealtimePostgresChangesPayload<any>) => {
           const notification = payload.new;
           
-          // Show toast notification for new offers
-          if (notification.notification_type === 'new_offer') {
+          // Show toast notification for new offers and transfers
+          if (notification.notification_type === 'new_offer' || notification.notification_type === 'transfer') {
             toast({
               title: notification.title,
               description: notification.message,
