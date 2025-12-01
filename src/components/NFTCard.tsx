@@ -15,6 +15,7 @@ interface NFTCardProps {
   isListed?: boolean;
   showListButton?: boolean;
   showTransferButton?: boolean;
+  isOwner?: boolean;
   nftId?: string;
   walletAddress?: string | null;
   onBuy?: () => void;
@@ -32,6 +33,7 @@ const NFTCard = ({
   isListed = false,
   showListButton = false,
   showTransferButton = false,
+  isOwner = false,
   nftId,
   walletAddress,
   onBuy,
@@ -91,44 +93,60 @@ const NFTCard = ({
       </CardContent>
 
       <CardFooter className="p-4 pt-0 gap-2">
-        {!isListed && !showListButton && !showTransferButton ? (
-          <Button 
-            onClick={() => navigate(`/nft/${tokenId}`)}
-            className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            View Details
-          </Button>
-        ) : (
+        {isOwner ? (
           <>
-            {showListButton && onList && (
+            {/* Owner view: Show List/Transfer when not listed, View Details when listed */}
+            {isListed ? (
               <Button 
-                onClick={onList}
+                onClick={() => navigate(`/nft/${tokenId}`)}
                 className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
               >
-                <Tag className="w-4 h-4 mr-2" />
-                List for Sale
+                <Eye className="w-4 h-4 mr-2" />
+                View Details
               </Button>
+            ) : (
+              <>
+                {showListButton && onList && (
+                  <Button 
+                    onClick={onList}
+                    className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
+                  >
+                    <Tag className="w-4 h-4 mr-2" />
+                    List for Sale
+                  </Button>
+                )}
+                
+                {showTransferButton && onTransfer && (
+                  <Button 
+                    onClick={onTransfer}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Gift className="w-4 h-4 mr-2" />
+                    Transfer
+                  </Button>
+                )}
+              </>
             )}
-            
-            {showTransferButton && onTransfer && (
-              <Button 
-                onClick={onTransfer}
-                variant="outline"
-                className="flex-1"
-              >
-                <Gift className="w-4 h-4 mr-2" />
-                Transfer
-              </Button>
-            )}
-            
-            {isListed && onBuy && (
+          </>
+        ) : (
+          <>
+            {/* Non-owner view: Show Buy if listed, View Details otherwise */}
+            {isListed && onBuy ? (
               <Button 
                 onClick={onBuy}
                 className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Buy
+              </Button>
+            ) : (
+              <Button 
+                onClick={() => navigate(`/nft/${tokenId}`)}
+                className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                View Details
               </Button>
             )}
           </>
