@@ -8,9 +8,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
-import { acceptOffer, cancelOffer } from '@/lib/web3/nft';
+import { acceptOffer, cancelOffer, listNFT, transferNFT } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Copy, CheckCircle2, Package, Tag, Gift, TrendingUp, DollarSign, Activity as ActivityIcon, Eye, Edit, Twitter, Instagram, Globe, MessageCircle, Calendar } from 'lucide-react';
 
@@ -83,6 +86,14 @@ const Profile = () => {
   const [sentOffers, setSentOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  
+  // Dialog states
+  const [listDialogOpen, setListDialogOpen] = useState(false);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [selectedNFT, setSelectedNFT] = useState<NFTWithListing | null>(null);
+  const [listPrice, setListPrice] = useState('');
+  const [transferAddress, setTransferAddress] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Stats
   const [stats, setStats] = useState({
@@ -339,6 +350,64 @@ const Profile = () => {
     }
   };
 
+  const handleListNFT = (nft: NFTWithListing) => {
+    setSelectedNFT(nft);
+    setListDialogOpen(true);
+  };
+
+  const handleTransferNFT = (nft: NFTWithListing) => {
+    setSelectedNFT(nft);
+    setTransferDialogOpen(true);
+  };
+
+  const confirmListNFT = async () => {
+    if (!selectedNFT || !account || !listPrice) return;
+
+    setIsProcessing(true);
+    const result = await listNFT(selectedNFT.token_id, listPrice, account);
+    
+    if (result.success) {
+      toast({
+        title: 'Success!',
+        description: 'NFT listed successfully',
+      });
+      setListDialogOpen(false);
+      setListPrice('');
+      checkAndFetchData();
+    } else {
+      toast({
+        title: 'Failed',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
+    setIsProcessing(false);
+  };
+
+  const confirmTransferNFT = async () => {
+    if (!selectedNFT || !account || !transferAddress) return;
+
+    setIsProcessing(true);
+    const result = await transferNFT(selectedNFT.token_id, account, transferAddress);
+    
+    if (result.success) {
+      toast({
+        title: 'Success!',
+        description: 'NFT transferred successfully',
+      });
+      setTransferDialogOpen(false);
+      setTransferAddress('');
+      checkAndFetchData();
+    } else {
+      toast({
+        title: 'Failed',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
+    setIsProcessing(false);
+  };
+
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -592,6 +661,14 @@ const Profile = () => {
                     name={nft.name}
                     imageUrl={nft.image_url}
                     owner={nft.owner_address}
+                    price={nft.listing?.price}
+                    isListed={!!nft.listing?.active}
+                    showListButton={!nft.listing?.active}
+                    showTransferButton={!nft.listing?.active}
+                    nftId={nft.id}
+                    walletAddress={account}
+                    onList={() => handleListNFT(nft)}
+                    onTransfer={() => handleTransferNFT(nft)}
                   />
                 ))}
               </div>
@@ -775,6 +852,82 @@ const Profile = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* List NFT Dialog */}
+      <Dialog open={listDialogOpen} onOpenChange={setListDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>List NFT for Sale</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="price">Price (NEX)</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                placeholder="Enter price"
+                value={listPrice}
+                onChange={(e) => setListPrice(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setListDialogOpen(false)}
+              disabled={isProcessing}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmListNFT}
+              disabled={!listPrice || isProcessing}
+              className="bg-gradient-sakura hover:shadow-sakura"
+            >
+              {isProcessing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              List NFT
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer NFT Dialog */}
+      <Dialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transfer NFT</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="address">Recipient Address</Label>
+              <Input
+                id="address"
+                placeholder="0x..."
+                value={transferAddress}
+                onChange={(e) => setTransferAddress(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setTransferDialogOpen(false)}
+              disabled={isProcessing}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmTransferNFT}
+              disabled={!transferAddress || isProcessing}
+              className="bg-gradient-sakura hover:shadow-sakura"
+            >
+              {isProcessing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Transfer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

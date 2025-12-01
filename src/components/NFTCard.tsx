@@ -1,6 +1,6 @@
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Button } from './ui/button';
-import { ShoppingCart, Tag, Eye } from 'lucide-react';
+import { ShoppingCart, Tag, Eye, Gift } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatAddress } from '@/lib/web3/wallet';
@@ -14,10 +14,12 @@ interface NFTCardProps {
   owner: string;
   isListed?: boolean;
   showListButton?: boolean;
+  showTransferButton?: boolean;
   nftId?: string;
   walletAddress?: string | null;
   onBuy?: () => void;
   onList?: () => void;
+  onTransfer?: () => void;
   onMakeOffer?: () => void;
 }
 
@@ -29,10 +31,12 @@ const NFTCard = ({
   owner, 
   isListed = false,
   showListButton = false,
+  showTransferButton = false,
   nftId,
   walletAddress,
   onBuy,
   onList,
+  onTransfer,
   onMakeOffer 
 }: NFTCardProps) => {
   const [imageError, setImageError] = useState(false);
@@ -87,33 +91,47 @@ const NFTCard = ({
       </CardContent>
 
       <CardFooter className="p-4 pt-0 gap-2">
-        <Button 
-          onClick={() => navigate(`/nft/${tokenId}`)}
-          variant="outline"
-          className="flex-1"
-        >
-          <Eye className="w-4 h-4 mr-2" />
-          View
-        </Button>
-        
-        {isListed && onBuy && (
+        {!isListed && !showListButton && !showTransferButton ? (
           <Button 
-            onClick={onBuy}
+            onClick={() => navigate(`/nft/${tokenId}`)}
             className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
           >
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Buy
+            <Eye className="w-4 h-4 mr-2" />
+            View Details
           </Button>
-        )}
-        
-        {showListButton && onList && (
-          <Button 
-            onClick={onList}
-            className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
-          >
-            <Tag className="w-4 h-4 mr-2" />
-            List
-          </Button>
+        ) : (
+          <>
+            {showListButton && onList && (
+              <Button 
+                onClick={onList}
+                className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
+              >
+                <Tag className="w-4 h-4 mr-2" />
+                List for Sale
+              </Button>
+            )}
+            
+            {showTransferButton && onTransfer && (
+              <Button 
+                onClick={onTransfer}
+                variant="outline"
+                className="flex-1"
+              >
+                <Gift className="w-4 h-4 mr-2" />
+                Transfer
+              </Button>
+            )}
+            
+            {isListed && onBuy && (
+              <Button 
+                onClick={onBuy}
+                className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Buy
+              </Button>
+            )}
+          </>
         )}
       </CardFooter>
     </Card>
