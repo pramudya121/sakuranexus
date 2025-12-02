@@ -131,15 +131,25 @@ const NFTCard = ({
           </>
         ) : (
           <>
-            {/* Non-owner view: Show Buy if listed, View Details otherwise */}
+            {/* Non-owner view: Show Buy and View Details when listed */}
             {isListed && onBuy ? (
-              <Button 
-                onClick={onBuy}
-                className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Buy
-              </Button>
+              <>
+                <Button 
+                  onClick={onBuy}
+                  className="flex-1 bg-gradient-sakura hover:shadow-sakura font-semibold"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Buy
+                </Button>
+                <Button 
+                  onClick={() => navigate(`/nft/${tokenId}`)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Details
+                </Button>
+              </>
             ) : (
               <Button 
                 onClick={() => navigate(`/nft/${tokenId}`)}
