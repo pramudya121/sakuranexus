@@ -16,6 +16,9 @@ import Leaderboard from "./pages/Leaderboard";
 import Analytics from "./pages/Analytics";
 import Collections from "./pages/Collections";
 import NotFound from "./pages/NotFound";
+import Swap from "./pages/dex/Swap";
+import Liquidity from "./pages/dex/Liquidity";
+import Pools from "./pages/dex/Pools";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +40,9 @@ const App = () => (
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/edit" element={<EditProfile />} />
+            <Route path="/dex/swap" element={<Swap />} />
+            <Route path="/dex/liquidity" element={<Liquidity />} />
+            <Route path="/dex/pools" element={<Pools />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
