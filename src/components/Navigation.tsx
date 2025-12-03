@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Store, Palette, Activity, User, Trophy, BarChart3 } from 'lucide-react';
+import { Home, Store, Palette, Activity, User, Trophy, BarChart3, ArrowLeftRight } from 'lucide-react';
 import ConnectWallet from './ConnectWallet';
 import NotificationBell from './NotificationBell';
 import { ThemeToggle } from './ThemeToggle';
@@ -12,6 +12,7 @@ const Navigation = () => {
     { path: '/', label: 'Home', icon: Home },
     { path: '/marketplace', label: 'Marketplace', icon: Store },
     { path: '/collections', label: 'Collections', icon: Store },
+    { path: '/dex/swap', label: 'DEX', icon: ArrowLeftRight },
     { path: '/mint', label: 'Mint NFT', icon: Palette },
     { path: '/activity', label: 'Activity', icon: Activity },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
