@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import PoolCard from '@/components/dex/PoolCard';
+import DEXNavigation from '@/components/dex/DEXNavigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -129,6 +130,9 @@ const Pools = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
+        {/* DEX Navigation */}
+        <DEXNavigation />
+        
         {/* Hero Section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
