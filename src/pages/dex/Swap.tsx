@@ -1,6 +1,7 @@
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import SwapBox from '@/components/dex/SwapBox';
+import DEXNavigation from '@/components/dex/DEXNavigation';
 import { ArrowLeftRight, TrendingUp, Shield, Zap } from 'lucide-react';
 
 const Swap = () => {
@@ -10,6 +11,9 @@ const Swap = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
+        {/* DEX Navigation */}
+        <DEXNavigation />
+        
         {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
