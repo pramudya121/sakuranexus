@@ -145,9 +145,18 @@ const SwapBox = () => {
           <div className="bg-secondary/30 rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">You Pay</span>
-              <span className="text-sm text-muted-foreground">
-                Balance: {parseFloat(balanceIn).toFixed(4)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Balance: {parseFloat(balanceIn).toFixed(4)}
+                </span>
+                <Button
+                  variant="link"
+                  className="text-xs text-primary p-0 h-auto"
+                  onClick={() => setAmountIn(balanceIn)}
+                >
+                  MAX
+                </Button>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Input
@@ -169,13 +178,6 @@ const SwapBox = () => {
                 <ChevronDown className="w-4 h-4" />
               </Button>
             </div>
-            <Button
-              variant="link"
-              className="text-xs text-primary p-0 h-auto mt-1"
-              onClick={() => setAmountIn(balanceIn)}
-            >
-              MAX
-            </Button>
           </div>
 
           {/* Switch Button */}

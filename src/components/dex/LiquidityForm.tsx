@@ -162,9 +162,18 @@ const LiquidityForm = () => {
             <div className="bg-secondary/30 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">Token A</span>
-                <span className="text-sm text-muted-foreground">
-                  Balance: {parseFloat(balanceA).toFixed(4)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Balance: {parseFloat(balanceA).toFixed(4)}
+                  </span>
+                  <Button
+                    variant="link"
+                    className="text-xs text-primary p-0 h-auto"
+                    onClick={() => setAmountA(balanceA)}
+                  >
+                    MAX
+                  </Button>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <Input
@@ -198,9 +207,18 @@ const LiquidityForm = () => {
             <div className="bg-secondary/30 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">Token B</span>
-                <span className="text-sm text-muted-foreground">
-                  Balance: {parseFloat(balanceB).toFixed(4)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Balance: {parseFloat(balanceB).toFixed(4)}
+                  </span>
+                  <Button
+                    variant="link"
+                    className="text-xs text-primary p-0 h-auto"
+                    onClick={() => setAmountB(balanceB)}
+                  >
+                    MAX
+                  </Button>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <Input
@@ -260,9 +278,18 @@ const LiquidityForm = () => {
             <div className="bg-secondary/30 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">LP Tokens to Remove</span>
-                <span className="text-sm text-muted-foreground">
-                  Balance: {parseFloat(lpBalance).toFixed(6)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Balance: {parseFloat(lpBalance).toFixed(6)}
+                  </span>
+                  <Button
+                    variant="link"
+                    className="text-xs text-primary p-0 h-auto"
+                    onClick={() => setLpAmount(lpBalance)}
+                  >
+                    MAX
+                  </Button>
+                </div>
               </div>
               <Input
                 type="number"
