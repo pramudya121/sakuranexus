@@ -30,6 +30,9 @@ const LiquidityForm = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [poolShare, setPoolShare] = useState(0);
   const [pairAddress, setPairAddress] = useState<string | null>(null);
+  const [reserves, setReserves] = useState<{ reserve0: bigint; reserve1: bigint } | null>(null);
+  const [poolRatio, setPoolRatio] = useState<string | null>(null);
+  const [isNewPool, setIsNewPool] = useState(false);
 
   useEffect(() => {
     loadAccount();
@@ -41,6 +44,15 @@ const LiquidityForm = () => {
       loadPairInfo();
     }
   }, [account, tokenA, tokenB]);
+
+  // Auto-calculate Token B when Token A changes
+  useEffect(() => {
+    if (amountA && parseFloat(amountA) > 0 && reserves && !isNewPool) {
+      calculateAmountB(amountA);
+    } else if (!amountA || parseFloat(amountA) === 0) {
+      setAmountB('');
+    }
+  }, [amountA, reserves, isNewPool]);
 
   const loadAccount = async () => {
     const acc = await getCurrentAccount();
@@ -62,11 +74,82 @@ const LiquidityForm = () => {
     const pair = await getPairAddress(tokenA.address, tokenB.address);
     setPairAddress(pair);
     
-    if (pair) {
+    if (pair && pair !== '0x0000000000000000000000000000000000000000') {
       const lpBal = await getLPBalance(pair, account);
       setLpBalance(lpBal);
+      
+      // Load reserves for ratio calculation
+      const reservesData = await getReserves(pair);
+      if (reservesData && reservesData.reserve0 > 0n && reservesData.reserve1 > 0n) {
+        setReserves(reservesData);
+        setIsNewPool(false);
+        
+        // Calculate pool ratio (Token B per Token A)
+        const ratio = Number(reservesData.reserve1) / Number(reservesData.reserve0);
+        setPoolRatio(ratio.toFixed(6));
+      } else {
+        setReserves(null);
+        setIsNewPool(true);
+        setPoolRatio(null);
+      }
     } else {
       setLpBalance('0');
+      setReserves(null);
+      setIsNewPool(true);
+      setPoolRatio(null);
+    }
+  };
+
+  const calculateAmountB = (inputA: string) => {
+    if (!reserves || !inputA || parseFloat(inputA) === 0) {
+      setAmountB('');
+      return;
+    }
+
+    try {
+      // Sort tokens to match reserve order
+      const tokenALower = tokenA.address.toLowerCase();
+      const tokenBLower = tokenB.address.toLowerCase();
+      const isTokenAFirst = tokenALower < tokenBLower;
+
+      const reserveA = isTokenAFirst ? reserves.reserve0 : reserves.reserve1;
+      const reserveB = isTokenAFirst ? reserves.reserve1 : reserves.reserve0;
+
+      // Calculate: amountB = (amountA * reserveB) / reserveA
+      const amountAWei = BigInt(Math.floor(parseFloat(inputA) * 1e18));
+      const amountBWei = (amountAWei * reserveB) / reserveA;
+      const calculatedB = Number(amountBWei) / 1e18;
+      
+      setAmountB(calculatedB.toFixed(6));
+    } catch (error) {
+      console.error('Error calculating amount B:', error);
+    }
+  };
+
+  const handleAmountAChange = (value: string) => {
+    setAmountA(value);
+  };
+
+  const handleAmountBChange = (value: string) => {
+    setAmountB(value);
+    // Reverse calculate Token A when user manually inputs Token B
+    if (reserves && !isNewPool && value && parseFloat(value) > 0) {
+      try {
+        const tokenALower = tokenA.address.toLowerCase();
+        const tokenBLower = tokenB.address.toLowerCase();
+        const isTokenAFirst = tokenALower < tokenBLower;
+
+        const reserveA = isTokenAFirst ? reserves.reserve0 : reserves.reserve1;
+        const reserveB = isTokenAFirst ? reserves.reserve1 : reserves.reserve0;
+
+        const amountBWei = BigInt(Math.floor(parseFloat(value) * 1e18));
+        const amountAWei = (amountBWei * reserveA) / reserveB;
+        const calculatedA = Number(amountAWei) / 1e18;
+        
+        setAmountA(calculatedA.toFixed(6));
+      } catch (error) {
+        console.error('Error calculating amount A:', error);
+      }
     }
   };
 
@@ -169,7 +252,7 @@ const LiquidityForm = () => {
                   <Button
                     variant="link"
                     className="text-xs text-primary p-0 h-auto"
-                    onClick={() => setAmountA(balanceA)}
+                    onClick={() => handleAmountAChange(balanceA)}
                   >
                     MAX
                   </Button>
@@ -180,7 +263,7 @@ const LiquidityForm = () => {
                   type="number"
                   placeholder="0.0"
                   value={amountA}
-                  onChange={(e) => setAmountA(e.target.value)}
+                  onChange={(e) => handleAmountAChange(e.target.value)}
                   className="border-0 bg-transparent text-xl font-semibold focus-visible:ring-0 p-0"
                 />
                 <Button
@@ -214,7 +297,7 @@ const LiquidityForm = () => {
                   <Button
                     variant="link"
                     className="text-xs text-primary p-0 h-auto"
-                    onClick={() => setAmountB(balanceB)}
+                    onClick={() => handleAmountBChange(balanceB)}
                   >
                     MAX
                   </Button>
@@ -225,7 +308,7 @@ const LiquidityForm = () => {
                   type="number"
                   placeholder="0.0"
                   value={amountB}
-                  onChange={(e) => setAmountB(e.target.value)}
+                  onChange={(e) => handleAmountBChange(e.target.value)}
                   className="border-0 bg-transparent text-xl font-semibold focus-visible:ring-0 p-0"
                 />
                 <Button
@@ -244,6 +327,16 @@ const LiquidityForm = () => {
 
             {/* Pool Info */}
             <div className="bg-secondary/20 rounded-lg p-3 space-y-2 text-sm">
+              {isNewPool ? (
+                <div className="flex items-center justify-center text-primary">
+                  <span>🆕 Creating New Pool</span>
+                </div>
+              ) : poolRatio && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Pool Ratio</span>
+                  <span>1 {tokenA.symbol} = {poolRatio} {tokenB.symbol}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Pool Share</span>
                 <span>{poolShare.toFixed(2)}%</span>
