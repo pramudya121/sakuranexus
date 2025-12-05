@@ -11,7 +11,7 @@ export const DEX_CONTRACTS = {
 };
 
 // Import NEX logo
-import nexLogo from '@/assets/nex-logo.jpg';
+import nexCoinLogo from '@/assets/nex-coin-logo.jpg';
 
 // Token list for DEX
 export interface Token {
@@ -28,28 +28,28 @@ export const DEFAULT_TOKENS: Token[] = [
     symbol: 'NEX',
     name: 'Nexus',
     decimals: 18,
-    logoURI: nexLogo,
+    logoURI: nexCoinLogo,
   },
   {
     address: DEX_CONTRACTS.WNEX,
     symbol: 'WNEX',
     name: 'Wrapped NEX',
     decimals: 18,
-    logoURI: nexLogo,
+    logoURI: nexCoinLogo,
   },
   {
     address: DEX_CONTRACTS.NXSA,
     symbol: 'NXSA',
     name: 'NEXUSAKURA Token',
     decimals: 18,
-    logoURI: '/placeholder.svg',
+    logoURI: nexCoinLogo,
   },
   {
     address: DEX_CONTRACTS.WETH9,
     symbol: 'WETH',
     name: 'Wrapped ETH',
     decimals: 18,
-    logoURI: '/placeholder.svg',
+    logoURI: nexCoinLogo,
   },
 ];
 

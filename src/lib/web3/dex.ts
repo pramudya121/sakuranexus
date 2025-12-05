@@ -47,25 +47,60 @@ export const isNativeToken = (address: string) => {
   return address === '0x0000000000000000000000000000000000000000';
 };
 
-// Get token balance
-export const getTokenBalance = async (tokenAddress: string, account: string): Promise<string> => {
-  try {
-    const provider = getProvider();
-    if (!provider) return '0';
+// Simple cache for balances to reduce RPC calls
+const balanceCache: Map<string, { balance: string; timestamp: number }> = new Map();
+const CACHE_DURATION = 10000; // 10 seconds
 
-    if (isNativeToken(tokenAddress)) {
-      const balance = await provider.getBalance(account);
-      return ethers.formatEther(balance);
-    }
-
-    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-    const balance = await tokenContract.balanceOf(account);
-    const decimals = await tokenContract.decimals();
-    return ethers.formatUnits(balance, decimals);
-  } catch (error) {
-    console.error('Error getting token balance:', error);
-    return '0';
+// Get token balance with caching and retry
+export const getTokenBalance = async (tokenAddress: string, account: string, forceRefresh = false): Promise<string> => {
+  const cacheKey = `${tokenAddress}-${account}`;
+  const cached = balanceCache.get(cacheKey);
+  
+  // Return cached value if valid and not forcing refresh
+  if (!forceRefresh && cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.balance;
   }
+
+  const maxRetries = 3;
+  let lastError: any;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const provider = getProvider();
+      if (!provider) return '0';
+
+      let balance: string;
+
+      if (isNativeToken(tokenAddress)) {
+        const rawBalance = await provider.getBalance(account);
+        balance = ethers.formatEther(rawBalance);
+      } else {
+        const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+        const [rawBalance, decimals] = await Promise.all([
+          tokenContract.balanceOf(account),
+          tokenContract.decimals()
+        ]);
+        balance = ethers.formatUnits(rawBalance, decimals);
+      }
+
+      // Cache the result
+      balanceCache.set(cacheKey, { balance, timestamp: Date.now() });
+      return balance;
+    } catch (error: any) {
+      lastError = error;
+      // If rate limited, wait before retry
+      if (error?.error?.code === -32002 || error?.code === 'UNKNOWN_ERROR') {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        continue;
+      }
+      break;
+    }
+  }
+
+  console.error('Error getting token balance after retries:', lastError);
+  // Return cached value if available, even if expired
+  if (cached) return cached.balance;
+  return '0';
 };
 
 // Get pair address
