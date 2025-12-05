@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowDown, Settings, Loader2, ChevronDown } from 'lucide-react';
+import { ArrowDown, Settings, Loader2, ChevronDown, RefreshCw } from 'lucide-react';
 import { Token, DEFAULT_TOKENS } from '@/lib/web3/dex-config';
 import { getAmountOut, swapTokens, getTokenBalance, calculatePriceImpact, getPairAddress, getReserves } from '@/lib/web3/dex';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
 import { useToast } from '@/hooks/use-toast';
+
+const REFRESH_INTERVAL = 30000; // 30 seconds
 
 const SwapBox = () => {
   const { toast } = useToast();
@@ -22,10 +24,12 @@ const SwapBox = () => {
   const [slippage, setSlippage] = useState(0.5);
   const [isLoading, setIsLoading] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [account, setAccount] = useState<string | null>(null);
   const [showTokenSelectorIn, setShowTokenSelectorIn] = useState(false);
   const [showTokenSelectorOut, setShowTokenSelectorOut] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
     loadAccount();
@@ -35,6 +39,17 @@ const SwapBox = () => {
     if (account) {
       loadBalances();
     }
+  }, [account, tokenIn, tokenOut]);
+
+  // Auto-refresh balance every 30 seconds
+  useEffect(() => {
+    if (!account) return;
+
+    const interval = setInterval(() => {
+      loadBalances(true);
+    }, REFRESH_INTERVAL);
+
+    return () => clearInterval(interval);
   }, [account, tokenIn, tokenOut]);
 
   useEffect(() => {
@@ -51,14 +66,27 @@ const SwapBox = () => {
     setAccount(acc);
   };
 
-  const loadBalances = async () => {
+  const loadBalances = useCallback(async (silent = false) => {
     if (!account) return;
-    const [balIn, balOut] = await Promise.all([
-      getTokenBalance(tokenIn.address, account),
-      getTokenBalance(tokenOut.address, account),
-    ]);
-    setBalanceIn(balIn);
-    setBalanceOut(balOut);
+    if (!silent) setIsRefreshing(true);
+    
+    try {
+      const [balIn, balOut] = await Promise.all([
+        getTokenBalance(tokenIn.address, account, true),
+        getTokenBalance(tokenOut.address, account, true),
+      ]);
+      setBalanceIn(balIn);
+      setBalanceOut(balOut);
+      setLastRefresh(new Date());
+    } catch (error) {
+      console.error('Error loading balances:', error);
+    }
+    
+    if (!silent) setIsRefreshing(false);
+  }, [account, tokenIn, tokenOut]);
+
+  const handleManualRefresh = () => {
+    loadBalances();
   };
 
   const calculateAmountOut = async () => {
@@ -135,9 +163,20 @@ const SwapBox = () => {
       <Card className="w-full max-w-md mx-auto glass border-border/50 overflow-hidden">
         <div className="p-4 border-b border-border/50 flex items-center justify-between">
           <h3 className="text-lg font-bold">Swap</h3>
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-            <Settings className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              title={`Last refresh: ${lastRefresh.toLocaleTimeString()}`}
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
+              <Settings className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         <div className="p-4 space-y-2">

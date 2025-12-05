@@ -10,8 +10,9 @@ export const DEX_CONTRACTS = {
   WNEX: '0x0c7DB8baE8f4B7C298372A78bfC10D8bb18BC42D',
 };
 
-// Import NEX logo
+// Import token logos
 import nexCoinLogo from '@/assets/nex-coin-logo.jpg';
+import nxsaTokenLogo from '@/assets/nxsa-token-logo.png';
 
 // Token list for DEX
 export interface Token {
@@ -42,7 +43,7 @@ export const DEFAULT_TOKENS: Token[] = [
     symbol: 'NXSA',
     name: 'NEXUSAKURA Token',
     decimals: 18,
-    logoURI: nexCoinLogo,
+    logoURI: nxsaTokenLogo,
   },
   {
     address: DEX_CONTRACTS.WETH9,
