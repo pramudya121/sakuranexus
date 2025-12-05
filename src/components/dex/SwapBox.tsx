@@ -171,9 +171,13 @@ const SwapBox = () => {
                 onClick={() => setShowTokenSelectorIn(true)}
                 className="flex items-center gap-2 min-w-[120px]"
               >
-                <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
-                  {tokenIn.symbol.charAt(0)}
-                </div>
+                {tokenIn.logoURI ? (
+                  <img src={tokenIn.logoURI} alt={tokenIn.symbol} className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
+                    {tokenIn.symbol.charAt(0)}
+                  </div>
+                )}
                 {tokenIn.symbol}
                 <ChevronDown className="w-4 h-4" />
               </Button>
@@ -213,9 +217,13 @@ const SwapBox = () => {
                 onClick={() => setShowTokenSelectorOut(true)}
                 className="flex items-center gap-2 min-w-[120px]"
               >
-                <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
-                  {tokenOut.symbol.charAt(0)}
-                </div>
+                {tokenOut.logoURI ? (
+                  <img src={tokenOut.logoURI} alt={tokenOut.symbol} className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
+                    {tokenOut.symbol.charAt(0)}
+                  </div>
+                )}
                 {tokenOut.symbol}
                 <ChevronDown className="w-4 h-4" />
               </Button>

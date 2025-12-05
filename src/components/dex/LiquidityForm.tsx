@@ -271,9 +271,13 @@ const LiquidityForm = () => {
                   onClick={() => setShowTokenSelectorA(true)}
                   className="flex items-center gap-2 min-w-[120px]"
                 >
-                  <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
-                    {tokenA.symbol.charAt(0)}
-                  </div>
+                  {tokenA.logoURI ? (
+                    <img src={tokenA.logoURI} alt={tokenA.symbol} className="w-6 h-6 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
+                      {tokenA.symbol.charAt(0)}
+                    </div>
+                  )}
                   {tokenA.symbol}
                   <ChevronDown className="w-4 h-4" />
                 </Button>
@@ -316,9 +320,13 @@ const LiquidityForm = () => {
                   onClick={() => setShowTokenSelectorB(true)}
                   className="flex items-center gap-2 min-w-[120px]"
                 >
-                  <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
-                    {tokenB.symbol.charAt(0)}
-                  </div>
+                  {tokenB.logoURI ? (
+                    <img src={tokenB.logoURI} alt={tokenB.symbol} className="w-6 h-6 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
+                      {tokenB.symbol.charAt(0)}
+                    </div>
+                  )}
                   {tokenB.symbol}
                   <ChevronDown className="w-4 h-4" />
                 </Button>
