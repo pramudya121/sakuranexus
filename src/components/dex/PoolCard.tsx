@@ -4,13 +4,37 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { PoolInfo } from '@/lib/web3/dex';
 import { TrendingUp, Droplets, BarChart3 } from 'lucide-react';
+import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface PoolCardProps {
   pool: PoolInfo;
 }
 
+// Generate mock price history data for chart
+const generateMockPriceHistory = (basePrice: number) => {
+  const data = [];
+  let price = basePrice;
+  for (let i = 0; i < 24; i++) {
+    price = price * (0.98 + Math.random() * 0.04);
+    data.push({
+      time: i,
+      price: price,
+    });
+  }
+  return data;
+};
+
 const PoolCard = ({ pool }: PoolCardProps) => {
   const navigate = useNavigate();
+  
+  // Generate mock price history based on pool ratio
+  const basePrice = pool.reserve1 && pool.reserve0 ? 
+    parseFloat(pool.reserve1) / parseFloat(pool.reserve0) : 1;
+  const priceHistory = generateMockPriceHistory(basePrice);
+  
+  // Calculate 24h price change (mock)
+  const priceChange = ((priceHistory[23].price - priceHistory[0].price) / priceHistory[0].price) * 100;
+  const isPositive = priceChange >= 0;
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
@@ -23,12 +47,28 @@ const PoolCard = ({ pool }: PoolCardProps) => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="flex -space-x-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center text-white font-bold z-10 border-2 border-background">
-              {pool.token0.symbol.charAt(0)}
-            </div>
-            <div className="w-10 h-10 rounded-full bg-primary/80 flex items-center justify-center text-white font-bold border-2 border-background">
-              {pool.token1.symbol.charAt(0)}
-            </div>
+            {pool.token0.logoURI ? (
+              <img 
+                src={pool.token0.logoURI} 
+                alt={pool.token0.symbol}
+                className="w-10 h-10 rounded-full object-cover z-10 border-2 border-background"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center text-white font-bold z-10 border-2 border-background">
+                {pool.token0.symbol.charAt(0)}
+              </div>
+            )}
+            {pool.token1.logoURI ? (
+              <img 
+                src={pool.token1.logoURI} 
+                alt={pool.token1.symbol}
+                className="w-10 h-10 rounded-full object-cover border-2 border-background"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-primary/80 flex items-center justify-center text-white font-bold border-2 border-background">
+                {pool.token1.symbol.charAt(0)}
+              </div>
+            )}
           </div>
           <div>
             <h3 className="font-bold text-lg">
@@ -43,6 +83,38 @@ const PoolCard = ({ pool }: PoolCardProps) => {
           <TrendingUp className="w-3 h-3 mr-1" />
           {pool.apr.toFixed(1)}% APR
         </Badge>
+      </div>
+
+      {/* Mini Price Chart */}
+      <div className="h-16 mb-4">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={priceHistory}>
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'hsl(var(--background))', 
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px',
+                fontSize: '12px'
+              }}
+              formatter={(value: number) => [`$${value.toFixed(4)}`, 'Price']}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="price" 
+              stroke={isPositive ? '#22c55e' : '#ef4444'} 
+              strokeWidth={2}
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Price Change */}
+      <div className="flex items-center justify-between mb-4 text-sm">
+        <span className="text-muted-foreground">24h Change</span>
+        <span className={isPositive ? 'text-green-500' : 'text-red-500'}>
+          {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
+        </span>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-4">

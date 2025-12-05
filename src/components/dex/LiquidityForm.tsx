@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Minus, Loader2, ChevronDown, Settings } from 'lucide-react';
+import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins } from 'lucide-react';
 import { Token, DEFAULT_TOKENS } from '@/lib/web3/dex-config';
 import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves } from '@/lib/web3/dex';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
 import { useToast } from '@/hooks/use-toast';
+
+const REFRESH_INTERVAL = 30000; // 30 seconds
 
 const LiquidityForm = () => {
   const { toast } = useToast();
@@ -24,15 +26,19 @@ const LiquidityForm = () => {
   const [lpBalance, setLpBalance] = useState('0');
   const [slippage, setSlippage] = useState(0.5);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [account, setAccount] = useState<string | null>(null);
   const [showTokenSelectorA, setShowTokenSelectorA] = useState(false);
   const [showTokenSelectorB, setShowTokenSelectorB] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [poolShare, setPoolShare] = useState(0);
   const [pairAddress, setPairAddress] = useState<string | null>(null);
-  const [reserves, setReserves] = useState<{ reserve0: bigint; reserve1: bigint } | null>(null);
+  const [reserves, setReserves] = useState<{ reserve0: bigint; reserve1: bigint; token0: string; token1: string } | null>(null);
   const [poolRatio, setPoolRatio] = useState<string | null>(null);
   const [isNewPool, setIsNewPool] = useState(false);
+  const [estimatedLPTokens, setEstimatedLPTokens] = useState<string>('0');
+  const [totalSupply, setTotalSupply] = useState<string>('0');
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
     loadAccount();
@@ -45,28 +51,60 @@ const LiquidityForm = () => {
     }
   }, [account, tokenA, tokenB]);
 
+  // Auto-refresh balance every 30 seconds
+  useEffect(() => {
+    if (!account) return;
+
+    const interval = setInterval(() => {
+      loadBalances(true);
+      loadPairInfo();
+    }, REFRESH_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [account, tokenA, tokenB]);
+
   // Auto-calculate Token B when Token A changes
   useEffect(() => {
     if (amountA && parseFloat(amountA) > 0 && reserves && !isNewPool) {
       calculateAmountB(amountA);
     } else if (!amountA || parseFloat(amountA) === 0) {
       setAmountB('');
+      setEstimatedLPTokens('0');
     }
   }, [amountA, reserves, isNewPool]);
+
+  // Calculate estimated LP tokens
+  useEffect(() => {
+    calculateEstimatedLP();
+  }, [amountA, amountB, reserves, totalSupply, isNewPool]);
 
   const loadAccount = async () => {
     const acc = await getCurrentAccount();
     setAccount(acc);
   };
 
-  const loadBalances = async () => {
+  const loadBalances = useCallback(async (silent = false) => {
     if (!account) return;
-    const [balA, balB] = await Promise.all([
-      getTokenBalance(tokenA.address, account),
-      getTokenBalance(tokenB.address, account),
-    ]);
-    setBalanceA(balA);
-    setBalanceB(balB);
+    if (!silent) setIsRefreshing(true);
+    
+    try {
+      const [balA, balB] = await Promise.all([
+        getTokenBalance(tokenA.address, account, true),
+        getTokenBalance(tokenB.address, account, true),
+      ]);
+      setBalanceA(balA);
+      setBalanceB(balB);
+      setLastRefresh(new Date());
+    } catch (error) {
+      console.error('Error loading balances:', error);
+    }
+    
+    if (!silent) setIsRefreshing(false);
+  }, [account, tokenA, tokenB]);
+
+  const handleManualRefresh = () => {
+    loadBalances();
+    loadPairInfo();
   };
 
   const loadPairInfo = async () => {
@@ -84,6 +122,21 @@ const LiquidityForm = () => {
         setReserves(reservesData);
         setIsNewPool(false);
         
+        // Get total supply for LP calculation
+        try {
+          const { ethers } = await import('ethers');
+          const { getProvider } = await import('@/lib/web3/wallet');
+          const { UNISWAP_V2_PAIR_ABI } = await import('@/lib/web3/dex-config');
+          const provider = getProvider();
+          if (provider) {
+            const pairContract = new ethers.Contract(pair, UNISWAP_V2_PAIR_ABI, provider);
+            const supply = await pairContract.totalSupply();
+            setTotalSupply(ethers.formatEther(supply));
+          }
+        } catch (error) {
+          console.error('Error getting total supply:', error);
+        }
+        
         // Calculate pool ratio (Token B per Token A)
         const ratio = Number(reservesData.reserve1) / Number(reservesData.reserve0);
         setPoolRatio(ratio.toFixed(6));
@@ -91,12 +144,14 @@ const LiquidityForm = () => {
         setReserves(null);
         setIsNewPool(true);
         setPoolRatio(null);
+        setTotalSupply('0');
       }
     } else {
       setLpBalance('0');
       setReserves(null);
       setIsNewPool(true);
       setPoolRatio(null);
+      setTotalSupply('0');
     }
   };
 
@@ -123,6 +178,50 @@ const LiquidityForm = () => {
       setAmountB(calculatedB.toFixed(6));
     } catch (error) {
       console.error('Error calculating amount B:', error);
+    }
+  };
+
+  const calculateEstimatedLP = () => {
+    if (!amountA || !amountB || parseFloat(amountA) === 0 || parseFloat(amountB) === 0) {
+      setEstimatedLPTokens('0');
+      setPoolShare(0);
+      return;
+    }
+
+    try {
+      const amountANum = parseFloat(amountA);
+      const amountBNum = parseFloat(amountB);
+
+      if (isNewPool) {
+        // For new pool: LP = sqrt(amountA * amountB) - MINIMUM_LIQUIDITY
+        const MINIMUM_LIQUIDITY = 1000 / 1e18; // 1000 wei
+        const lpTokens = Math.sqrt(amountANum * amountBNum) - MINIMUM_LIQUIDITY;
+        setEstimatedLPTokens(lpTokens > 0 ? lpTokens.toFixed(6) : '0');
+        setPoolShare(100); // 100% for new pool
+      } else if (reserves && totalSupply && parseFloat(totalSupply) > 0) {
+        // For existing pool: LP = min(amountA * totalSupply / reserveA, amountB * totalSupply / reserveB)
+        const tokenALower = tokenA.address.toLowerCase();
+        const tokenBLower = tokenB.address.toLowerCase();
+        const isTokenAFirst = tokenALower < tokenBLower;
+
+        const reserveA = Number(isTokenAFirst ? reserves.reserve0 : reserves.reserve1) / 1e18;
+        const reserveB = Number(isTokenAFirst ? reserves.reserve1 : reserves.reserve0) / 1e18;
+        const supply = parseFloat(totalSupply);
+
+        const lpFromA = (amountANum * supply) / reserveA;
+        const lpFromB = (amountBNum * supply) / reserveB;
+        const lpTokens = Math.min(lpFromA, lpFromB);
+
+        setEstimatedLPTokens(lpTokens.toFixed(6));
+        
+        // Calculate pool share
+        const newTotalSupply = supply + lpTokens;
+        const share = (lpTokens / newTotalSupply) * 100;
+        setPoolShare(share);
+      }
+    } catch (error) {
+      console.error('Error calculating LP tokens:', error);
+      setEstimatedLPTokens('0');
     }
   };
 
@@ -223,9 +322,20 @@ const LiquidityForm = () => {
       <Card className="w-full max-w-md mx-auto glass border-border/50 overflow-hidden">
         <div className="p-4 border-b border-border/50 flex items-center justify-between">
           <h3 className="text-lg font-bold">Liquidity</h3>
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-            <Settings className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              title={`Last refresh: ${lastRefresh.toLocaleTimeString()}`}
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
+              <Settings className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         <Tabs value={tab} onValueChange={setTab} className="w-full">
@@ -332,6 +442,20 @@ const LiquidityForm = () => {
                 </Button>
               </div>
             </div>
+
+            {/* LP Token Estimate */}
+            {(amountA && amountB && parseFloat(amountA) > 0 && parseFloat(amountB) > 0) && (
+              <div className="bg-primary/10 rounded-xl p-4 border border-primary/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Coins className="w-5 h-5 text-primary" />
+                  <span className="font-semibold text-primary">Estimated LP Tokens</span>
+                </div>
+                <p className="text-2xl font-bold">{estimatedLPTokens}</p>
+                <p className="text-sm text-muted-foreground">
+                  {tokenA.symbol}/{tokenB.symbol} LP Tokens
+                </p>
+              </div>
+            )}
 
             {/* Pool Info */}
             <div className="bg-secondary/20 rounded-lg p-3 space-y-2 text-sm">
