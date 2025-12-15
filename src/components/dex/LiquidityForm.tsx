@@ -435,7 +435,7 @@ const LiquidityForm = () => {
 
   return (
     <>
-      <Card className="w-full max-w-md mx-auto glass border-border/50 overflow-hidden">
+      <Card className="w-full max-w-md mx-auto glass border-border/50 overflow-hidden transition-all duration-500 hover:shadow-sakura">
         <div className="p-4 border-b border-border/50 flex items-center justify-between">
           <h3 className="text-lg font-bold">Liquidity</h3>
           <div className="flex items-center gap-2">
@@ -445,39 +445,51 @@ const LiquidityForm = () => {
               onClick={handleManualRefresh}
               disabled={isRefreshing}
               title={`Last refresh: ${lastRefresh.toLocaleTimeString()}`}
+              className="transition-transform duration-300 hover:scale-110"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 transition-transform duration-500 ${isRefreshing ? 'animate-spin' : 'hover:rotate-180'}`} />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setShowSettings(true)}
+              className="transition-transform duration-300 hover:scale-110 hover:rotate-45"
+            >
               <Settings className="w-5 h-5" />
             </Button>
           </div>
         </div>
 
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-2 bg-secondary/30 m-4 mb-0" style={{ width: 'calc(100% - 2rem)' }}>
-            <TabsTrigger value="add" className="data-[state=active]:bg-gradient-sakura">
-              <Plus className="w-4 h-4 mr-2" />
+          <TabsList className="w-full grid grid-cols-2 bg-secondary/30 m-4 mb-0 transition-all duration-300" style={{ width: 'calc(100% - 2rem)' }}>
+            <TabsTrigger 
+              value="add" 
+              className="data-[state=active]:bg-gradient-sakura transition-all duration-300 data-[state=active]:shadow-sakura"
+            >
+              <Plus className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
               Add
             </TabsTrigger>
-            <TabsTrigger value="remove" className="data-[state=active]:bg-gradient-sakura">
+            <TabsTrigger 
+              value="remove" 
+              className="data-[state=active]:bg-gradient-sakura transition-all duration-300 data-[state=active]:shadow-sakura"
+            >
               <Minus className="w-4 h-4 mr-2" />
               Remove
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="add" className="p-4 space-y-3">
+          <TabsContent value="add" className="p-4 space-y-3 animate-fade-in-up">
             {/* Token A */}
-            <div className="bg-secondary/30 rounded-xl p-4">
+            <div className="token-box bg-secondary/30 rounded-xl p-4 transition-all duration-300">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">Token A</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground number-transition">
                     Balance: {parseFloat(balanceA).toFixed(4)}
                   </span>
                   <Button
                     variant="link"
-                    className="text-xs text-primary p-0 h-auto"
+                    className="text-xs text-primary p-0 h-auto transition-all duration-200 hover:scale-110"
                     onClick={() => handleAmountAChange(balanceA)}
                   >
                     MAX
@@ -490,43 +502,45 @@ const LiquidityForm = () => {
                   placeholder="0.0"
                   value={amountA}
                   onChange={(e) => handleAmountAChange(e.target.value)}
-                  className="border-0 bg-transparent text-xl font-semibold focus-visible:ring-0 p-0"
+                  className="dex-input border-0 bg-transparent text-xl font-semibold focus-visible:ring-0 p-0"
                 />
                 <Button
                   variant="outline"
                   onClick={() => setShowTokenSelectorA(true)}
-                  className="flex items-center gap-2 min-w-[120px]"
+                  className="flex items-center gap-2 min-w-[120px] transition-all duration-300 hover:scale-105 hover:shadow-md"
                 >
                   {tokenA.logoURI ? (
-                    <img src={tokenA.logoURI} alt={tokenA.symbol} className="w-6 h-6 rounded-full object-cover" />
+                    <img src={tokenA.logoURI} alt={tokenA.symbol} className="w-6 h-6 rounded-full object-cover transition-transform duration-300 hover:scale-110" />
                   ) : (
                     <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
                       {tokenA.symbol.charAt(0)}
                     </div>
                   )}
                   {tokenA.symbol}
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" />
                 </Button>
               </div>
             </div>
 
             <div className="flex justify-center">
-              <div className="w-8 h-8 rounded-full bg-secondary/50 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-secondary/50 flex items-center justify-center transition-all duration-300 hover:bg-primary/20 hover:scale-110 cursor-pointer plus-icon-animate">
                 <Plus className="w-4 h-4" />
               </div>
             </div>
 
             {/* Token B */}
-            <div className="bg-secondary/30 rounded-xl p-4">
+            <div className="token-box bg-secondary/30 rounded-xl p-4 transition-all duration-300">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">Token B</span>
+                <span className="text-sm text-muted-foreground">
+                  Token B {!isNewPool && reserves && <span className="text-primary text-xs ml-1">(auto-calculated)</span>}
+                </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground number-transition">
                     Balance: {parseFloat(balanceB).toFixed(4)}
                   </span>
                   <Button
                     variant="link"
-                    className="text-xs text-primary p-0 h-auto"
+                    className="text-xs text-primary p-0 h-auto transition-all duration-200 hover:scale-110"
                     onClick={() => handleAmountBChange(balanceB)}
                   >
                     MAX
@@ -539,34 +553,34 @@ const LiquidityForm = () => {
                   placeholder="0.0"
                   value={amountB}
                   onChange={(e) => handleAmountBChange(e.target.value)}
-                  className="border-0 bg-transparent text-xl font-semibold focus-visible:ring-0 p-0"
+                  className={`dex-input border-0 bg-transparent text-xl font-semibold focus-visible:ring-0 p-0 ${!isNewPool && reserves && amountA ? 'text-primary' : ''}`}
                 />
                 <Button
                   variant="outline"
                   onClick={() => setShowTokenSelectorB(true)}
-                  className="flex items-center gap-2 min-w-[120px]"
+                  className="flex items-center gap-2 min-w-[120px] transition-all duration-300 hover:scale-105 hover:shadow-md"
                 >
                   {tokenB.logoURI ? (
-                    <img src={tokenB.logoURI} alt={tokenB.symbol} className="w-6 h-6 rounded-full object-cover" />
+                    <img src={tokenB.logoURI} alt={tokenB.symbol} className="w-6 h-6 rounded-full object-cover transition-transform duration-300 hover:scale-110" />
                   ) : (
                     <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
                       {tokenB.symbol.charAt(0)}
                     </div>
                   )}
                   {tokenB.symbol}
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" />
                 </Button>
               </div>
             </div>
 
             {/* LP Token Estimate */}
             {(amountA && amountB && parseFloat(amountA) > 0 && parseFloat(amountB) > 0) && (
-              <div className="bg-primary/10 rounded-xl p-4 border border-primary/30">
+              <div className="animate-scale-in bg-primary/10 rounded-xl p-4 border border-primary/30 lp-glow transition-all duration-500">
                 <div className="flex items-center gap-2 mb-2">
-                  <Coins className="w-5 h-5 text-primary" />
+                  <Coins className="w-5 h-5 text-primary animate-pulse" />
                   <span className="font-semibold text-primary">Estimated LP Tokens</span>
                 </div>
-                <p className="text-2xl font-bold">{estimatedLPTokens}</p>
+                <p className="text-2xl font-bold number-transition">{estimatedLPTokens}</p>
                 <p className="text-sm text-muted-foreground">
                   {tokenA.symbol}/{tokenB.symbol} LP Tokens
                 </p>
@@ -574,24 +588,24 @@ const LiquidityForm = () => {
             )}
 
             {/* Pool Info */}
-            <div className="bg-secondary/20 rounded-lg p-3 space-y-2 text-sm">
+            <div className="bg-secondary/20 rounded-lg p-3 space-y-2 text-sm transition-all duration-300 hover:bg-secondary/30">
               {isNewPool ? (
-                <div className="flex items-center justify-center text-primary">
+                <div className="flex items-center justify-center text-primary animate-pulse">
                   <span>🆕 Creating New Pool</span>
                 </div>
               ) : poolRatio && (
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between transition-all duration-300">
                   <span className="text-muted-foreground">Pool Ratio</span>
-                  <span>1 {tokenA.symbol} = {poolRatio} {tokenB.symbol}</span>
+                  <span className="number-transition">1 {tokenA.symbol} = {poolRatio} {tokenB.symbol}</span>
                 </div>
               )}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between transition-all duration-300">
                 <span className="text-muted-foreground">Pool Share</span>
-                <span>{poolShare.toFixed(2)}%</span>
+                <span className="number-transition">{poolShare.toFixed(2)}%</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between transition-all duration-300">
                 <span className="text-muted-foreground">Your LP Tokens</span>
-                <span>{parseFloat(lpBalance).toFixed(6)}</span>
+                <span className="number-transition">{parseFloat(lpBalance).toFixed(6)}</span>
               </div>
             </div>
 
@@ -651,7 +665,7 @@ const LiquidityForm = () => {
 
               if (!account) {
                 return (
-                  <Button disabled className="w-full h-14 text-lg font-bold bg-gradient-sakura">
+                  <Button disabled className="w-full h-14 text-lg font-bold bg-gradient-sakura opacity-70">
                     Connect Wallet
                   </Button>
                 );
@@ -659,7 +673,7 @@ const LiquidityForm = () => {
 
               if (!amountA || !amountB || parseFloat(amountA) === 0 || parseFloat(amountB) === 0) {
                 return (
-                  <Button disabled className="w-full h-14 text-lg font-bold bg-gradient-sakura">
+                  <Button disabled className="w-full h-14 text-lg font-bold bg-gradient-sakura opacity-70">
                     Enter Amounts
                   </Button>
                 );
@@ -670,7 +684,7 @@ const LiquidityForm = () => {
                   <Button
                     onClick={handleApproveTokenA}
                     disabled={isApproving === 'A'}
-                    className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura"
+                    className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] btn-pulse"
                   >
                     {isApproving === 'A' ? (
                       <>
@@ -689,7 +703,7 @@ const LiquidityForm = () => {
                   <Button
                     onClick={handleApproveTokenB}
                     disabled={isApproving === 'B'}
-                    className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura"
+                    className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] btn-pulse"
                   >
                     {isApproving === 'B' ? (
                       <>
@@ -707,7 +721,7 @@ const LiquidityForm = () => {
                 <Button
                   onClick={handleAddLiquidity}
                   disabled={isLoading}
-                  className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura"
+                  className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] btn-pulse"
                 >
                   {isLoading ? (
                     <>
@@ -725,17 +739,17 @@ const LiquidityForm = () => {
             })()}
           </TabsContent>
 
-          <TabsContent value="remove" className="p-4 space-y-3">
-            <div className="bg-secondary/30 rounded-xl p-4">
+          <TabsContent value="remove" className="p-4 space-y-3 animate-fade-in-up">
+            <div className="token-box bg-secondary/30 rounded-xl p-4 transition-all duration-300">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">LP Tokens to Remove</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground number-transition">
                     Balance: {parseFloat(lpBalance).toFixed(6)}
                   </span>
                   <Button
                     variant="link"
-                    className="text-xs text-primary p-0 h-auto"
+                    className="text-xs text-primary p-0 h-auto transition-all duration-200 hover:scale-110"
                     onClick={() => setLpAmount(lpBalance)}
                   >
                     MAX
@@ -747,15 +761,17 @@ const LiquidityForm = () => {
                 placeholder="0.0"
                 value={lpAmount}
                 onChange={(e) => setLpAmount(e.target.value)}
-                className="border-0 bg-transparent text-xl font-semibold focus-visible:ring-0 p-0"
+                className="dex-input border-0 bg-transparent text-xl font-semibold focus-visible:ring-0 p-0"
               />
               <div className="flex gap-2 mt-3">
-                {[25, 50, 75, 100].map((percent) => (
+                {[25, 50, 75, 100].map((percent, index) => (
                   <Button
                     key={percent}
                     variant="outline"
                     size="sm"
                     onClick={() => setLpAmount((parseFloat(lpBalance) * percent / 100).toString())}
+                    className="transition-all duration-300 hover:scale-105 hover:bg-primary/20"
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
                     {percent}%
                   </Button>
@@ -763,7 +779,7 @@ const LiquidityForm = () => {
               </div>
             </div>
 
-            <div className="bg-secondary/20 rounded-lg p-3 space-y-2 text-sm">
+            <div className="bg-secondary/20 rounded-lg p-3 space-y-2 text-sm transition-all duration-300 hover:bg-secondary/30">
               <p className="text-muted-foreground text-center">
                 Removing liquidity for {tokenA.symbol} / {tokenB.symbol}
               </p>
@@ -772,7 +788,7 @@ const LiquidityForm = () => {
             <Button
               onClick={handleRemoveLiquidity}
               disabled={!account || !lpAmount || isLoading || parseFloat(lpAmount) > parseFloat(lpBalance)}
-              className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura"
+              className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             >
               {isLoading ? (
                 <>

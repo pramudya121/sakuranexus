@@ -188,4 +188,95 @@ All colors MUST be HSL.
   .gradient-text {
     @apply bg-gradient-to-r from-primary via-accent to-primary-light bg-clip-text text-transparent;
   }
+
+  /* Smooth Input Transition */
+  .dex-input {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .dex-input:focus {
+    @apply ring-2 ring-primary/30;
+  }
+
+  /* Animated Token Box */
+  .token-box {
+    @apply transition-all duration-300 ease-out;
+    @apply hover:bg-secondary/50 hover:shadow-md;
+  }
+
+  /* Smooth Value Change Animation */
+  @keyframes value-pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.02); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .value-updating {
+    animation: value-pulse 0.5s ease-out;
+  }
+
+  /* Fade In Up Animation */
+  @keyframes fade-in-up {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.4s ease-out forwards;
+  }
+
+  /* Scale In Animation */
+  @keyframes scale-in-smooth {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-scale-in {
+    animation: scale-in-smooth 0.3s ease-out forwards;
+  }
+
+  /* Slide In Animation */
+  @keyframes slide-in-bottom {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-slide-in {
+    animation: slide-in-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* LP Token Glow Animation */
+  @keyframes lp-glow {
+    0%, 100% { box-shadow: 0 0 10px hsl(328 85% 55% / 0.3); }
+    50% { box-shadow: 0 0 25px hsl(328 85% 55% / 0.5); }
+  }
+
+  .lp-glow {
+    animation: lp-glow 2s ease-in-out infinite;
+  }
+
+  /* Button Pulse Animation */
+  @keyframes btn-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+  }
+
+  .btn-pulse:not(:disabled) {
+    animation: btn-pulse 2s ease-in-out infinite;
+  }
+
+  /* Smooth Number Transition */
+  .number-transition {
+    @apply transition-all duration-500 ease-out;
+  }
+
+  /* Plus Icon Rotate Animation */
+  @keyframes rotate-plus {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(180deg); }
+  }
+
+  .plus-icon-animate {
+    @apply transition-transform duration-300 hover:rotate-90;
+  }
 }
