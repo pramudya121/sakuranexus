@@ -256,7 +256,7 @@ export const swapTokens = async (
     const router = await getRouterContract();
     if (!router) return { success: false, error: 'Router not found' };
 
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 30; // 30 minutes for safety
     const amountInWei = ethers.parseUnits(amountIn, tokenIn.decimals);
     const minOut = parseFloat(amountOutMin) * (1 - slippage / 100);
     const amountOutMinWei = ethers.parseUnits(minOut.toFixed(tokenOut.decimals), tokenOut.decimals);
@@ -315,7 +315,7 @@ export const addLiquidity = async (
     const router = await getRouterContract();
     if (!router) return { success: false, error: 'Router not found' };
 
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 30; // 30 minutes for safety
     const amountAWei = ethers.parseUnits(amountA, tokenA.decimals);
     const amountBWei = ethers.parseUnits(amountB, tokenB.decimals);
     const amountAMin = ethers.parseUnits((parseFloat(amountA) * (1 - slippage / 100)).toFixed(tokenA.decimals), tokenA.decimals);
@@ -382,7 +382,7 @@ export const removeLiquidity = async (
     const pairAddress = await getPairAddress(tokenA.address, tokenB.address);
     if (!pairAddress) return { success: false, error: 'Pair not found' };
 
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 30; // 30 minutes for safety
     const liquidityWei = ethers.parseUnits(liquidity, 18);
 
     // Approve LP tokens
