@@ -3,14 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins, Check } from 'lucide-react';
+import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins, Check, Infinity } from 'lucide-react';
 import { Token, DEFAULT_TOKENS, DEX_CONTRACTS } from '@/lib/web3/dex-config';
 import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves, checkAllowance, approveToken, isNativeToken } from '@/lib/web3/dex';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
 import { useToast } from '@/hooks/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ethers } from 'ethers';
+
+const MAX_UINT256 = ethers.MaxUint256;
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
@@ -43,6 +46,7 @@ const LiquidityForm = () => {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [allowanceA, setAllowanceA] = useState<bigint>(BigInt(0));
   const [allowanceB, setAllowanceB] = useState<bigint>(BigInt(0));
+  const [useInfiniteApproval, setUseInfiniteApproval] = useState(true);
 
   useEffect(() => {
     loadAccount();
@@ -296,12 +300,18 @@ const LiquidityForm = () => {
     if (!account || !amountA) return;
     setIsApproving('A');
     try {
-      const amountAWei = ethers.parseUnits(amountA, tokenA.decimals);
-      const success = await approveToken(tokenA.address, DEX_CONTRACTS.UniswapV2Router02, amountAWei);
+      // Use infinite approval or exact amount based on user preference
+      const approvalAmount = useInfiniteApproval 
+        ? MAX_UINT256 
+        : ethers.parseUnits(amountA, tokenA.decimals);
+      
+      const success = await approveToken(tokenA.address, DEX_CONTRACTS.UniswapV2Router02, approvalAmount);
       if (success) {
         toast({
           title: 'Token Approved!',
-          description: `${tokenA.symbol} approved for trading`,
+          description: useInfiniteApproval 
+            ? `${tokenA.symbol} approved with unlimited spending` 
+            : `${tokenA.symbol} approved for trading`,
         });
         await checkAllowances();
       } else {
@@ -325,12 +335,18 @@ const LiquidityForm = () => {
     if (!account || !amountB) return;
     setIsApproving('B');
     try {
-      const amountBWei = ethers.parseUnits(amountB, tokenB.decimals);
-      const success = await approveToken(tokenB.address, DEX_CONTRACTS.UniswapV2Router02, amountBWei);
+      // Use infinite approval or exact amount based on user preference
+      const approvalAmount = useInfiniteApproval 
+        ? MAX_UINT256 
+        : ethers.parseUnits(amountB, tokenB.decimals);
+      
+      const success = await approveToken(tokenB.address, DEX_CONTRACTS.UniswapV2Router02, approvalAmount);
       if (success) {
         toast({
           title: 'Token Approved!',
-          description: `${tokenB.symbol} approved for trading`,
+          description: useInfiniteApproval 
+            ? `${tokenB.symbol} approved with unlimited spending` 
+            : `${tokenB.symbol} approved for trading`,
         });
         await checkAllowances();
       } else {
@@ -601,6 +617,27 @@ const LiquidityForm = () => {
                   ) : (
                     <span className="text-yellow-500">Needs Approval</span>
                   )}
+                </div>
+                
+                {/* Infinite Approval Toggle */}
+                <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="infiniteApproval" 
+                      checked={useInfiniteApproval}
+                      onCheckedChange={(checked) => setUseInfiniteApproval(checked === true)}
+                    />
+                    <label 
+                      htmlFor="infiniteApproval" 
+                      className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1"
+                    >
+                      <Infinity className="w-3 h-3" />
+                      Infinite Approval
+                    </label>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {useInfiniteApproval ? 'No future approvals needed' : 'Approve exact amount'}
+                  </span>
                 </div>
               </div>
             )}
