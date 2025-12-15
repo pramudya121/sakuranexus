@@ -79,7 +79,7 @@ export const mintNFT = async (
     // 4. Save to Supabase database
     const { error: dbError } = await supabase.from('nfts').insert({
       token_id: tokenId,
-      contract_address: CONTRACTS.SakuraNFT,
+      contract_address: CONTRACTS.NFTCollection,
       owner_address: ownerAddress.toLowerCase(),
       name,
       description,
@@ -95,7 +95,7 @@ export const mintNFT = async (
     await supabase.from('activities').insert({
       activity_type: 'mint',
       to_address: ownerAddress.toLowerCase(),
-      contract_address: CONTRACTS.SakuraNFT,
+      contract_address: CONTRACTS.NFTCollection,
       token_id: tokenId,
       transaction_hash: receipt.hash,
     });
@@ -113,7 +113,7 @@ export const approveNFT = async (tokenId: number): Promise<boolean> => {
     const contract = await getSakuraNFTContract();
     if (!contract) return false;
 
-    const tx = await contract.approve(CONTRACTS.SakuraMarketplace, tokenId);
+    const tx = await contract.approve(CONTRACTS.Marketplace, tokenId);
     await tx.wait();
 
     return true;
@@ -143,7 +143,7 @@ export const listNFT = async (
     }
 
     const priceInWei = parsePrice(price);
-    const tx = await contract.listNFT(CONTRACTS.SakuraNFT, tokenId, priceInWei);
+    const tx = await contract.listNFT(CONTRACTS.NFTCollection, tokenId, priceInWei);
     const receipt = await tx.wait();
 
     // Get listingId from event
@@ -167,7 +167,7 @@ export const listNFT = async (
       .from('nfts')
       .select('id')
       .eq('token_id', tokenId)
-      .eq('contract_address', CONTRACTS.SakuraNFT)
+      .eq('contract_address', CONTRACTS.NFTCollection)
       .single();
 
     if (nft) {
@@ -175,7 +175,7 @@ export const listNFT = async (
         listing_id: listingId,
         nft_id: nft.id,
         seller_address: sellerAddress.toLowerCase(),
-        contract_address: CONTRACTS.SakuraNFT,
+        contract_address: CONTRACTS.NFTCollection,
         token_id: tokenId,
         price: price,
         active: true,
@@ -187,7 +187,7 @@ export const listNFT = async (
       activity_type: 'list',
       from_address: sellerAddress.toLowerCase(),
       price: price,
-      contract_address: CONTRACTS.SakuraNFT,
+      contract_address: CONTRACTS.NFTCollection,
       token_id: tokenId,
       transaction_hash: receipt.hash,
     });
@@ -226,14 +226,14 @@ export const buyNFT = async (
       .from('nfts')
       .update({ owner_address: buyerAddress.toLowerCase() })
       .eq('token_id', tokenId)
-      .eq('contract_address', CONTRACTS.SakuraNFT);
+      .eq('contract_address', CONTRACTS.NFTCollection);
 
     // Record activity
     await supabase.from('activities').insert({
       activity_type: 'sale',
       to_address: buyerAddress.toLowerCase(),
       price: price,
-      contract_address: CONTRACTS.SakuraNFT,
+      contract_address: CONTRACTS.NFTCollection,
       token_id: tokenId,
       transaction_hash: receipt.hash,
     });
@@ -245,12 +245,12 @@ export const buyNFT = async (
   }
 };
 
-// Make offer on NFT
+// Make offer on NFT (New contract uses nft+tokenId instead of offerId)
 export const makeOffer = async (
   tokenId: number,
   offerPrice: string,
   offererAddress: string
-): Promise<{ success: boolean; offerId?: number; error?: string }> => {
+): Promise<{ success: boolean; error?: string }> => {
   try {
     const contract = await getOfferContract();
     if (!contract) {
@@ -258,48 +258,30 @@ export const makeOffer = async (
     }
 
     const priceInWei = parsePrice(offerPrice);
-    const tx = await contract.makeOffer(CONTRACTS.SakuraNFT, tokenId, { value: priceInWei });
+    const tx = await contract.makeOffer(CONTRACTS.NFTCollection, tokenId, { value: priceInWei });
     const receipt = await tx.wait();
-
-    // Get offerId from OfferMade event
-    const offerMadeEvent = receipt.logs.find((log: any) => {
-      try {
-        const parsed = contract.interface.parseLog(log);
-        return parsed?.name === 'OfferMade';
-      } catch {
-        return false;
-      }
-    });
-
-    let offerId = 0;
-    if (offerMadeEvent) {
-      const parsed = contract.interface.parseLog(offerMadeEvent);
-      offerId = Number(parsed?.args?.offerId || 0);
-    }
 
     // Save offer to database
     const { data: nft } = await supabase
       .from('nfts')
       .select('id')
       .eq('token_id', tokenId)
-      .eq('contract_address', CONTRACTS.SakuraNFT)
+      .eq('contract_address', CONTRACTS.NFTCollection)
       .single();
 
     if (nft) {
       await supabase.from('offers').insert({
         nft_id: nft.id,
         offerer_address: offererAddress.toLowerCase(),
-        contract_address: CONTRACTS.SakuraNFT,
+        contract_address: CONTRACTS.NFTCollection,
         token_id: tokenId,
         offer_price: offerPrice,
         status: 'pending',
-        offer_id: offerId,
       });
     }
 
     // Log to offer_logs
     await supabase.from('offer_logs').insert({
-      offer_id: offerId,
       action: 'make',
       user_address: offererAddress.toLowerCase(),
       token_id: tokenId,
@@ -312,21 +294,20 @@ export const makeOffer = async (
       activity_type: 'offer',
       from_address: offererAddress.toLowerCase(),
       price: offerPrice,
-      contract_address: CONTRACTS.SakuraNFT,
+      contract_address: CONTRACTS.NFTCollection,
       token_id: tokenId,
       transaction_hash: receipt.hash,
     });
 
-    return { success: true, offerId };
+    return { success: true };
   } catch (error: any) {
     console.error('Error making offer:', error);
     return { success: false, error: error.message || 'Failed to make offer' };
   }
 };
 
-// Accept offer on NFT
+// Accept offer on NFT (New contract uses nft+tokenId)
 export const acceptOffer = async (
-  offerId: number,
   tokenId: number,
   offererAddress: string
 ): Promise<{ success: boolean; error?: string }> => {
@@ -346,8 +327,8 @@ export const acceptOffer = async (
       return { success: false, error: 'Failed to connect to offer contract' };
     }
 
-    // Accept offer using offerId
-    const tx = await contract.acceptOffer(offerId);
+    // Accept offer using nft address + tokenId
+    const tx = await contract.acceptOffer(CONTRACTS.NFTCollection, tokenId);
     const receipt = await tx.wait();
     
     console.log('Offer accepted successfully:', receipt.hash);
@@ -356,18 +337,18 @@ export const acceptOffer = async (
     await supabase
       .from('offers')
       .update({ status: 'accepted' })
-      .eq('offer_id', offerId)
+      .eq('token_id', tokenId)
+      .eq('contract_address', CONTRACTS.NFTCollection)
       .eq('status', 'pending');
 
     await supabase
       .from('nfts')
       .update({ owner_address: offererAddress.toLowerCase() })
       .eq('token_id', tokenId)
-      .eq('contract_address', CONTRACTS.SakuraNFT);
+      .eq('contract_address', CONTRACTS.NFTCollection);
 
     // Log to offer_logs
     await supabase.from('offer_logs').insert({
-      offer_id: offerId,
       action: 'accept',
       user_address: offererAddress.toLowerCase(),
       token_id: tokenId,
@@ -378,14 +359,16 @@ export const acceptOffer = async (
     const { data: offer } = await supabase
       .from('offers')
       .select('offer_price')
-      .eq('offer_id', offerId)
+      .eq('token_id', tokenId)
+      .eq('contract_address', CONTRACTS.NFTCollection)
+      .eq('status', 'accepted')
       .single();
 
     await supabase.from('activities').insert({
       activity_type: 'offer_accepted',
       to_address: offererAddress.toLowerCase(),
       price: offer?.offer_price || '0',
-      contract_address: CONTRACTS.SakuraNFT,
+      contract_address: CONTRACTS.NFTCollection,
       token_id: tokenId,
       transaction_hash: receipt.hash,
     });
@@ -397,9 +380,9 @@ export const acceptOffer = async (
   }
 };
 
-// Cancel offer
+// Cancel offer (New contract uses nft+tokenId)
 export const cancelOffer = async (
-  offerId: number
+  tokenId: number
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     const contract = await getOfferContract();
@@ -410,27 +393,29 @@ export const cancelOffer = async (
     // Get offer details for logging
     const { data: offerData } = await supabase
       .from('offers')
-      .select('token_id, offerer_address')
-      .eq('offer_id', offerId)
+      .select('offerer_address')
+      .eq('token_id', tokenId)
+      .eq('contract_address', CONTRACTS.NFTCollection)
+      .eq('status', 'pending')
       .single();
 
-    const tx = await contract.cancelOffer(offerId);
+    const tx = await contract.cancelOffer(CONTRACTS.NFTCollection, tokenId);
     const receipt = await tx.wait();
 
     // Update database
     await supabase
       .from('offers')
       .update({ status: 'cancelled' })
-      .eq('offer_id', offerId)
+      .eq('token_id', tokenId)
+      .eq('contract_address', CONTRACTS.NFTCollection)
       .eq('status', 'pending');
 
     // Log to offer_logs
     if (offerData) {
       await supabase.from('offer_logs').insert({
-        offer_id: offerId,
         action: 'cancel',
         user_address: offerData.offerer_address.toLowerCase(),
-        token_id: offerData.token_id,
+        token_id: tokenId,
         transaction_hash: receipt.hash,
       });
     }
@@ -454,12 +439,8 @@ export const transferNFT = async (
       return { success: false, error: 'Failed to connect to NFT contract' };
     }
 
-    // Transfer using safeTransferFrom
-    const tx = await contract['safeTransferFrom(address,address,uint256)'](
-      fromAddress,
-      toAddress,
-      tokenId
-    );
+    // Transfer using transferFrom
+    const tx = await contract.transferFrom(fromAddress, toAddress, tokenId);
     const receipt = await tx.wait();
 
     // Get NFT details for notification
@@ -467,7 +448,7 @@ export const transferNFT = async (
       .from('nfts')
       .select('id, name')
       .eq('token_id', tokenId)
-      .eq('contract_address', CONTRACTS.SakuraNFT)
+      .eq('contract_address', CONTRACTS.NFTCollection)
       .single();
 
     // Update database
@@ -475,14 +456,14 @@ export const transferNFT = async (
       .from('nfts')
       .update({ owner_address: toAddress.toLowerCase() })
       .eq('token_id', tokenId)
-      .eq('contract_address', CONTRACTS.SakuraNFT);
+      .eq('contract_address', CONTRACTS.NFTCollection);
 
     // Record activity
     await supabase.from('activities').insert({
       activity_type: 'transfer',
       from_address: fromAddress.toLowerCase(),
       to_address: toAddress.toLowerCase(),
-      contract_address: CONTRACTS.SakuraNFT,
+      contract_address: CONTRACTS.NFTCollection,
       token_id: tokenId,
       transaction_hash: receipt.hash,
     });

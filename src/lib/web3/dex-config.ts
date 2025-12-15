@@ -1,13 +1,14 @@
-// DEX Contract Addresses on Nexus Testnet
+// DEX Contract Addresses on Nexus Testnet (New Contracts)
 export const DEX_CONTRACTS = {
-  UniswapV2Factory: '0x469eFD1D1EEdF103845F2c6B266A7af0aFc3e747',
-  UniswapV2Pair: '0x4945fb5624f7359d12972b40c7D00f960A92AF5d',
-  WETH9: '0x5E139B8BC3e5B369621266716884D86E7C502950',
-  UniswapV2Router02: '0x6E5B0967B40739d9892bc942Ea445d3fC706E60F',
-  UniswapV2Library: '0x80003A9899A6C1F4fA87Dd250C2C3ebA57E8F343',
-  Multicall: '0xF34763197c50be165eF87995B8FBB2Cdc2714B1B',
-  NXSA: '0x2DFD7d9cA6928405b5c9Ad060f41AA09D5Ef2391',
-  WNEX: '0x0c7DB8baE8f4B7C298372A78bfC10D8bb18BC42D',
+  UniswapV2Factory: '0xB498E251626e6FC5a0Cd922ec6116D0553D66f36',
+  UniswapV2Router02: '0xc59442df63d58BF36104EF22682e83D393d04F1C',
+  UniswapV2Library: '0xdF88Fb97B7d6C8aC8e73BbA341BDB6262e20Bb5B',
+  WETH9: '0xf175ae6037663D2b77da2e1FaB6710a1Fb302033',
+  Multicall: '0x503Bdb5Dd218E73c755D2Fc03D6E14c79330a85f',
+  // Tokens
+  WNEX: '0xe7B71a77525fB695C4D5843D69498aD07fE95E83',
+  NXSA: '0xeAbCC511340116574E5507cA732e378EFDAC7Fba',
+  WETH: '0xE0bACfC884B88877A85805F0D0577b72922b1D80',
 };
 
 // Import token logos
@@ -46,7 +47,7 @@ export const DEFAULT_TOKENS: Token[] = [
     logoURI: nxsaTokenLogo,
   },
   {
-    address: DEX_CONTRACTS.WETH9,
+    address: DEX_CONTRACTS.WETH,
     symbol: 'WETH',
     name: 'Wrapped ETH',
     decimals: 18,
@@ -54,7 +55,7 @@ export const DEFAULT_TOKENS: Token[] = [
   },
 ];
 
-// ABIs
+// UniswapV2Factory ABI
 export const UNISWAP_V2_FACTORY_ABI = [
   {
     constant: false,
@@ -64,6 +65,41 @@ export const UNISWAP_V2_FACTORY_ABI = [
     ],
     name: 'createPair',
     outputs: [{ internalType: 'address', name: 'pair', type: 'address' }],
+    payable: false,
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: '_feeToSetter', type: 'address' }],
+    payable: false,
+    stateMutability: 'nonpayable',
+    type: 'constructor',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'token0', type: 'address' },
+      { indexed: true, internalType: 'address', name: 'token1', type: 'address' },
+      { indexed: false, internalType: 'address', name: 'pair', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: '', type: 'uint256' },
+    ],
+    name: 'PairCreated',
+    type: 'event',
+  },
+  {
+    constant: false,
+    inputs: [{ internalType: 'address', name: '_feeTo', type: 'address' }],
+    name: 'setFeeTo',
+    outputs: [],
+    payable: false,
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    constant: false,
+    inputs: [{ internalType: 'address', name: '_feeToSetter', type: 'address' }],
+    name: 'setFeeToSetter',
+    outputs: [],
     payable: false,
     stateMutability: 'nonpayable',
     type: 'function',
@@ -88,18 +124,6 @@ export const UNISWAP_V2_FACTORY_ABI = [
   },
   {
     constant: true,
-    inputs: [
-      { internalType: 'address', name: '', type: 'address' },
-      { internalType: 'address', name: '', type: 'address' },
-    ],
-    name: 'getPair',
-    outputs: [{ internalType: 'address', name: '', type: 'address' }],
-    payable: false,
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    constant: true,
     inputs: [],
     name: 'feeTo',
     outputs: [{ internalType: 'address', name: '', type: 'address' }],
@@ -117,15 +141,25 @@ export const UNISWAP_V2_FACTORY_ABI = [
     type: 'function',
   },
   {
-    anonymous: false,
+    constant: true,
     inputs: [
-      { indexed: true, internalType: 'address', name: 'token0', type: 'address' },
-      { indexed: true, internalType: 'address', name: 'token1', type: 'address' },
-      { indexed: false, internalType: 'address', name: 'pair', type: 'address' },
-      { indexed: false, internalType: 'uint256', name: '', type: 'uint256' },
+      { internalType: 'address', name: '', type: 'address' },
+      { internalType: 'address', name: '', type: 'address' },
     ],
-    name: 'PairCreated',
-    type: 'event',
+    name: 'getPair',
+    outputs: [{ internalType: 'address', name: '', type: 'address' }],
+    payable: false,
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: 'INIT_CODE_PAIR_HASH',
+    outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }],
+    payable: false,
+    stateMutability: 'view',
+    type: 'function',
   },
 ];
 
@@ -347,6 +381,39 @@ export const UNISWAP_V2_ROUTER_ABI = [
     type: 'function',
   },
   {
+    inputs: [
+      { internalType: 'uint256', name: 'amountIn', type: 'uint256' },
+      { internalType: 'uint256', name: 'reserveIn', type: 'uint256' },
+      { internalType: 'uint256', name: 'reserveOut', type: 'uint256' },
+    ],
+    name: 'getAmountOut',
+    outputs: [{ internalType: 'uint256', name: 'amountOut', type: 'uint256' }],
+    stateMutability: 'pure',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'amountOut', type: 'uint256' },
+      { internalType: 'uint256', name: 'reserveIn', type: 'uint256' },
+      { internalType: 'uint256', name: 'reserveOut', type: 'uint256' },
+    ],
+    name: 'getAmountIn',
+    outputs: [{ internalType: 'uint256', name: 'amountIn', type: 'uint256' }],
+    stateMutability: 'pure',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'amountA', type: 'uint256' },
+      { internalType: 'uint256', name: 'reserveA', type: 'uint256' },
+      { internalType: 'uint256', name: 'reserveB', type: 'uint256' },
+    ],
+    name: 'quote',
+    outputs: [{ internalType: 'uint256', name: 'amountB', type: 'uint256' }],
+    stateMutability: 'pure',
+    type: 'function',
+  },
+  {
     inputs: [],
     name: 'factory',
     outputs: [{ internalType: 'address', name: '', type: 'address' }],
@@ -503,9 +570,51 @@ export const MULTICALL_ABI = [
     type: 'function',
   },
   {
+    inputs: [{ internalType: 'uint256', name: 'blockNumber', type: 'uint256' }],
+    name: 'getBlockHash',
+    outputs: [{ internalType: 'bytes32', name: 'blockHash', type: 'bytes32' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getCurrentBlockCoinbase',
+    outputs: [{ internalType: 'address', name: 'coinbase', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getCurrentBlockDifficulty',
+    outputs: [{ internalType: 'uint256', name: 'difficulty', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getCurrentBlockGasLimit',
+    outputs: [{ internalType: 'uint256', name: 'gaslimit', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getCurrentBlockTimestamp',
+    outputs: [{ internalType: 'uint256', name: 'timestamp', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
     inputs: [{ internalType: 'address', name: 'addr', type: 'address' }],
     name: 'getEthBalance',
     outputs: [{ internalType: 'uint256', name: 'balance', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getLastBlockHash',
+    outputs: [{ internalType: 'bytes32', name: 'blockHash', type: 'bytes32' }],
     stateMutability: 'view',
     type: 'function',
   },

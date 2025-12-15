@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { NEXUS_TESTNET, CONTRACTS, SAKURA_NFT_ABI, SAKURA_MARKETPLACE_ABI, OFFER_CONTRACT_ABI } from './config';
+import { NEXUS_TESTNET, CONTRACTS, NFT_COLLECTION_ABI, MARKETPLACE_ABI, OFFER_CONTRACT_ABI } from './config';
 
 declare global {
   interface Window {
@@ -107,20 +107,20 @@ export const getCurrentAccount = async (): Promise<string | null> => {
   }
 };
 
-// Get SakuraNFT contract
+// Get NFTCollection contract
 export const getSakuraNFTContract = async (): Promise<ethers.Contract | null> => {
   const signer = await getSigner();
   if (!signer) return null;
 
-  return new ethers.Contract(CONTRACTS.SakuraNFT, SAKURA_NFT_ABI, signer);
+  return new ethers.Contract(CONTRACTS.NFTCollection, NFT_COLLECTION_ABI, signer);
 };
 
-// Get SakuraMarketplace contract
+// Get Marketplace contract
 export const getSakuraMarketplaceContract = async (): Promise<ethers.Contract | null> => {
   const signer = await getSigner();
   if (!signer) return null;
 
-  return new ethers.Contract(CONTRACTS.SakuraMarketplace, SAKURA_MARKETPLACE_ABI, signer);
+  return new ethers.Contract(CONTRACTS.Marketplace, MARKETPLACE_ABI, signer);
 };
 
 // Get Offer contract

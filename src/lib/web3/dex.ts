@@ -505,19 +505,19 @@ export const calculatePriceImpact = (
   reserve1: string
 ): number => {
   try {
-    const inputAmount = parseFloat(amountIn);
-    const outputAmount = parseFloat(amountOut);
-    const r0 = parseFloat(reserve0);
-    const r1 = parseFloat(reserve1);
+    const amountInNum = parseFloat(amountIn);
+    const amountOutNum = parseFloat(amountOut);
+    const reserve0Num = parseFloat(reserve0);
+    const reserve1Num = parseFloat(reserve1);
 
-    if (r0 === 0 || r1 === 0) return 0;
+    if (amountInNum === 0 || reserve0Num === 0) return 0;
 
-    const spotPrice = r1 / r0;
-    const executionPrice = outputAmount / inputAmount;
-    const impact = ((spotPrice - executionPrice) / spotPrice) * 100;
+    const idealPrice = reserve1Num / reserve0Num;
+    const actualPrice = amountOutNum / amountInNum;
+    const impact = ((idealPrice - actualPrice) / idealPrice) * 100;
 
-    return Math.abs(impact);
-  } catch (error) {
+    return Math.max(0, impact);
+  } catch {
     return 0;
   }
 };

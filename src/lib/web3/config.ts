@@ -1,26 +1,29 @@
-// NEXUSLABS Testnet Configuration
+// NEXUSLABS Testnet Configuration (New RPC)
 export const NEXUS_TESTNET = {
-  chainId: 3940,
-  chainIdHex: '0xF64',
+  chainId: 3945,
+  chainIdHex: '0xF69',
   name: 'Nexus Testnet',
-  rpcUrl: 'https://nexus-testnet.g.alchemy.com/public',
+  rpcUrl: 'https://testnet.rpc.nexus.xyz',
   nativeCurrency: {
     name: 'NEX',
     symbol: 'NEX',
     decimals: 18,
   },
-  blockExplorer: 'https://testnet3.explorer.nexus.xyz',
+  blockExplorer: 'https://nexus.testnet.blockscout.com',
 };
 
-// Smart Contract Addresses
+// Smart Contract Addresses (New Contracts)
 export const CONTRACTS = {
-  SakuraNFT: '0x1C1D9c4F5e56315A7b67819680EF6E716F749E7c',
-  SakuraMarketplace: '0xA0a0be9650dE3aA37b15C6c4BB6Ac9c30399F585',
-  OfferContract: '0x629B82D3ff9cCbC5714a778fe58098c50cbB3e36',
+  NFTCollection: '0xBd327bec62EDF8956dca6c32b750c9aA2a7d2a26',
+  Marketplace: '0xDb4205CF25b82a171BAAAc2Dbaae1dE3392E8817',
+  OfferContract: '0xc77C6Bc6c73e07Dc6beF7B1F172D892d38b1413E',
+  // Legacy names for compatibility
+  SakuraNFT: '0xBd327bec62EDF8956dca6c32b750c9aA2a7d2a26',
+  SakuraMarketplace: '0xDb4205CF25b82a171BAAAc2Dbaae1dE3392E8817',
 };
 
-// Contract ABIs
-export const SAKURA_NFT_ABI = [
+// NFTCollection Contract ABI
+export const NFT_COLLECTION_ABI = [
   {
     inputs: [],
     stateMutability: 'nonpayable',
@@ -296,7 +299,8 @@ export const SAKURA_NFT_ABI = [
   },
 ];
 
-export const SAKURA_MARKETPLACE_ABI = [
+// Marketplace Contract ABI
+export const MARKETPLACE_ABI = [
   {
     inputs: [
       {
@@ -525,12 +529,18 @@ export const SAKURA_MARKETPLACE_ABI = [
   },
 ];
 
+// Offer Contract ABI (New - uses nft+tokenId instead of offerId)
 export const OFFER_CONTRACT_ABI = [
   {
     inputs: [
       {
+        internalType: 'address',
+        name: 'nft',
+        type: 'address',
+      },
+      {
         internalType: 'uint256',
-        name: 'offerId',
+        name: 'tokenId',
         type: 'uint256',
       },
     ],
@@ -542,8 +552,13 @@ export const OFFER_CONTRACT_ABI = [
   {
     inputs: [
       {
+        internalType: 'address',
+        name: 'nft',
+        type: 'address',
+      },
+      {
         internalType: 'uint256',
-        name: 'offerId',
+        name: 'tokenId',
         type: 'uint256',
       },
     ],
@@ -566,13 +581,7 @@ export const OFFER_CONTRACT_ABI = [
       },
     ],
     name: 'makeOffer',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
+    outputs: [],
     stateMutability: 'payable',
     type: 'function',
   },
@@ -581,32 +590,26 @@ export const OFFER_CONTRACT_ABI = [
     inputs: [
       {
         indexed: true,
-        internalType: 'uint256',
-        name: 'offerId',
-        type: 'uint256',
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'seller',
-        type: 'address',
-      },
-      {
-        indexed: false,
         internalType: 'address',
         name: 'nft',
         type: 'address',
       },
       {
-        indexed: false,
+        indexed: true,
         internalType: 'uint256',
         name: 'tokenId',
         type: 'uint256',
       },
       {
+        indexed: true,
+        internalType: 'address',
+        name: 'buyer',
+        type: 'address',
+      },
+      {
         indexed: false,
         internalType: 'uint256',
-        name: 'amount',
+        name: 'price',
         type: 'uint256',
       },
     ],
@@ -618,14 +621,20 @@ export const OFFER_CONTRACT_ABI = [
     inputs: [
       {
         indexed: true,
+        internalType: 'address',
+        name: 'nft',
+        type: 'address',
+      },
+      {
+        indexed: true,
         internalType: 'uint256',
-        name: 'offerId',
+        name: 'tokenId',
         type: 'uint256',
       },
       {
         indexed: true,
         internalType: 'address',
-        name: 'offeror',
+        name: 'offerer',
         type: 'address',
       },
     ],
@@ -637,32 +646,26 @@ export const OFFER_CONTRACT_ABI = [
     inputs: [
       {
         indexed: true,
-        internalType: 'uint256',
-        name: 'offerId',
-        type: 'uint256',
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'offeror',
-        type: 'address',
-      },
-      {
-        indexed: false,
         internalType: 'address',
         name: 'nft',
         type: 'address',
       },
       {
-        indexed: false,
+        indexed: true,
         internalType: 'uint256',
         name: 'tokenId',
         type: 'uint256',
       },
       {
+        indexed: true,
+        internalType: 'address',
+        name: 'offerer',
+        type: 'address',
+      },
+      {
         indexed: false,
         internalType: 'uint256',
-        name: 'amount',
+        name: 'price',
         type: 'uint256',
       },
     ],
@@ -670,24 +673,12 @@ export const OFFER_CONTRACT_ABI = [
     type: 'event',
   },
   {
-    stateMutability: 'payable',
-    type: 'receive',
-  },
-  {
-    inputs: [],
-    name: 'offerCount',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
     inputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address',
+      },
       {
         internalType: 'uint256',
         name: '',
@@ -698,31 +689,20 @@ export const OFFER_CONTRACT_ABI = [
     outputs: [
       {
         internalType: 'address',
-        name: 'offeror',
-        type: 'address',
-      },
-      {
-        internalType: 'address',
-        name: 'nft',
+        name: 'offerer',
         type: 'address',
       },
       {
         internalType: 'uint256',
-        name: 'tokenId',
+        name: 'price',
         type: 'uint256',
-      },
-      {
-        internalType: 'uint256',
-        name: 'amount',
-        type: 'uint256',
-      },
-      {
-        internalType: 'bool',
-        name: 'active',
-        type: 'bool',
       },
     ],
     stateMutability: 'view',
     type: 'function',
   },
 ];
+
+// Legacy ABI aliases for backward compatibility
+export const SAKURA_NFT_ABI = NFT_COLLECTION_ABI;
+export const SAKURA_MARKETPLACE_ABI = MARKETPLACE_ABI;
