@@ -324,16 +324,16 @@ const Profile = () => {
   };
 
   const handleCancelOffer = async (offer: Offer) => {
-    if (!account || !offer.offer_id) {
+    if (!account) {
       toast({
         title: 'Error',
-        description: 'Invalid offer',
+        description: 'Please connect wallet',
         variant: 'destructive',
       });
       return;
     }
 
-    const result = await cancelOffer(offer.offer_id);
+    const result = await cancelOffer(offer.token_id);
     
     if (result.success) {
       toast({
