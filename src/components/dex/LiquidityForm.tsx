@@ -3,13 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins } from 'lucide-react';
-import { Token, DEFAULT_TOKENS } from '@/lib/web3/dex-config';
-import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves } from '@/lib/web3/dex';
+import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins, Check } from 'lucide-react';
+import { Token, DEFAULT_TOKENS, DEX_CONTRACTS } from '@/lib/web3/dex-config';
+import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves, checkAllowance, approveToken, isNativeToken } from '@/lib/web3/dex';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
 import { useToast } from '@/hooks/use-toast';
+import { ethers } from 'ethers';
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
@@ -26,6 +27,7 @@ const LiquidityForm = () => {
   const [lpBalance, setLpBalance] = useState('0');
   const [slippage, setSlippage] = useState(0.5);
   const [isLoading, setIsLoading] = useState(false);
+  const [isApproving, setIsApproving] = useState<'A' | 'B' | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [account, setAccount] = useState<string | null>(null);
   const [showTokenSelectorA, setShowTokenSelectorA] = useState(false);
@@ -39,6 +41,8 @@ const LiquidityForm = () => {
   const [estimatedLPTokens, setEstimatedLPTokens] = useState<string>('0');
   const [totalSupply, setTotalSupply] = useState<string>('0');
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [allowanceA, setAllowanceA] = useState<bigint>(BigInt(0));
+  const [allowanceB, setAllowanceB] = useState<bigint>(BigInt(0));
 
   useEffect(() => {
     loadAccount();
@@ -71,12 +75,45 @@ const LiquidityForm = () => {
     if (forceRefresh) setIsRefreshing(false);
   }, [account, tokenA, tokenB]);
 
+  // Check allowances when amounts or tokens change
+  const checkAllowances = useCallback(async () => {
+    if (!account || !amountA || !amountB) return;
+    
+    try {
+      const amountAWei = ethers.parseUnits(amountA || '0', tokenA.decimals);
+      const amountBWei = ethers.parseUnits(amountB || '0', tokenB.decimals);
+      
+      if (!isNativeToken(tokenA.address)) {
+        const allowA = await checkAllowance(tokenA.address, account, DEX_CONTRACTS.UniswapV2Router02);
+        setAllowanceA(allowA);
+      } else {
+        setAllowanceA(amountAWei); // Native tokens don't need approval
+      }
+      
+      if (!isNativeToken(tokenB.address)) {
+        const allowB = await checkAllowance(tokenB.address, account, DEX_CONTRACTS.UniswapV2Router02);
+        setAllowanceB(allowB);
+      } else {
+        setAllowanceB(amountBWei); // Native tokens don't need approval
+      }
+    } catch (error) {
+      console.error('Error checking allowances:', error);
+    }
+  }, [account, amountA, amountB, tokenA, tokenB]);
+
   useEffect(() => {
     if (account) {
       loadBalances();
       loadPairInfo();
     }
   }, [account, tokenA, tokenB, loadBalances]);
+
+  // Check allowances when amounts change
+  useEffect(() => {
+    if (account && amountA && amountB) {
+      checkAllowances();
+    }
+  }, [account, amountA, amountB, tokenA, tokenB, checkAllowances]);
 
   // Auto-refresh balance every 30 seconds
   useEffect(() => {
@@ -255,6 +292,64 @@ const LiquidityForm = () => {
     }
   };
 
+  const handleApproveTokenA = async () => {
+    if (!account || !amountA) return;
+    setIsApproving('A');
+    try {
+      const amountAWei = ethers.parseUnits(amountA, tokenA.decimals);
+      const success = await approveToken(tokenA.address, DEX_CONTRACTS.UniswapV2Router02, amountAWei);
+      if (success) {
+        toast({
+          title: 'Token Approved!',
+          description: `${tokenA.symbol} approved for trading`,
+        });
+        await checkAllowances();
+      } else {
+        toast({
+          title: 'Approval Failed',
+          description: `Failed to approve ${tokenA.symbol}`,
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Approval Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+    setIsApproving(null);
+  };
+
+  const handleApproveTokenB = async () => {
+    if (!account || !amountB) return;
+    setIsApproving('B');
+    try {
+      const amountBWei = ethers.parseUnits(amountB, tokenB.decimals);
+      const success = await approveToken(tokenB.address, DEX_CONTRACTS.UniswapV2Router02, amountBWei);
+      if (success) {
+        toast({
+          title: 'Token Approved!',
+          description: `${tokenB.symbol} approved for trading`,
+        });
+        await checkAllowances();
+      } else {
+        toast({
+          title: 'Approval Failed',
+          description: `Failed to approve ${tokenB.symbol}`,
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Approval Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+    setIsApproving(null);
+  };
+
   const handleAddLiquidity = async () => {
     if (!account || !amountA || !amountB) return;
 
@@ -269,6 +364,8 @@ const LiquidityForm = () => {
         });
         setAmountA('');
         setAmountB('');
+        setAllowanceA(BigInt(0));
+        setAllowanceB(BigInt(0));
         loadBalances();
         loadPairInfo();
       } else {
@@ -482,24 +579,113 @@ const LiquidityForm = () => {
               </div>
             </div>
 
-            <Button
-              onClick={handleAddLiquidity}
-              disabled={!account || !amountA || !amountB || isLoading}
-              className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Adding Liquidity...
-                </>
-              ) : !account ? (
-                'Connect Wallet'
-              ) : !amountA || !amountB ? (
-                'Enter Amounts'
-              ) : (
-                'Add Liquidity'
-              )}
-            </Button>
+            {/* Approval Status Indicator */}
+            {amountA && amountB && parseFloat(amountA) > 0 && parseFloat(amountB) > 0 && (
+              <div className="bg-secondary/20 rounded-lg p-3 space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{tokenA.symbol} Approval</span>
+                  {isNativeToken(tokenA.address) ? (
+                    <span className="text-green-500 flex items-center gap-1"><Check className="w-4 h-4" /> Native</span>
+                  ) : allowanceA >= (amountA ? ethers.parseUnits(amountA, tokenA.decimals) : BigInt(0)) ? (
+                    <span className="text-green-500 flex items-center gap-1"><Check className="w-4 h-4" /> Approved</span>
+                  ) : (
+                    <span className="text-yellow-500">Needs Approval</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{tokenB.symbol} Approval</span>
+                  {isNativeToken(tokenB.address) ? (
+                    <span className="text-green-500 flex items-center gap-1"><Check className="w-4 h-4" /> Native</span>
+                  ) : allowanceB >= (amountB ? ethers.parseUnits(amountB, tokenB.decimals) : BigInt(0)) ? (
+                    <span className="text-green-500 flex items-center gap-1"><Check className="w-4 h-4" /> Approved</span>
+                  ) : (
+                    <span className="text-yellow-500">Needs Approval</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Approval/Add Liquidity Buttons */}
+            {(() => {
+              const amountAWei = amountA ? ethers.parseUnits(amountA, tokenA.decimals) : BigInt(0);
+              const amountBWei = amountB ? ethers.parseUnits(amountB, tokenB.decimals) : BigInt(0);
+              const needsApprovalA = !isNativeToken(tokenA.address) && allowanceA < amountAWei;
+              const needsApprovalB = !isNativeToken(tokenB.address) && allowanceB < amountBWei;
+
+              if (!account) {
+                return (
+                  <Button disabled className="w-full h-14 text-lg font-bold bg-gradient-sakura">
+                    Connect Wallet
+                  </Button>
+                );
+              }
+
+              if (!amountA || !amountB || parseFloat(amountA) === 0 || parseFloat(amountB) === 0) {
+                return (
+                  <Button disabled className="w-full h-14 text-lg font-bold bg-gradient-sakura">
+                    Enter Amounts
+                  </Button>
+                );
+              }
+
+              if (needsApprovalA) {
+                return (
+                  <Button
+                    onClick={handleApproveTokenA}
+                    disabled={isApproving === 'A'}
+                    className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura"
+                  >
+                    {isApproving === 'A' ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Approving {tokenA.symbol}...
+                      </>
+                    ) : (
+                      <>Approve {tokenA.symbol}</>
+                    )}
+                  </Button>
+                );
+              }
+
+              if (needsApprovalB) {
+                return (
+                  <Button
+                    onClick={handleApproveTokenB}
+                    disabled={isApproving === 'B'}
+                    className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura"
+                  >
+                    {isApproving === 'B' ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Approving {tokenB.symbol}...
+                      </>
+                    ) : (
+                      <>Approve {tokenB.symbol}</>
+                    )}
+                  </Button>
+                );
+              }
+
+              return (
+                <Button
+                  onClick={handleAddLiquidity}
+                  disabled={isLoading}
+                  className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Adding Liquidity...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5 mr-2" />
+                      Add Liquidity
+                    </>
+                  )}
+                </Button>
+              );
+            })()}
           </TabsContent>
 
           <TabsContent value="remove" className="p-4 space-y-3">
