@@ -4,6 +4,7 @@ import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import NFTCard from '@/components/NFTCard';
 import UserBadges from '@/components/UserBadges';
+import PortfolioTab from '@/components/PortfolioTab';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
 import { acceptOffer, cancelOffer, listNFT, transferNFT } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Copy, CheckCircle2, Package, Tag, Gift, TrendingUp, DollarSign, Activity as ActivityIcon, Eye, Edit, Twitter, Instagram, Globe, MessageCircle, Calendar } from 'lucide-react';
+import { Loader2, Copy, CheckCircle2, Package, Tag, Gift, TrendingUp, DollarSign, Activity as ActivityIcon, Eye, Edit, Twitter, Instagram, Globe, MessageCircle, Calendar, Wallet } from 'lucide-react';
 
 interface NFT {
   id: string;
@@ -620,7 +621,7 @@ const Profile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="collected" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 md:grid-cols-5">
+          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-6">
             <TabsTrigger value="collected" className="gap-2">
               <Package className="w-4 h-4" />
               <span className="hidden sm:inline">Collected</span>
@@ -641,6 +642,10 @@ const Profile = () => {
             <TabsTrigger value="offers" className="gap-2">
               <Tag className="w-4 h-4" />
               <span className="hidden sm:inline">Offers</span>
+            </TabsTrigger>
+            <TabsTrigger value="portfolio" className="gap-2">
+              <Wallet className="w-4 h-4" />
+              <span className="hidden sm:inline">Portfolio</span>
             </TabsTrigger>
           </TabsList>
 
@@ -850,6 +855,11 @@ const Profile = () => {
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          {/* Portfolio */}
+          <TabsContent value="portfolio">
+            <PortfolioTab walletAddress={account} />
           </TabsContent>
         </Tabs>
       </div>
