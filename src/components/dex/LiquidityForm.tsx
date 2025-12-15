@@ -44,12 +44,39 @@ const LiquidityForm = () => {
     loadAccount();
   }, []);
 
+  const loadAccount = async () => {
+    const acc = await getCurrentAccount();
+    setAccount(acc);
+  };
+
+  const loadBalances = useCallback(async (forceRefresh = false) => {
+    if (!account) return;
+    if (forceRefresh) setIsRefreshing(true);
+    
+    try {
+      // Fetch sequentially to reduce RPC load
+      const balA = await getTokenBalance(tokenA.address, account, forceRefresh);
+      setBalanceA(balA);
+      
+      // Small delay between calls to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const balB = await getTokenBalance(tokenB.address, account, forceRefresh);
+      setBalanceB(balB);
+      setLastRefresh(new Date());
+    } catch (error) {
+      console.error('Error loading balances:', error);
+    }
+    
+    if (forceRefresh) setIsRefreshing(false);
+  }, [account, tokenA, tokenB]);
+
   useEffect(() => {
     if (account) {
       loadBalances();
       loadPairInfo();
     }
-  }, [account, tokenA, tokenB]);
+  }, [account, tokenA, tokenB, loadBalances]);
 
   // Auto-refresh balance every 30 seconds
   useEffect(() => {
@@ -61,7 +88,7 @@ const LiquidityForm = () => {
     }, REFRESH_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [account, tokenA, tokenB]);
+  }, [account, tokenA, tokenB, loadBalances]);
 
   // Auto-calculate Token B when Token A changes
   useEffect(() => {
@@ -78,32 +105,8 @@ const LiquidityForm = () => {
     calculateEstimatedLP();
   }, [amountA, amountB, reserves, totalSupply, isNewPool]);
 
-  const loadAccount = async () => {
-    const acc = await getCurrentAccount();
-    setAccount(acc);
-  };
-
-  const loadBalances = useCallback(async (silent = false) => {
-    if (!account) return;
-    if (!silent) setIsRefreshing(true);
-    
-    try {
-      const [balA, balB] = await Promise.all([
-        getTokenBalance(tokenA.address, account, true),
-        getTokenBalance(tokenB.address, account, true),
-      ]);
-      setBalanceA(balA);
-      setBalanceB(balB);
-      setLastRefresh(new Date());
-    } catch (error) {
-      console.error('Error loading balances:', error);
-    }
-    
-    if (!silent) setIsRefreshing(false);
-  }, [account, tokenA, tokenB]);
-
   const handleManualRefresh = () => {
-    loadBalances();
+    loadBalances(true);
     loadPairInfo();
   };
 

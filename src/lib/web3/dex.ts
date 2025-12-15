@@ -10,6 +10,7 @@ import {
   Token,
   DEFAULT_TOKENS,
 } from './dex-config';
+import * as UniswapV2Library from './uniswap-library';
 
 // Get contract instances
 export const getRouterContract = async () => {
@@ -551,4 +552,9 @@ export const calculatePriceImpact = (
   } catch {
     return 0;
   }
+};
+
+// Re-export UniswapV2Library functions for convenience
+export {
+  UniswapV2Library,
 };
