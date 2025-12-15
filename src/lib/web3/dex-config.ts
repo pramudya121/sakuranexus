@@ -9,11 +9,18 @@ export const DEX_CONTRACTS = {
   WNEX: '0xe7B71a77525fB695C4D5843D69498aD07fE95E83',
   NXSA: '0xeAbCC511340116574E5507cA732e378EFDAC7Fba',
   WETH: '0xE0bACfC884B88877A85805F0D0577b72922b1D80',
+  BNB: '0x223C9cc8fEa2d10cE7a4c2396Eb449faBef5870A',
+  USDC: '0x88b3Ec15b1000B430111bbAFB05bd8eDeeb89299',
 };
 
 // Import token logos
 import nexCoinLogo from '@/assets/nex-coin-logo.jpg';
 import nxsaTokenLogo from '@/assets/nxsa-token-logo.png';
+
+// External token logos (using popular CDN sources for crypto icons)
+const ETH_LOGO = 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png';
+const BNB_LOGO = 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/binance/info/logo.png';
+const USDC_LOGO = 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png';
 
 // Token list for DEX
 export interface Token {
@@ -51,7 +58,21 @@ export const DEFAULT_TOKENS: Token[] = [
     symbol: 'WETH',
     name: 'Wrapped ETH',
     decimals: 18,
-    logoURI: nexCoinLogo,
+    logoURI: ETH_LOGO,
+  },
+  {
+    address: DEX_CONTRACTS.BNB,
+    symbol: 'BNB',
+    name: 'Binance Coin',
+    decimals: 18,
+    logoURI: BNB_LOGO,
+  },
+  {
+    address: DEX_CONTRACTS.USDC,
+    symbol: 'USDC',
+    name: 'USD Coin',
+    decimals: 6,
+    logoURI: USDC_LOGO,
   },
 ];
 

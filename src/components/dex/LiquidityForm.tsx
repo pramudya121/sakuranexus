@@ -9,6 +9,8 @@ import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBa
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
+import LiquidityConfirmModal from './LiquidityConfirmModal';
+import LiquiditySkeleton from './LiquiditySkeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ethers } from 'ethers';
@@ -47,6 +49,9 @@ const LiquidityForm = () => {
   const [allowanceA, setAllowanceA] = useState<bigint>(BigInt(0));
   const [allowanceB, setAllowanceB] = useState<bigint>(BigInt(0));
   const [useInfiniteApproval, setUseInfiniteApproval] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmMode, setConfirmMode] = useState<'add' | 'remove'>('add');
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
     loadAccount();
@@ -55,6 +60,8 @@ const LiquidityForm = () => {
   const loadAccount = async () => {
     const acc = await getCurrentAccount();
     setAccount(acc);
+    // Allow a brief moment for initial data fetch
+    setTimeout(() => setIsInitialLoading(false), 1000);
   };
 
   const loadBalances = useCallback(async (forceRefresh = false) => {
@@ -366,6 +373,16 @@ const LiquidityForm = () => {
     setIsApproving(null);
   };
 
+  const openAddConfirmModal = () => {
+    setConfirmMode('add');
+    setShowConfirmModal(true);
+  };
+
+  const openRemoveConfirmModal = () => {
+    setConfirmMode('remove');
+    setShowConfirmModal(true);
+  };
+
   const handleAddLiquidity = async () => {
     if (!account || !amountA || !amountB) return;
 
@@ -382,6 +399,7 @@ const LiquidityForm = () => {
         setAmountB('');
         setAllowanceA(BigInt(0));
         setAllowanceB(BigInt(0));
+        setShowConfirmModal(false);
         loadBalances();
         loadPairInfo();
       } else {
@@ -414,6 +432,7 @@ const LiquidityForm = () => {
           description: `Removed ${lpAmount} LP tokens`,
         });
         setLpAmount('');
+        setShowConfirmModal(false);
         loadBalances();
         loadPairInfo();
       } else {
@@ -432,6 +451,11 @@ const LiquidityForm = () => {
     }
     setIsLoading(false);
   };
+
+  // Show skeleton while initial loading
+  if (isInitialLoading) {
+    return <LiquiditySkeleton />;
+  }
 
   return (
     <>
@@ -719,21 +743,11 @@ const LiquidityForm = () => {
 
               return (
                 <Button
-                  onClick={handleAddLiquidity}
-                  disabled={isLoading}
+                  onClick={openAddConfirmModal}
                   className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] btn-pulse"
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Adding Liquidity...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-5 h-5 mr-2" />
-                      Add Liquidity
-                    </>
-                  )}
+                  <Check className="w-5 h-5 mr-2" />
+                  Add Liquidity
                 </Button>
               );
             })()}
@@ -786,16 +800,11 @@ const LiquidityForm = () => {
             </div>
 
             <Button
-              onClick={handleRemoveLiquidity}
-              disabled={!account || !lpAmount || isLoading || parseFloat(lpAmount) > parseFloat(lpBalance)}
+              onClick={openRemoveConfirmModal}
+              disabled={!account || !lpAmount || parseFloat(lpAmount) > parseFloat(lpBalance)}
               className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Removing Liquidity...
-                </>
-              ) : !account ? (
+              {!account ? (
                 'Connect Wallet'
               ) : !lpAmount ? (
                 'Enter Amount'
@@ -808,6 +817,23 @@ const LiquidityForm = () => {
           </TabsContent>
         </Tabs>
       </Card>
+
+      {/* Confirmation Modal */}
+      <LiquidityConfirmModal
+        open={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={confirmMode === 'add' ? handleAddLiquidity : handleRemoveLiquidity}
+        isLoading={isLoading}
+        mode={confirmMode}
+        tokenA={tokenA}
+        tokenB={tokenB}
+        amountA={amountA || '0'}
+        amountB={amountB || '0'}
+        lpAmount={lpAmount}
+        estimatedLP={estimatedLPTokens}
+        poolShare={poolShare}
+        slippage={slippage}
+      />
 
       {/* Token Selectors */}
       <TokenSelector
