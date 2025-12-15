@@ -66,27 +66,30 @@ const SwapBox = () => {
     setAccount(acc);
   };
 
-  const loadBalances = useCallback(async (silent = false) => {
+  const loadBalances = useCallback(async (forceRefresh = false) => {
     if (!account) return;
-    if (!silent) setIsRefreshing(true);
+    if (forceRefresh) setIsRefreshing(true);
     
     try {
-      const [balIn, balOut] = await Promise.all([
-        getTokenBalance(tokenIn.address, account, true),
-        getTokenBalance(tokenOut.address, account, true),
-      ]);
+      // Fetch sequentially to reduce RPC load
+      const balIn = await getTokenBalance(tokenIn.address, account, forceRefresh);
       setBalanceIn(balIn);
+      
+      // Small delay between calls to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const balOut = await getTokenBalance(tokenOut.address, account, forceRefresh);
       setBalanceOut(balOut);
       setLastRefresh(new Date());
     } catch (error) {
       console.error('Error loading balances:', error);
     }
     
-    if (!silent) setIsRefreshing(false);
+    if (forceRefresh) setIsRefreshing(false);
   }, [account, tokenIn, tokenOut]);
 
   const handleManualRefresh = () => {
-    loadBalances();
+    loadBalances(true);
   };
 
   const calculateAmountOut = async () => {

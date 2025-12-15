@@ -49,11 +49,44 @@ export const isNativeToken = (address: string) => {
 
 // Simple cache for balances to reduce RPC calls
 const balanceCache: Map<string, { balance: string; timestamp: number }> = new Map();
-const CACHE_DURATION = 10000; // 10 seconds
+const CACHE_DURATION = 30000; // 30 seconds - increased to reduce RPC calls
+
+// Token decimals cache to avoid repeated calls
+const decimalsCache: Map<string, number> = new Map();
+
+// Get token decimals with caching
+const getTokenDecimals = async (tokenAddress: string, provider: ethers.BrowserProvider): Promise<number> => {
+  const cached = decimalsCache.get(tokenAddress.toLowerCase());
+  if (cached !== undefined) return cached;
+  
+  // Default to 18 for known tokens
+  const knownDecimals: Record<string, number> = {
+    [DEX_CONTRACTS.WNEX.toLowerCase()]: 18,
+    [DEX_CONTRACTS.NXSA.toLowerCase()]: 18,
+    [DEX_CONTRACTS.WETH.toLowerCase()]: 18,
+    [DEX_CONTRACTS.WETH9.toLowerCase()]: 18,
+  };
+  
+  const known = knownDecimals[tokenAddress.toLowerCase()];
+  if (known !== undefined) {
+    decimalsCache.set(tokenAddress.toLowerCase(), known);
+    return known;
+  }
+  
+  try {
+    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+    const decimals = await tokenContract.decimals();
+    decimalsCache.set(tokenAddress.toLowerCase(), Number(decimals));
+    return Number(decimals);
+  } catch {
+    // Default to 18 if we can't get decimals
+    return 18;
+  }
+};
 
 // Get token balance with caching and retry
 export const getTokenBalance = async (tokenAddress: string, account: string, forceRefresh = false): Promise<string> => {
-  const cacheKey = `${tokenAddress}-${account}`;
+  const cacheKey = `${tokenAddress.toLowerCase()}-${account.toLowerCase()}`;
   const cached = balanceCache.get(cacheKey);
   
   // Return cached value if valid and not forcing refresh
@@ -67,7 +100,7 @@ export const getTokenBalance = async (tokenAddress: string, account: string, for
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const provider = getProvider();
-      if (!provider) return '0';
+      if (!provider) return cached?.balance || '0';
 
       let balance: string;
 
@@ -76,10 +109,9 @@ export const getTokenBalance = async (tokenAddress: string, account: string, for
         balance = ethers.formatEther(rawBalance);
       } else {
         const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-        const [rawBalance, decimals] = await Promise.all([
-          tokenContract.balanceOf(account),
-          tokenContract.decimals()
-        ]);
+        // Get decimals from cache first to reduce RPC calls
+        const decimals = await getTokenDecimals(tokenAddress, provider);
+        const rawBalance = await tokenContract.balanceOf(account);
         balance = ethers.formatUnits(rawBalance, decimals);
       }
 
@@ -88,16 +120,15 @@ export const getTokenBalance = async (tokenAddress: string, account: string, for
       return balance;
     } catch (error: any) {
       lastError = error;
-      // If rate limited, wait before retry
-      if (error?.error?.code === -32002 || error?.code === 'UNKNOWN_ERROR') {
-        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+      // If rate limited or contract error, wait before retry
+      if (error?.error?.code === -32002 || error?.code === 'UNKNOWN_ERROR' || error?.code === 'CALL_EXCEPTION') {
+        await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
         continue;
       }
       break;
     }
   }
 
-  console.error('Error getting token balance after retries:', lastError);
   // Return cached value if available, even if expired
   if (cached) return cached.balance;
   return '0';
