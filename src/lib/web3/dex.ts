@@ -48,6 +48,26 @@ export const isNativeToken = (address: string) => {
   return address === '0x0000000000000000000000000000000000000000';
 };
 
+// Get deadline from blockchain timestamp (more reliable than Date.now())
+export const getDeadline = async (minutes: number = 30): Promise<number> => {
+  try {
+    const provider = getProvider();
+    if (provider) {
+      const block = await provider.getBlock('latest');
+      if (block) {
+        const blockTimestamp = Number(block.timestamp);
+        const deadline = blockTimestamp + (60 * minutes);
+        console.log('Blockchain timestamp:', blockTimestamp, 'Deadline:', deadline);
+        return deadline;
+      }
+    }
+  } catch (error) {
+    console.warn('Could not get block timestamp, using Date.now():', error);
+  }
+  // Fallback to Date.now() with extra buffer
+  return Math.floor(Date.now() / 1000) + (60 * minutes);
+};
+
 // Simple cache for balances to reduce RPC calls
 const balanceCache: Map<string, { balance: string; timestamp: number }> = new Map();
 const CACHE_DURATION = 30000; // 30 seconds - increased to reduce RPC calls
@@ -256,7 +276,7 @@ export const swapTokens = async (
     const router = await getRouterContract();
     if (!router) return { success: false, error: 'Router not found' };
 
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 30; // 30 minutes for safety
+    const deadline = await getDeadline(30); // Get deadline from blockchain
     const amountInWei = ethers.parseUnits(amountIn, tokenIn.decimals);
     const minOut = parseFloat(amountOutMin) * (1 - slippage / 100);
     const amountOutMinWei = ethers.parseUnits(minOut.toFixed(tokenOut.decimals), tokenOut.decimals);
@@ -315,7 +335,7 @@ export const addLiquidity = async (
     const router = await getRouterContract();
     if (!router) return { success: false, error: 'Router not found' };
 
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 30; // 30 minutes for safety
+    const deadline = await getDeadline(30); // Get deadline from blockchain
     const amountAWei = ethers.parseUnits(amountA, tokenA.decimals);
     const amountBWei = ethers.parseUnits(amountB, tokenB.decimals);
     const amountAMin = ethers.parseUnits((parseFloat(amountA) * (1 - slippage / 100)).toFixed(tokenA.decimals), tokenA.decimals);
@@ -382,7 +402,7 @@ export const removeLiquidity = async (
     const pairAddress = await getPairAddress(tokenA.address, tokenB.address);
     if (!pairAddress) return { success: false, error: 'Pair not found' };
 
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 30; // 30 minutes for safety
+    const deadline = await getDeadline(30); // Get deadline from blockchain
     const liquidityWei = ethers.parseUnits(liquidity, 18);
 
     // Approve LP tokens
