@@ -324,8 +324,7 @@ export const addLiquidity = async (
     let tx;
 
     if (isNativeToken(tokenA.address)) {
-      // ETH + Token
-      await approveToken(tokenB.address, DEX_CONTRACTS.UniswapV2Router02, amountBWei);
+      // ETH + Token (no approval needed for native token)
       tx = await router.addLiquidityETH(
         tokenB.address,
         amountBWei,
@@ -336,8 +335,7 @@ export const addLiquidity = async (
         { value: amountAWei }
       );
     } else if (isNativeToken(tokenB.address)) {
-      // Token + ETH
-      await approveToken(tokenA.address, DEX_CONTRACTS.UniswapV2Router02, amountAWei);
+      // Token + ETH (no approval needed for native token)
       tx = await router.addLiquidityETH(
         tokenA.address,
         amountAWei,
@@ -348,9 +346,7 @@ export const addLiquidity = async (
         { value: amountBWei }
       );
     } else {
-      // Token + Token
-      await approveToken(tokenA.address, DEX_CONTRACTS.UniswapV2Router02, amountAWei);
-      await approveToken(tokenB.address, DEX_CONTRACTS.UniswapV2Router02, amountBWei);
+      // Token + Token (approvals already done separately in LiquidityForm)
       tx = await router.addLiquidity(
         tokenA.address,
         tokenB.address,
