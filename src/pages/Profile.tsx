@@ -306,7 +306,7 @@ const Profile = () => {
       return;
     }
 
-    const result = await acceptOffer(offer.offer_id, offer.token_id, offer.offerer_address);
+    const result = await acceptOffer(offer.token_id, offer.offerer_address);
     
     if (result.success) {
       toast({

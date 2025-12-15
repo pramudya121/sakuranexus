@@ -219,7 +219,7 @@ const NFTDetail = () => {
 
     setIsProcessing(true);
     try {
-      const result = await acceptOffer(offer.offer_id, nft.token_id, offer.offerer_address);
+      const result = await acceptOffer(nft.token_id, offer.offerer_address);
       
       if (result.success) {
         toast({
