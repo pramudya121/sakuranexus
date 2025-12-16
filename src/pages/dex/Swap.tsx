@@ -1,11 +1,19 @@
+import { useState } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import SwapBox from '@/components/dex/SwapBox';
 import DEXNavigation from '@/components/dex/DEXNavigation';
 import TransactionHistory from '@/components/dex/TransactionHistory';
-import { ArrowLeftRight, TrendingUp, Shield, Zap } from 'lucide-react';
+import TradingChart from '@/components/dex/TradingChart';
+import { ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
 
 const Swap = () => {
+  const [showChart, setShowChart] = useState(true);
+  const [chartTokenIn, setChartTokenIn] = useState<Token>(DEFAULT_TOKENS[0]); // NEX
+  const [chartTokenOut, setChartTokenOut] = useState<Token>(DEFAULT_TOKENS[2]); // NXSA
+
   return (
     <div className="min-h-screen bg-background relative">
       <SakuraFalling />
@@ -16,7 +24,7 @@ const Swap = () => {
         <DEXNavigation />
         
         {/* Hero Section */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
             <ArrowLeftRight className="w-4 h-4" />
             <span className="text-sm font-medium">NEXUSAKURA DEX</span>
@@ -29,6 +37,26 @@ const Swap = () => {
             Powered by automated market maker technology.
           </p>
         </div>
+
+        {/* Chart Toggle */}
+        <div className="flex justify-center mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowChart(!showChart)}
+            className="gap-2"
+          >
+            {showChart ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {showChart ? 'Hide Chart' : 'Show Chart'}
+          </Button>
+        </div>
+
+        {/* Trading Chart */}
+        {showChart && (
+          <div className="max-w-5xl mx-auto mb-8 animate-fade-in">
+            <TradingChart tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
+          </div>
+        )}
 
         {/* Swap Interface + Transaction History */}
         <div className="grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
