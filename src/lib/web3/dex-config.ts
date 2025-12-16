@@ -47,13 +47,6 @@ export const DEFAULT_TOKENS: Token[] = [
     logoURI: nexCoinLogo,
   },
   {
-    address: DEX_CONTRACTS.WETH9,
-    symbol: 'WNEX',
-    name: 'Wrapped NEX (WETH9)',
-    decimals: 18,
-    logoURI: nexCoinLogo,
-  },
-  {
     address: DEX_CONTRACTS.NXSA,
     symbol: 'NXSA',
     name: 'NEXUSAKURA Token',
