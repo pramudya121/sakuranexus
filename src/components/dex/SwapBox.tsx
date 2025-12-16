@@ -2,14 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowDown, Settings, Loader2, ChevronDown, RefreshCw } from 'lucide-react';
+import { ArrowDown, Settings, Loader2, ChevronDown, RefreshCw, Zap } from 'lucide-react';
 import { Token, DEFAULT_TOKENS } from '@/lib/web3/dex-config';
 import { getAmountOut, swapTokens, getTokenBalance, calculatePriceImpact, getPairAddress, getReserves } from '@/lib/web3/dex';
+import { findAllRoutes, executeMultiHopSwap, Route } from '@/lib/web3/swap-router';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
 import PriceImpactWarning from './PriceImpactWarning';
 import SwapConfirmModal from './SwapConfirmModal';
+import SwapRouteDisplay from './SwapRouteDisplay';
 import { saveTransaction } from './TransactionHistory';
 import { useToast } from '@/hooks/use-toast';
 
@@ -34,6 +36,9 @@ const SwapBox = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [useSmartRouting, setUseSmartRouting] = useState(true);
+  const [bestRoute, setBestRoute] = useState<Route | null>(null);
+  const [allRoutes, setAllRoutes] = useState<Route[]>([]);
 
   useEffect(() => {
     loadAccount();
@@ -98,22 +103,55 @@ const SwapBox = () => {
 
   const calculateAmountOut = async () => {
     setIsCalculating(true);
+    setBestRoute(null);
+    setAllRoutes([]);
+    
     try {
-      const output = await getAmountOut(amountIn, tokenIn, tokenOut);
-      setAmountOut(output);
-
-      // Calculate price impact
-      const pairAddress = await getPairAddress(tokenIn.address, tokenOut.address);
-      if (pairAddress) {
-        const reserves = await getReserves(pairAddress);
-        if (reserves) {
-          const impact = calculatePriceImpact(
-            amountIn,
-            output,
-            reserves.reserve0.toString(),
-            reserves.reserve1.toString()
-          );
-          setPriceImpact(impact);
+      if (useSmartRouting) {
+        // Use smart routing to find best path
+        const routeResult = await findAllRoutes(tokenIn, tokenOut, amountIn, 3);
+        
+        if (routeResult.bestRoute) {
+          setBestRoute(routeResult.bestRoute);
+          setAllRoutes(routeResult.allRoutes);
+          setAmountOut(routeResult.bestRoute.amounts[1]);
+          setPriceImpact(routeResult.bestRoute.priceImpact);
+        } else {
+          // Fallback to direct swap calculation
+          const output = await getAmountOut(amountIn, tokenIn, tokenOut);
+          setAmountOut(output);
+          
+          const pairAddress = await getPairAddress(tokenIn.address, tokenOut.address);
+          if (pairAddress) {
+            const reserves = await getReserves(pairAddress);
+            if (reserves) {
+              const impact = calculatePriceImpact(
+                amountIn,
+                output,
+                reserves.reserve0.toString(),
+                reserves.reserve1.toString()
+              );
+              setPriceImpact(impact);
+            }
+          }
+        }
+      } else {
+        // Direct swap only
+        const output = await getAmountOut(amountIn, tokenIn, tokenOut);
+        setAmountOut(output);
+        
+        const pairAddress = await getPairAddress(tokenIn.address, tokenOut.address);
+        if (pairAddress) {
+          const reserves = await getReserves(pairAddress);
+          if (reserves) {
+            const impact = calculatePriceImpact(
+              amountIn,
+              output,
+              reserves.reserve0.toString(),
+              reserves.reserve1.toString()
+            );
+            setPriceImpact(impact);
+          }
         }
       }
     } catch (error) {
@@ -129,6 +167,8 @@ const SwapBox = () => {
     setTokenOut(tempToken);
     setAmountIn(amountOut);
     setAmountOut(tempAmount);
+    setBestRoute(null);
+    setAllRoutes([]);
   };
 
   const handleSwapClick = () => {
@@ -141,9 +181,24 @@ const SwapBox = () => {
 
     setIsLoading(true);
     try {
-      const result = await swapTokens(amountIn, amountOut, tokenIn, tokenOut, account, slippage);
+      let result;
+      
+      // Use multi-hop swap if route has more than 2 tokens
+      if (bestRoute && bestRoute.path.length > 2) {
+        result = await executeMultiHopSwap(
+          bestRoute,
+          amountIn,
+          amountOut,
+          account,
+          slippage
+        );
+      } else {
+        result = await swapTokens(amountIn, amountOut, tokenIn, tokenOut, account, slippage);
+      }
       
       if (result.success) {
+        const routePath = bestRoute ? bestRoute.path.map(t => t.symbol).join(' → ') : `${tokenIn.symbol} → ${tokenOut.symbol}`;
+        
         saveTransaction({
           hash: result.hash || '',
           type: 'swap',
@@ -157,10 +212,12 @@ const SwapBox = () => {
 
         toast({
           title: 'Swap Successful!',
-          description: `Swapped ${amountIn} ${tokenIn.symbol} for ${amountOut} ${tokenOut.symbol}`,
+          description: `Swapped via ${routePath}`,
         });
         setAmountIn('');
         setAmountOut('');
+        setBestRoute(null);
+        setAllRoutes([]);
         setShowConfirmModal(false);
         loadBalances();
       } else {
@@ -293,6 +350,31 @@ const SwapBox = () => {
               </Button>
             </div>
           </div>
+
+          {/* Smart Routing Toggle */}
+          <div className="flex items-center justify-between text-sm px-1">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-primary" />
+              <span className="text-muted-foreground">Smart Routing</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setUseSmartRouting(!useSmartRouting)}
+              className={`h-6 px-2 ${useSmartRouting ? 'text-primary' : 'text-muted-foreground'}`}
+            >
+              {useSmartRouting ? 'On' : 'Off'}
+            </Button>
+          </div>
+
+          {/* Route Display */}
+          {amountIn && amountOut && useSmartRouting && (
+            <SwapRouteDisplay 
+              route={bestRoute} 
+              allRoutes={allRoutes} 
+              isLoading={isCalculating} 
+            />
+          )}
 
           {/* Price Impact Warning */}
           {amountIn && amountOut && priceImpact >= 2 && (
