@@ -491,20 +491,29 @@ export const getPoolInfo = async (pairAddress: string): Promise<PoolInfo | null>
       pair.totalSupply(),
     ]);
 
-    // Find tokens in default list or create basic token info
-    const token0 = DEFAULT_TOKENS.find(t => t.address.toLowerCase() === token0Address.toLowerCase()) || {
-      address: token0Address,
-      symbol: 'TOKEN0',
-      name: 'Token 0',
-      decimals: 18,
+    // Find tokens in default list, also check WETH9 address for native token wrapper
+    const findToken = (address: string): Token => {
+      // Direct match
+      let token = DEFAULT_TOKENS.find(t => t.address.toLowerCase() === address.toLowerCase());
+      if (token) return token;
+      
+      // Check if it's WETH9 (native wrapper) - map to WNEX or NEX
+      if (address.toLowerCase() === DEX_CONTRACTS.WETH9.toLowerCase()) {
+        const wnex = DEFAULT_TOKENS.find(t => t.symbol === 'WNEX');
+        if (wnex) return { ...wnex, address }; // Use WNEX info but with actual address
+      }
+      
+      // Try to get token info from contract
+      return {
+        address,
+        symbol: `${address.slice(0, 6)}...`,
+        name: 'Unknown Token',
+        decimals: 18,
+      };
     };
 
-    const token1 = DEFAULT_TOKENS.find(t => t.address.toLowerCase() === token1Address.toLowerCase()) || {
-      address: token1Address,
-      symbol: 'TOKEN1',
-      name: 'Token 1',
-      decimals: 18,
-    };
+    const token0 = findToken(token0Address);
+    const token1 = findToken(token1Address);
 
     // Calculate dummy TVL, volume, APR for display
     const reserve0Formatted = ethers.formatUnits(reserves[0], token0.decimals);

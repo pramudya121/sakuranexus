@@ -213,20 +213,24 @@ const LiquidityForm = () => {
     }
 
     try {
-      // Sort tokens to match reserve order
-      const tokenALower = tokenA.address.toLowerCase();
-      const tokenBLower = tokenB.address.toLowerCase();
-      const isTokenAFirst = tokenALower < tokenBLower;
-
-      const reserveA = isTokenAFirst ? reserves.reserve0 : reserves.reserve1;
-      const reserveB = isTokenAFirst ? reserves.reserve1 : reserves.reserve0;
-
-      // Calculate: amountB = (amountA * reserveB) / reserveA
-      const amountAWei = BigInt(Math.floor(parseFloat(inputA) * 1e18));
-      const amountBWei = (amountAWei * reserveB) / reserveA;
-      const calculatedB = Number(amountBWei) / 1e18;
+      // Get the actual token addresses used in the pair (WETH9 for native)
+      const addressA = isNativeToken(tokenA.address) ? DEX_CONTRACTS.WETH9 : tokenA.address;
+      const addressB = isNativeToken(tokenB.address) ? DEX_CONTRACTS.WETH9 : tokenB.address;
       
-      setAmountB(calculatedB.toFixed(6));
+      // Match with reserves.token0 and reserves.token1 from the pair contract
+      const isTokenAToken0 = reserves.token0.toLowerCase() === addressA.toLowerCase();
+      
+      const reserveA = isTokenAToken0 ? reserves.reserve0 : reserves.reserve1;
+      const reserveB = isTokenAToken0 ? reserves.reserve1 : reserves.reserve0;
+
+      // Use proper decimals for calculation
+      const amountAWei = ethers.parseUnits(inputA, tokenA.decimals);
+      const amountBWei = (amountAWei * reserveB) / reserveA;
+      const calculatedB = ethers.formatUnits(amountBWei, tokenB.decimals);
+      
+      // Limit decimal places based on token decimals
+      const decimalPlaces = Math.min(6, tokenB.decimals);
+      setAmountB(parseFloat(calculatedB).toFixed(decimalPlaces));
     } catch (error) {
       console.error('Error calculating amount B:', error);
     }
@@ -251,12 +255,11 @@ const LiquidityForm = () => {
         setPoolShare(100); // 100% for new pool
       } else if (reserves && totalSupply && parseFloat(totalSupply) > 0) {
         // For existing pool: LP = min(amountA * totalSupply / reserveA, amountB * totalSupply / reserveB)
-        const tokenALower = tokenA.address.toLowerCase();
-        const tokenBLower = tokenB.address.toLowerCase();
-        const isTokenAFirst = tokenALower < tokenBLower;
+        const addressA = isNativeToken(tokenA.address) ? DEX_CONTRACTS.WETH9 : tokenA.address;
+        const isTokenAToken0 = reserves.token0.toLowerCase() === addressA.toLowerCase();
 
-        const reserveA = Number(isTokenAFirst ? reserves.reserve0 : reserves.reserve1) / 1e18;
-        const reserveB = Number(isTokenAFirst ? reserves.reserve1 : reserves.reserve0) / 1e18;
+        const reserveA = Number(ethers.formatUnits(isTokenAToken0 ? reserves.reserve0 : reserves.reserve1, tokenA.decimals));
+        const reserveB = Number(ethers.formatUnits(isTokenAToken0 ? reserves.reserve1 : reserves.reserve0, tokenB.decimals));
         const supply = parseFloat(totalSupply);
 
         const lpFromA = (amountANum * supply) / reserveA;
@@ -285,18 +288,22 @@ const LiquidityForm = () => {
     // Reverse calculate Token A when user manually inputs Token B
     if (reserves && !isNewPool && value && parseFloat(value) > 0) {
       try {
-        const tokenALower = tokenA.address.toLowerCase();
-        const tokenBLower = tokenB.address.toLowerCase();
-        const isTokenAFirst = tokenALower < tokenBLower;
-
-        const reserveA = isTokenAFirst ? reserves.reserve0 : reserves.reserve1;
-        const reserveB = isTokenAFirst ? reserves.reserve1 : reserves.reserve0;
-
-        const amountBWei = BigInt(Math.floor(parseFloat(value) * 1e18));
-        const amountAWei = (amountBWei * reserveA) / reserveB;
-        const calculatedA = Number(amountAWei) / 1e18;
+        // Get the actual token addresses used in the pair (WETH9 for native)
+        const addressA = isNativeToken(tokenA.address) ? DEX_CONTRACTS.WETH9 : tokenA.address;
+        const addressB = isNativeToken(tokenB.address) ? DEX_CONTRACTS.WETH9 : tokenB.address;
         
-        setAmountA(calculatedA.toFixed(6));
+        // Match with reserves.token0 and reserves.token1 from the pair contract
+        const isTokenAToken0 = reserves.token0.toLowerCase() === addressA.toLowerCase();
+        
+        const reserveA = isTokenAToken0 ? reserves.reserve0 : reserves.reserve1;
+        const reserveB = isTokenAToken0 ? reserves.reserve1 : reserves.reserve0;
+
+        const amountBWei = ethers.parseUnits(value, tokenB.decimals);
+        const amountAWei = (amountBWei * reserveA) / reserveB;
+        const calculatedA = ethers.formatUnits(amountAWei, tokenA.decimals);
+        
+        const decimalPlaces = Math.min(6, tokenA.decimals);
+        setAmountA(parseFloat(calculatedA).toFixed(decimalPlaces));
       } catch (error) {
         console.error('Error calculating amount A:', error);
       }
