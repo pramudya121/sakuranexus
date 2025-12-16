@@ -6,7 +6,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
 import { getTokenBalance } from '@/lib/web3/dex';
 import { getCurrentAccount } from '@/lib/web3/wallet';
-import { Search, Check, Loader2, Plus, X } from 'lucide-react';
+import { Search, Check, Loader2, Plus, X, BarChart2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import CustomTokenImport, { getCustomTokens, removeCustomToken } from './CustomTokenImport';
 
 interface TokenSelectorProps {
@@ -18,6 +19,7 @@ interface TokenSelectorProps {
 }
 
 const TokenSelector = ({ open, onClose, onSelect, selectedToken, disabledToken }: TokenSelectorProps) => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [balances, setBalances] = useState<Record<string, string>>({});
   const [loadingBalances, setLoadingBalances] = useState(false);
@@ -71,6 +73,11 @@ const TokenSelector = ({ open, onClose, onSelect, selectedToken, disabledToken }
     setCustomTokens(getCustomTokens());
   };
 
+  const handleViewAnalytics = (e: React.MouseEvent, tokenAddress: string) => {
+    e.stopPropagation();
+    onClose();
+    navigate(`/dex/token/${tokenAddress}`);
+  };
   const filteredTokens = allTokens.filter(
     (token) =>
       token.symbol.toLowerCase().includes(search.toLowerCase()) ||
@@ -167,6 +174,13 @@ const TokenSelector = ({ open, onClose, onSelect, selectedToken, disabledToken }
                     ) : (
                       <p className="text-sm font-medium">{formatBalance(balance)}</p>
                     )}
+                    <button
+                      onClick={(e) => handleViewAnalytics(e, token.address)}
+                      className="p-1 hover:bg-primary/20 rounded-full transition-colors"
+                      title="View token analytics"
+                    >
+                      <BarChart2 className="w-4 h-4 text-primary" />
+                    </button>
                     {isSelected && <Check className="w-5 h-5 text-primary" />}
                     {isCustomToken(token.address) && (
                       <button
