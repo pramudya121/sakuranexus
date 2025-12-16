@@ -387,13 +387,61 @@ export const addLiquidity = async (
   }
 };
 
+// Calculate estimated output amounts when removing liquidity
+export const calculateRemoveLiquidityAmounts = async (
+  tokenA: Token,
+  tokenB: Token,
+  liquidity: string
+): Promise<{ amountA: string; amountB: string } | null> => {
+  try {
+    const pairAddress = await getPairAddress(tokenA.address, tokenB.address);
+    if (!pairAddress || pairAddress === '0x0000000000000000000000000000000000000000') {
+      return null;
+    }
+
+    const reserves = await getReserves(pairAddress);
+    if (!reserves) return null;
+
+    const provider = getProvider();
+    if (!provider) return null;
+
+    const pairContract = new ethers.Contract(pairAddress, UNISWAP_V2_PAIR_ABI, provider);
+    const totalSupply = await pairContract.totalSupply();
+    
+    if (totalSupply === 0n) return null;
+
+    const liquidityWei = ethers.parseUnits(liquidity, 18);
+    
+    // Get actual token addresses (WETH9 for native)
+    const addressA = isNativeToken(tokenA.address) ? DEX_CONTRACTS.WETH9 : tokenA.address;
+    const isTokenAToken0 = reserves.token0.toLowerCase() === addressA.toLowerCase();
+    
+    const reserveA = isTokenAToken0 ? reserves.reserve0 : reserves.reserve1;
+    const reserveB = isTokenAToken0 ? reserves.reserve1 : reserves.reserve0;
+
+    // Calculate amounts: amount = liquidity * reserve / totalSupply
+    const amountAWei = (liquidityWei * reserveA) / totalSupply;
+    const amountBWei = (liquidityWei * reserveB) / totalSupply;
+
+    return {
+      amountA: ethers.formatUnits(amountAWei, tokenA.decimals),
+      amountB: ethers.formatUnits(amountBWei, tokenB.decimals),
+    };
+  } catch (error) {
+    console.error('Error calculating remove liquidity amounts:', error);
+    return null;
+  }
+};
+
 // Remove liquidity
 export const removeLiquidity = async (
   tokenA: Token,
   tokenB: Token,
   liquidity: string,
   account: string,
-  slippage: number
+  slippage: number,
+  expectedAmountA?: string,
+  expectedAmountB?: string
 ): Promise<{ success: boolean; hash?: string; error?: string }> => {
   try {
     const router = await getRouterContract();
@@ -405,20 +453,30 @@ export const removeLiquidity = async (
     const deadline = await getDeadline(30); // Get deadline from blockchain
     const liquidityWei = ethers.parseUnits(liquidity, 18);
 
-    // Approve LP tokens
-    await approveToken(pairAddress, DEX_CONTRACTS.UniswapV2Router02, liquidityWei);
+    // Calculate minimum amounts with slippage protection
+    let amountAMin = BigInt(0);
+    let amountBMin = BigInt(0);
+    
+    if (expectedAmountA && expectedAmountB) {
+      const expectedA = ethers.parseUnits(expectedAmountA, tokenA.decimals);
+      const expectedB = ethers.parseUnits(expectedAmountB, tokenB.decimals);
+      const slippageMultiplier = BigInt(Math.floor((100 - slippage) * 100));
+      amountAMin = (expectedA * slippageMultiplier) / BigInt(10000);
+      amountBMin = (expectedB * slippageMultiplier) / BigInt(10000);
+    }
 
     let tx;
-    const amountAMin = 0;
-    const amountBMin = 0;
 
     if (isNativeToken(tokenA.address) || isNativeToken(tokenB.address)) {
       const token = isNativeToken(tokenA.address) ? tokenB : tokenA;
+      const amountTokenMin = isNativeToken(tokenA.address) ? amountBMin : amountAMin;
+      const amountETHMin = isNativeToken(tokenA.address) ? amountAMin : amountBMin;
+      
       tx = await router.removeLiquidityETH(
         token.address,
         liquidityWei,
-        amountAMin,
-        amountBMin,
+        amountTokenMin,
+        amountETHMin,
         account,
         deadline
       );
