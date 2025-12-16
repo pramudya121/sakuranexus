@@ -2,6 +2,7 @@ import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import SwapBox from '@/components/dex/SwapBox';
 import DEXNavigation from '@/components/dex/DEXNavigation';
+import TransactionHistory from '@/components/dex/TransactionHistory';
 import { ArrowLeftRight, TrendingUp, Shield, Zap } from 'lucide-react';
 
 const Swap = () => {
@@ -29,9 +30,10 @@ const Swap = () => {
           </p>
         </div>
 
-        {/* Swap Interface */}
-        <div className="max-w-md mx-auto mb-16">
+        {/* Swap Interface + Transaction History */}
+        <div className="grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
           <SwapBox />
+          <TransactionHistory />
         </div>
 
         {/* Features */}

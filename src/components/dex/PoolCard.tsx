@@ -146,12 +146,21 @@ const PoolCard = ({ pool }: PoolCardProps) => {
         </div>
       </div>
 
-      <Button
-        onClick={() => navigate('/dex/liquidity')}
-        className="w-full bg-gradient-sakura hover:shadow-sakura"
-      >
-        Add Liquidity
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/dex/pool/${pool.pairAddress}`)}
+          className="flex-1"
+        >
+          View Details
+        </Button>
+        <Button
+          onClick={() => navigate('/dex/liquidity')}
+          className="flex-1 bg-gradient-sakura hover:shadow-sakura"
+        >
+          Add Liquidity
+        </Button>
+      </div>
     </Card>
   );
 };
