@@ -48,10 +48,20 @@ const PoolFavorites = () => {
 
     for (const address of favoriteAddresses) {
       try {
+        // Skip dummy/demo addresses that start with 0x000000
+        if (address.startsWith('0x000000')) {
+          // Remove invalid demo addresses from favorites
+          removeFavoritePool(address);
+          continue;
+        }
         const poolInfo = await getPoolInfo(address);
-        pools.push(poolInfo);
+        if (poolInfo) {
+          pools.push(poolInfo);
+        }
       } catch (error) {
         console.error(`Error loading pool ${address}:`, error);
+        // Remove invalid addresses from favorites to prevent future errors
+        removeFavoritePool(address);
       }
     }
 
