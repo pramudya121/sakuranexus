@@ -1,10 +1,12 @@
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { PoolInfo } from '@/lib/web3/dex';
-import { TrendingUp, Droplets, BarChart3 } from 'lucide-react';
+import { TrendingUp, Droplets, BarChart3, Star } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts';
+import { isFavoritePool, addFavoritePool, removeFavoritePool } from './PoolFavorites';
 
 interface PoolCardProps {
   pool: PoolInfo;
@@ -26,6 +28,21 @@ const generateMockPriceHistory = (basePrice: number) => {
 
 const PoolCard = ({ pool }: PoolCardProps) => {
   const navigate = useNavigate();
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    setIsFavorite(isFavoritePool(pool.pairAddress));
+  }, [pool.pairAddress]);
+
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isFavorite) {
+      removeFavoritePool(pool.pairAddress);
+    } else {
+      addFavoritePool(pool.pairAddress);
+    }
+    setIsFavorite(!isFavorite);
+  };
   
   // Generate mock price history based on pool ratio
   const basePrice = pool.reserve1 && pool.reserve0 ? 
@@ -43,7 +60,14 @@ const PoolCard = ({ pool }: PoolCardProps) => {
   };
 
   return (
-    <Card className="glass border-border/50 p-4 hover:border-primary/50 transition-all duration-300">
+    <Card className="glass border-border/50 p-4 hover:border-primary/50 transition-all duration-300 relative">
+      {/* Favorite Button */}
+      <button 
+        onClick={toggleFavorite}
+        className="absolute top-3 right-3 p-1 hover:scale-110 transition-transform"
+      >
+        <Star className={`w-5 h-5 ${isFavorite ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`} />
+      </button>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="flex -space-x-2">

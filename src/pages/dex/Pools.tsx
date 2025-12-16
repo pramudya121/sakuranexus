@@ -3,12 +3,15 @@ import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import PoolCard from '@/components/dex/PoolCard';
 import DEXNavigation from '@/components/dex/DEXNavigation';
+import MyPositions from '@/components/dex/MyPositions';
+import PoolFavorites from '@/components/dex/PoolFavorites';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
-import { Search, Plus, Loader2, Waves, TrendingUp, BarChart3, RefreshCw, Droplets } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, Plus, Loader2, Waves, TrendingUp, BarChart3, RefreshCw, Droplets, Star, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getAllPairs, getPoolInfo, PoolInfo } from '@/lib/web3/dex';
 import { DEFAULT_TOKENS } from '@/lib/web3/dex-config';
@@ -222,6 +225,11 @@ const Pools = () => {
           </div>
         </div>
 
+        {/* My Positions & Favorites */}
+        <div className="grid lg:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+          <MyPositions />
+          <PoolFavorites />
+        </div>
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-8 max-w-4xl mx-auto">
           <div className="relative flex-1">
