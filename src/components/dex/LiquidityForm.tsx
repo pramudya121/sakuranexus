@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins, Check, Infinity } from 'lucide-react';
 import { Token, DEFAULT_TOKENS, DEX_CONTRACTS } from '@/lib/web3/dex-config';
-import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves, checkAllowance, approveToken, isNativeToken } from '@/lib/web3/dex';
+import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves, checkAllowance, approveToken, isNativeToken, calculateRemoveLiquidityAmounts } from '@/lib/web3/dex';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
@@ -33,7 +33,7 @@ const LiquidityForm = () => {
   const [lpBalance, setLpBalance] = useState('0');
   const [slippage, setSlippage] = useState(0.5);
   const [isLoading, setIsLoading] = useState(false);
-  const [isApproving, setIsApproving] = useState<'A' | 'B' | null>(null);
+  const [isApproving, setIsApproving] = useState<'A' | 'B' | 'LP' | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [account, setAccount] = useState<string | null>(null);
   const [showTokenSelectorA, setShowTokenSelectorA] = useState(false);
@@ -49,10 +49,13 @@ const LiquidityForm = () => {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [allowanceA, setAllowanceA] = useState<bigint>(BigInt(0));
   const [allowanceB, setAllowanceB] = useState<bigint>(BigInt(0));
+  const [allowanceLP, setAllowanceLP] = useState<bigint>(BigInt(0));
   const [useInfiniteApproval, setUseInfiniteApproval] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmMode, setConfirmMode] = useState<'add' | 'remove'>('add');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [estimatedRemoveA, setEstimatedRemoveA] = useState('0');
+  const [estimatedRemoveB, setEstimatedRemoveB] = useState('0');
 
   useEffect(() => {
     loadAccount();
@@ -153,6 +156,44 @@ const LiquidityForm = () => {
   useEffect(() => {
     calculateEstimatedLP();
   }, [amountA, amountB, reserves, totalSupply, isNewPool]);
+
+  // Calculate estimated output when removing liquidity
+  useEffect(() => {
+    const calculateRemoveAmounts = async () => {
+      if (!lpAmount || parseFloat(lpAmount) <= 0 || !pairAddress) {
+        setEstimatedRemoveA('0');
+        setEstimatedRemoveB('0');
+        return;
+      }
+      
+      const amounts = await calculateRemoveLiquidityAmounts(tokenA, tokenB, lpAmount);
+      if (amounts) {
+        setEstimatedRemoveA(amounts.amountA);
+        setEstimatedRemoveB(amounts.amountB);
+      }
+    };
+    
+    calculateRemoveAmounts();
+  }, [lpAmount, tokenA, tokenB, pairAddress]);
+
+  // Check LP token allowance for remove liquidity
+  useEffect(() => {
+    const checkLPAllowance = async () => {
+      if (!account || !pairAddress || !lpAmount || parseFloat(lpAmount) <= 0) {
+        setAllowanceLP(BigInt(0));
+        return;
+      }
+      
+      try {
+        const allowance = await checkAllowance(pairAddress, account, DEX_CONTRACTS.UniswapV2Router02);
+        setAllowanceLP(allowance);
+      } catch (error) {
+        console.error('Error checking LP allowance:', error);
+      }
+    };
+    
+    checkLPAllowance();
+  }, [account, pairAddress, lpAmount]);
 
   const handleManualRefresh = () => {
     loadBalances(true);
@@ -381,6 +422,42 @@ const LiquidityForm = () => {
     setIsApproving(null);
   };
 
+  const handleApproveLPToken = async () => {
+    if (!account || !lpAmount || !pairAddress) return;
+    setIsApproving('LP');
+    try {
+      const approvalAmount = useInfiniteApproval 
+        ? MAX_UINT256 
+        : ethers.parseUnits(lpAmount, 18);
+      
+      const success = await approveToken(pairAddress, DEX_CONTRACTS.UniswapV2Router02, approvalAmount);
+      if (success) {
+        toast({
+          title: 'LP Token Approved!',
+          description: useInfiniteApproval 
+            ? 'LP tokens approved with unlimited spending' 
+            : 'LP tokens approved for removal',
+        });
+        // Recheck allowance
+        const newAllowance = await checkAllowance(pairAddress, account, DEX_CONTRACTS.UniswapV2Router02);
+        setAllowanceLP(newAllowance);
+      } else {
+        toast({
+          title: 'Approval Failed',
+          description: 'Failed to approve LP tokens',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Approval Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+    setIsApproving(null);
+  };
+
   const openAddConfirmModal = () => {
     setConfirmMode('add');
     setShowConfirmModal(true);
@@ -443,7 +520,15 @@ const LiquidityForm = () => {
 
     setIsLoading(true);
     try {
-      const result = await removeLiquidity(tokenA, tokenB, lpAmount, account, slippage);
+      const result = await removeLiquidity(
+        tokenA, 
+        tokenB, 
+        lpAmount, 
+        account, 
+        slippage,
+        estimatedRemoveA,
+        estimatedRemoveB
+      );
       
       if (result.success) {
         saveTransaction({
@@ -452,15 +537,19 @@ const LiquidityForm = () => {
           tokenIn: tokenA.symbol,
           tokenOut: tokenB.symbol,
           amountIn: lpAmount,
+          amountOut: `${parseFloat(estimatedRemoveA).toFixed(6)} ${tokenA.symbol} + ${parseFloat(estimatedRemoveB).toFixed(6)} ${tokenB.symbol}`,
           timestamp: Date.now(),
           status: 'success',
         });
 
         toast({
           title: 'Liquidity Removed!',
-          description: `Removed ${lpAmount} LP tokens`,
+          description: `Received ${parseFloat(estimatedRemoveA).toFixed(4)} ${tokenA.symbol} + ${parseFloat(estimatedRemoveB).toFixed(4)} ${tokenB.symbol}`,
         });
         setLpAmount('');
+        setEstimatedRemoveA('0');
+        setEstimatedRemoveB('0');
+        setAllowanceLP(BigInt(0));
         setShowConfirmModal(false);
         loadBalances();
         loadPairInfo();
@@ -822,27 +911,119 @@ const LiquidityForm = () => {
               </div>
             </div>
 
-            <div className="bg-secondary/20 rounded-lg p-3 space-y-2 text-sm transition-all duration-300 hover:bg-secondary/30">
-              <p className="text-muted-foreground text-center">
-                Removing liquidity for {tokenA.symbol} / {tokenB.symbol}
-              </p>
-            </div>
+            {/* Estimated Output */}
+            {lpAmount && parseFloat(lpAmount) > 0 && (
+              <div className="bg-secondary/30 rounded-xl p-4 space-y-3 animate-fade-in-up">
+                <p className="text-sm text-muted-foreground text-center mb-2">You will receive (estimated)</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {tokenA.logoURI ? (
+                      <img src={tokenA.logoURI} alt={tokenA.symbol} className="w-6 h-6 rounded-full" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
+                        {tokenA.symbol.charAt(0)}
+                      </div>
+                    )}
+                    <span className="font-medium">{tokenA.symbol}</span>
+                  </div>
+                  <span className="text-lg font-bold text-primary number-transition">
+                    {parseFloat(estimatedRemoveA).toFixed(6)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {tokenB.logoURI ? (
+                      <img src={tokenB.logoURI} alt={tokenB.symbol} className="w-6 h-6 rounded-full" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
+                        {tokenB.symbol.charAt(0)}
+                      </div>
+                    )}
+                    <span className="font-medium">{tokenB.symbol}</span>
+                  </div>
+                  <span className="text-lg font-bold text-primary number-transition">
+                    {parseFloat(estimatedRemoveB).toFixed(6)}
+                  </span>
+                </div>
+              </div>
+            )}
 
-            <Button
-              onClick={openRemoveConfirmModal}
-              disabled={!account || !lpAmount || parseFloat(lpAmount) > parseFloat(lpBalance)}
-              className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {!account ? (
-                'Connect Wallet'
-              ) : !lpAmount ? (
-                'Enter Amount'
-              ) : parseFloat(lpAmount) > parseFloat(lpBalance) ? (
-                'Insufficient LP Balance'
-              ) : (
-                'Remove Liquidity'
-              )}
-            </Button>
+            {/* LP Approval Status */}
+            {lpAmount && parseFloat(lpAmount) > 0 && (
+              <div className="bg-secondary/20 rounded-lg p-3 space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">LP Token Approval</span>
+                  {allowanceLP >= ethers.parseUnits(lpAmount || '0', 18) ? (
+                    <span className="text-green-500 flex items-center gap-1"><Check className="w-4 h-4" /> Approved</span>
+                  ) : (
+                    <span className="text-yellow-500">Needs Approval</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Slippage Tolerance</span>
+                  <span className="font-medium">{slippage}%</span>
+                </div>
+              </div>
+            )}
+
+            {/* Approval/Remove Buttons */}
+            {(() => {
+              const lpAmountWei = lpAmount ? ethers.parseUnits(lpAmount, 18) : BigInt(0);
+              const needsApprovalLP = lpAmountWei > 0n && allowanceLP < lpAmountWei;
+
+              if (!account) {
+                return (
+                  <Button disabled className="w-full h-14 text-lg font-bold bg-gradient-sakura opacity-70">
+                    Connect Wallet
+                  </Button>
+                );
+              }
+
+              if (!lpAmount || parseFloat(lpAmount) === 0) {
+                return (
+                  <Button disabled className="w-full h-14 text-lg font-bold bg-gradient-sakura opacity-70">
+                    Enter Amount
+                  </Button>
+                );
+              }
+
+              if (parseFloat(lpAmount) > parseFloat(lpBalance)) {
+                return (
+                  <Button disabled className="w-full h-14 text-lg font-bold bg-gradient-sakura opacity-70">
+                    Insufficient LP Balance
+                  </Button>
+                );
+              }
+
+              if (needsApprovalLP) {
+                return (
+                  <Button
+                    onClick={handleApproveLPToken}
+                    disabled={isApproving === 'LP'}
+                    className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] btn-pulse"
+                  >
+                    {isApproving === 'LP' ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Approving LP Tokens...
+                      </>
+                    ) : (
+                      <>Approve LP Tokens</>
+                    )}
+                  </Button>
+                );
+              }
+
+              return (
+                <Button
+                  onClick={openRemoveConfirmModal}
+                  className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Minus className="w-5 h-5 mr-2" />
+                  Remove Liquidity
+                </Button>
+              );
+            })()}
           </TabsContent>
         </Tabs>
       </Card>
@@ -856,8 +1037,8 @@ const LiquidityForm = () => {
         mode={confirmMode}
         tokenA={tokenA}
         tokenB={tokenB}
-        amountA={amountA || '0'}
-        amountB={amountB || '0'}
+        amountA={confirmMode === 'add' ? (amountA || '0') : estimatedRemoveA}
+        amountB={confirmMode === 'add' ? (amountB || '0') : estimatedRemoveB}
         lpAmount={lpAmount}
         estimatedLP={estimatedLPTokens}
         poolShare={poolShare}

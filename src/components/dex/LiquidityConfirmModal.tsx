@@ -51,8 +51,21 @@ const LiquidityConfirmModal = ({
         </DialogHeader>
         
         <div className="space-y-4 py-4">
+          {/* LP Tokens being burned (for remove mode) */}
+          {mode === 'remove' && lpAmount && (
+            <div className="bg-destructive/10 rounded-xl p-4 animate-fade-in-up border border-destructive/20">
+              <p className="text-sm text-muted-foreground text-center mb-2">LP Tokens to Burn</p>
+              <p className="text-2xl font-bold text-center text-destructive number-transition">
+                {parseFloat(lpAmount).toFixed(6)} LP
+              </p>
+            </div>
+          )}
+
           {/* Token Summary */}
           <div className="bg-secondary/30 rounded-xl p-4 space-y-3 animate-fade-in-up">
+            <p className="text-sm text-muted-foreground text-center">
+              {mode === 'add' ? 'You will deposit' : 'You will receive (estimated)'}
+            </p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {tokenA.logoURI ? (
@@ -64,12 +77,14 @@ const LiquidityConfirmModal = ({
                 )}
                 <span className="font-medium">{tokenA.symbol}</span>
               </div>
-              <span className="text-lg font-bold number-transition">{parseFloat(amountA).toFixed(6)}</span>
+              <span className={`text-lg font-bold number-transition ${mode === 'remove' ? 'text-green-500' : ''}`}>
+                {mode === 'remove' ? '+' : ''}{parseFloat(amountA).toFixed(6)}
+              </span>
             </div>
             
             <div className="flex justify-center">
               <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                {mode === 'add' ? <span className="text-primary font-bold">+</span> : <ArrowRight className="w-3 h-3 text-primary" />}
+                {mode === 'add' ? <span className="text-primary font-bold">+</span> : <span className="text-green-500 font-bold">+</span>}
               </div>
             </div>
             
@@ -84,7 +99,9 @@ const LiquidityConfirmModal = ({
                 )}
                 <span className="font-medium">{tokenB.symbol}</span>
               </div>
-              <span className="text-lg font-bold number-transition">{parseFloat(amountB).toFixed(6)}</span>
+              <span className={`text-lg font-bold number-transition ${mode === 'remove' ? 'text-green-500' : ''}`}>
+                {mode === 'remove' ? '+' : ''}{parseFloat(amountB).toFixed(6)}
+              </span>
             </div>
           </div>
 
