@@ -12,6 +12,7 @@ import SlippageSettings from './SlippageSettings';
 import LiquidityConfirmModal from './LiquidityConfirmModal';
 import LiquiditySkeleton from './LiquiditySkeleton';
 import { useToast } from '@/hooks/use-toast';
+import { saveTransaction } from './TransactionHistory';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ethers } from 'ethers';
 
@@ -398,6 +399,17 @@ const LiquidityForm = () => {
       const result = await addLiquidity(tokenA, tokenB, amountA, amountB, account, slippage);
       
       if (result.success) {
+        saveTransaction({
+          hash: result.hash || '',
+          type: 'add_liquidity',
+          tokenIn: tokenA.symbol,
+          tokenOut: tokenB.symbol,
+          amountIn: amountA,
+          amountOut: amountB,
+          timestamp: Date.now(),
+          status: 'success',
+        });
+
         toast({
           title: 'Liquidity Added!',
           description: `Added ${amountA} ${tokenA.symbol} + ${amountB} ${tokenB.symbol}`,
@@ -434,6 +446,16 @@ const LiquidityForm = () => {
       const result = await removeLiquidity(tokenA, tokenB, lpAmount, account, slippage);
       
       if (result.success) {
+        saveTransaction({
+          hash: result.hash || '',
+          type: 'remove_liquidity',
+          tokenIn: tokenA.symbol,
+          tokenOut: tokenB.symbol,
+          amountIn: lpAmount,
+          timestamp: Date.now(),
+          status: 'success',
+        });
+
         toast({
           title: 'Liquidity Removed!',
           description: `Removed ${lpAmount} LP tokens`,

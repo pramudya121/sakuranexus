@@ -9,10 +9,11 @@ import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
 import PriceImpactWarning from './PriceImpactWarning';
+import SwapConfirmModal from './SwapConfirmModal';
 import { saveTransaction } from './TransactionHistory';
 import { useToast } from '@/hooks/use-toast';
 
-const REFRESH_INTERVAL = 30000; // 30 seconds
+const REFRESH_INTERVAL = 30000;
 
 const SwapBox = () => {
   const { toast } = useToast();
@@ -31,6 +32,7 @@ const SwapBox = () => {
   const [showTokenSelectorIn, setShowTokenSelectorIn] = useState(false);
   const [showTokenSelectorOut, setShowTokenSelectorOut] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -129,6 +131,11 @@ const SwapBox = () => {
     setAmountOut(tempAmount);
   };
 
+  const handleSwapClick = () => {
+    if (!account || !amountIn || !amountOut) return;
+    setShowConfirmModal(true);
+  };
+
   const handleSwap = async () => {
     if (!account || !amountIn || !amountOut) return;
 
@@ -137,7 +144,6 @@ const SwapBox = () => {
       const result = await swapTokens(amountIn, amountOut, tokenIn, tokenOut, account, slippage);
       
       if (result.success) {
-        // Save transaction to history
         saveTransaction({
           hash: result.hash || '',
           type: 'swap',
@@ -155,6 +161,7 @@ const SwapBox = () => {
         });
         setAmountIn('');
         setAmountOut('');
+        setShowConfirmModal(false);
         loadBalances();
       } else {
         toast({
@@ -174,6 +181,7 @@ const SwapBox = () => {
   };
 
   const minReceived = amountOut ? (parseFloat(amountOut) * (1 - slippage / 100)).toFixed(6) : '0';
+  const rate = amountIn && amountOut ? `1 ${tokenIn.symbol} = ${(parseFloat(amountOut) / parseFloat(amountIn)).toFixed(6)} ${tokenOut.symbol}` : '';
 
   return (
     <>
@@ -319,16 +327,11 @@ const SwapBox = () => {
 
           {/* Swap Button */}
           <Button
-            onClick={handleSwap}
+            onClick={handleSwapClick}
             disabled={!account || !amountIn || !amountOut || isLoading || parseFloat(amountIn) > parseFloat(balanceIn)}
             className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Swapping...
-              </>
-            ) : !account ? (
+            {!account ? (
               'Connect Wallet'
             ) : !amountIn ? (
               'Enter Amount'
@@ -340,6 +343,22 @@ const SwapBox = () => {
           </Button>
         </div>
       </Card>
+
+      {/* Swap Confirm Modal */}
+      <SwapConfirmModal
+        open={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleSwap}
+        isLoading={isLoading}
+        tokenIn={tokenIn}
+        tokenOut={tokenOut}
+        amountIn={amountIn}
+        amountOut={amountOut}
+        priceImpact={priceImpact}
+        minReceived={minReceived}
+        slippage={slippage}
+        rate={rate}
+      />
 
       {/* Token Selectors */}
       <TokenSelector
