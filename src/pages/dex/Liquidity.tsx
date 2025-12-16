@@ -2,6 +2,8 @@ import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import LiquidityForm from '@/components/dex/LiquidityForm';
 import DEXNavigation from '@/components/dex/DEXNavigation';
+import MyPositions from '@/components/dex/MyPositions';
+import PoolFavorites from '@/components/dex/PoolFavorites';
 import { Droplets, Percent, Gift, PiggyBank } from 'lucide-react';
 
 const Liquidity = () => {
@@ -29,9 +31,18 @@ const Liquidity = () => {
           </p>
         </div>
 
-        {/* Liquidity Form */}
-        <div className="max-w-md mx-auto mb-16">
-          <LiquidityForm />
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
+          {/* Left Column - Liquidity Form */}
+          <div className="space-y-6">
+            <LiquidityForm />
+          </div>
+          
+          {/* Right Column - Positions & Favorites */}
+          <div className="space-y-6">
+            <MyPositions />
+            <PoolFavorites />
+          </div>
         </div>
 
         {/* Benefits */}
