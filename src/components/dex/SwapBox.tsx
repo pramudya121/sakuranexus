@@ -8,6 +8,8 @@ import { getAmountOut, swapTokens, getTokenBalance, calculatePriceImpact, getPai
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
+import PriceImpactWarning from './PriceImpactWarning';
+import { saveTransaction } from './TransactionHistory';
 import { useToast } from '@/hooks/use-toast';
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -135,6 +137,18 @@ const SwapBox = () => {
       const result = await swapTokens(amountIn, amountOut, tokenIn, tokenOut, account, slippage);
       
       if (result.success) {
+        // Save transaction to history
+        saveTransaction({
+          hash: result.hash || '',
+          type: 'swap',
+          tokenIn: tokenIn.symbol,
+          tokenOut: tokenOut.symbol,
+          amountIn: amountIn,
+          amountOut: amountOut,
+          timestamp: Date.now(),
+          status: 'success',
+        });
+
         toast({
           title: 'Swap Successful!',
           description: `Swapped ${amountIn} ${tokenIn.symbol} for ${amountOut} ${tokenOut.symbol}`,
@@ -271,6 +285,11 @@ const SwapBox = () => {
               </Button>
             </div>
           </div>
+
+          {/* Price Impact Warning */}
+          {amountIn && amountOut && priceImpact >= 2 && (
+            <PriceImpactWarning priceImpact={priceImpact} />
+          )}
 
           {/* Swap Info */}
           {amountIn && amountOut && (
