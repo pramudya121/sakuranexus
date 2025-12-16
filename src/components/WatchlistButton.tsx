@@ -23,7 +23,7 @@ const WatchlistButton = ({ nftId, walletAddress }: WatchlistButtonProps) => {
         .select('id')
         .eq('wallet_address', walletAddress)
         .eq('nft_id', nftId)
-        .single();
+        .maybeSingle();
 
       setIsInWatchlist(!!data);
     };
