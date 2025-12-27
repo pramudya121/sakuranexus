@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Coins, 
   Clock, 
   TrendingUp, 
-  Wallet, 
-  ArrowUpRight, 
   Lock,
-  Gift,
+  ChevronDown,
+  ChevronUp,
   AlertCircle
 } from 'lucide-react';
 import { ethers } from 'ethers';
@@ -25,6 +24,7 @@ interface StakingPool {
   tokenSymbol: string;
   tokenName: string;
   tokenLogo?: string;
+  tokenDecimals: number;
   apr: number;
   lockPeriod: number;
   minStake: string;
@@ -41,6 +41,11 @@ interface UserStake {
   unlockTime: number;
 }
 
+interface TokenBalance {
+  balance: string;
+  formatted: string;
+}
+
 // Helper function to get token info from DEFAULT_TOKENS
 const getTokenInfo = (address: string) => {
   const normalizedAddress = address.toLowerCase();
@@ -51,11 +56,13 @@ const getTokenInfo = (address: string) => {
 const LPStaking = () => {
   const [pools, setPools] = useState<StakingPool[]>([]);
   const [userStakes, setUserStakes] = useState<Record<number, UserStake>>({});
+  const [tokenBalances, setTokenBalances] = useState<Record<number, TokenBalance>>({});
   const [loading, setLoading] = useState(true);
   const [stakeAmounts, setStakeAmounts] = useState<Record<number, string>>({});
   const [stakingPid, setStakingPid] = useState<number | null>(null);
   const [unstakingPid, setUnstakingPid] = useState<number | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [expandedPools, setExpandedPools] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     checkWallet();
@@ -65,6 +72,7 @@ const LPStaking = () => {
   useEffect(() => {
     if (walletAddress && pools.length > 0) {
       loadUserStakes();
+      loadTokenBalances();
     }
   }, [walletAddress, pools]);
 
@@ -85,7 +93,6 @@ const LPStaking = () => {
     setLoading(true);
     try {
       if (typeof window.ethereum === 'undefined') {
-        // No wallet - show empty state
         setPools([]);
         setLoading(false);
         return;
@@ -98,26 +105,24 @@ const LPStaking = () => {
         provider
       );
 
-      // Try to load pools - we'll try up to 10 pools
       const loadedPools: StakingPool[] = [];
       for (let i = 0; i < 10; i++) {
         try {
           const pool = await stakingContract.pools(i);
-          // Check if pool exists (token address should not be zero)
           if (!pool || pool.token === ethers.ZeroAddress) break;
           
-          // Get token info from our token list first
           const tokenInfo = getTokenInfo(pool.token);
           let tokenSymbol = tokenInfo?.symbol || 'TOKEN';
           let tokenName = tokenInfo?.name || 'Unknown Token';
           let tokenLogo = tokenInfo?.logoURI;
+          let tokenDecimals = tokenInfo?.decimals || 18;
 
-          // If not in our list, try to get from contract
           if (!tokenInfo) {
             try {
               const tokenContract = new ethers.Contract(pool.token, ERC20_ABI, provider);
               tokenSymbol = await tokenContract.symbol();
               tokenName = await tokenContract.name();
+              tokenDecimals = await tokenContract.decimals();
             } catch (e) {
               console.warn('Could not get token info:', e);
             }
@@ -129,6 +134,7 @@ const LPStaking = () => {
             tokenSymbol,
             tokenName,
             tokenLogo,
+            tokenDecimals,
             apr: Number(pool.apr),
             lockPeriod: Number(pool.lockPeriod),
             minStake: ethers.formatEther(pool.minStake),
@@ -136,11 +142,9 @@ const LPStaking = () => {
             active: pool.active,
           });
         } catch (error: any) {
-          // Check if it's "missing revert data" - means no pool at this index
           if (error.message?.includes('missing revert data') || error.message?.includes('could not coalesce')) {
             break;
           }
-          // Log other errors but continue
           console.warn(`Could not load pool ${i}:`, error.message);
           break;
         }
@@ -149,7 +153,6 @@ const LPStaking = () => {
       setPools(loadedPools);
     } catch (error) {
       console.error('Error loading pools:', error);
-      toast.error('Failed to load staking pools');
     } finally {
       setLoading(false);
     }
@@ -201,6 +204,38 @@ const LPStaking = () => {
     }
   };
 
+  const loadTokenBalances = async () => {
+    if (!walletAddress) return;
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum!);
+      const balances: Record<number, TokenBalance> = {};
+
+      for (const pool of pools) {
+        try {
+          const tokenContract = new ethers.Contract(pool.token, ERC20_ABI, provider);
+          const balance = await tokenContract.balanceOf(walletAddress);
+          const formatted = ethers.formatUnits(balance, pool.tokenDecimals);
+          balances[pool.pid] = {
+            balance: balance.toString(),
+            formatted,
+          };
+        } catch (error) {
+          balances[pool.pid] = { balance: '0', formatted: '0' };
+        }
+      }
+
+      setTokenBalances(balances);
+    } catch (error) {
+      console.error('Error loading token balances:', error);
+    }
+  };
+
+  const handleSetMax = (pid: number) => {
+    const balance = tokenBalances[pid]?.formatted || '0';
+    setStakeAmounts({ ...stakeAmounts, [pid]: balance });
+  };
+
   const handleStake = async (pid: number, tokenAddress: string) => {
     if (!walletAddress) {
       toast.error('Please connect your wallet');
@@ -218,7 +253,6 @@ const LPStaking = () => {
       const provider = new ethers.BrowserProvider(window.ethereum!);
       const signer = await provider.getSigner();
       
-      // First approve tokens
       const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
       const amountWei = ethers.parseEther(amount);
       
@@ -226,7 +260,6 @@ const LPStaking = () => {
       const approveTx = await tokenContract.approve(STAKING_CONTRACT.address, amountWei);
       await approveTx.wait();
 
-      // Then stake
       const stakingContract = new ethers.Contract(
         STAKING_CONTRACT.address,
         STAKING_ABI,
@@ -241,6 +274,7 @@ const LPStaking = () => {
       setStakeAmounts({ ...stakeAmounts, [pid]: '' });
       loadPools();
       loadUserStakes();
+      loadTokenBalances();
     } catch (error: any) {
       console.error('Stake error:', error);
       toast.error(error.reason || 'Failed to stake');
@@ -273,6 +307,7 @@ const LPStaking = () => {
       toast.success('Successfully unstaked!');
       loadPools();
       loadUserStakes();
+      loadTokenBalances();
     } catch (error: any) {
       console.error('Unstake error:', error);
       toast.error(error.reason || 'Failed to unstake');
@@ -283,9 +318,9 @@ const LPStaking = () => {
 
   const formatLockPeriod = (seconds: number): string => {
     const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    if (days > 0) return `${days} days`;
-    return `${hours} hours`;
+    if (days > 0) return `${days}d`;
+    const hours = Math.floor(seconds / 3600);
+    return `${hours}h`;
   };
 
   const formatTimeRemaining = (unlockTime: number): string => {
@@ -295,191 +330,234 @@ const LPStaking = () => {
     
     const days = Math.floor(remaining / 86400);
     const hours = Math.floor((remaining % 86400) / 3600);
-    const minutes = Math.floor((remaining % 3600) / 60);
     
     if (days > 0) return `${days}d ${hours}h remaining`;
-    if (hours > 0) return `${hours}h ${minutes}m remaining`;
-    return `${minutes}m remaining`;
+    return `${hours}h remaining`;
+  };
+
+  const calculateTVL = (totalStaked: string): string => {
+    const staked = parseFloat(totalStaked);
+    if (staked >= 1000000) return `${(staked / 1000000).toFixed(2)}M`;
+    if (staked >= 1000) return `${(staked / 1000).toFixed(2)}K`;
+    return staked.toFixed(3);
+  };
+
+  const toggleExpand = (pid: number) => {
+    setExpandedPools(prev => ({ ...prev, [pid]: !prev[pid] }));
   };
 
   if (loading) {
     return (
-      <Card className="glass border-border/50">
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-4 w-48 mt-2" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {[1, 2].map((i) => (
-            <Skeleton key={i} className="h-40 w-full" />
-          ))}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-80 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  if (pools.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <AlertCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+        <h3 className="text-xl font-semibold mb-2">No Staking Pools Available</h3>
+        <p className="text-muted-foreground">Check back later for staking opportunities</p>
+      </div>
     );
   }
 
   return (
-    <Card className="glass border-border/50">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Coins className="w-5 h-5 text-primary" />
-              Token Staking
-            </CardTitle>
-            <CardDescription>Stake individual tokens to earn rewards</CardDescription>
-          </div>
-          <Badge variant="outline" className="gap-1">
-            <Gift className="w-3 h-3" />
-            Earn Rewards
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {pools.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No staking pools available</p>
-          </div>
-        ) : (
-          pools.map((pool) => {
-            const stake = userStakes[pool.pid];
-            const hasStake = stake && parseFloat(stake.amount) > 0;
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {pools.filter(p => p.active).map((pool) => {
+        const stake = userStakes[pool.pid];
+        const hasStake = stake && parseFloat(stake.amount) > 0;
+        const balance = tokenBalances[pool.pid];
+        const isExpanded = expandedPools[pool.pid] ?? false;
 
-            return (
-              <div
-                key={pool.pid}
-                className="p-4 rounded-xl border border-border/50 bg-background/50 space-y-4"
-              >
-                {/* Pool Header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {pool.tokenLogo ? (
-                      <img 
-                        src={pool.tokenLogo} 
-                        alt={pool.tokenSymbol}
-                        className="w-10 h-10 rounded-full"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center">
-                        <Coins className="w-5 h-5 text-white" />
-                      </div>
-                    )}
-                    <div>
-                      <h4 className="font-semibold">{pool.tokenSymbol}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {pool.tokenName}
-                      </p>
+        return (
+          <div
+            key={pool.pid}
+            className="rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden"
+          >
+            {/* Header */}
+            <div className="p-4 border-b border-border/30">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  {pool.tokenLogo ? (
+                    <img 
+                      src={pool.tokenLogo} 
+                      alt={pool.tokenSymbol}
+                      className="w-10 h-10 rounded-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center">
+                      <Coins className="w-5 h-5 text-white" />
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 text-green-500">
-                      <TrendingUp className="w-4 h-4" />
-                      <span className="font-bold">{pool.apr}% APR</span>
-                    </div>
-                    <Badge variant={pool.active ? 'default' : 'secondary'} className="mt-1">
-                      {pool.active ? 'Active' : 'Inactive'}
-                    </Badge>
+                  )}
+                  <div>
+                    <h4 className="font-bold text-lg">{pool.tokenSymbol}</h4>
+                    <p className="text-xs text-muted-foreground">{pool.tokenName}</p>
                   </div>
                 </div>
-
-                {/* Pool Stats */}
-                <div className="grid grid-cols-3 gap-3 text-sm">
-                  <div className="text-center p-2 rounded-lg bg-muted/30">
-                    <Lock className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">Lock Period</p>
-                    <p className="font-medium">{formatLockPeriod(pool.lockPeriod)}</p>
-                  </div>
-                  <div className="text-center p-2 rounded-lg bg-muted/30">
-                    <Wallet className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">Min Stake</p>
-                    <p className="font-medium">{pool.minStake}</p>
-                  </div>
-                  <div className="text-center p-2 rounded-lg bg-muted/30">
-                    <Coins className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">Total Staked</p>
-                    <p className="font-medium">{parseFloat(pool.totalStaked).toLocaleString()}</p>
-                  </div>
-                </div>
-
-                {/* User Stake Info */}
-                {hasStake && stake && (
-                  <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Your Stake</span>
-                      <span className="font-semibold">{parseFloat(stake.amount).toFixed(4)} {pool.tokenSymbol}</span>
-                    </div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Pending Rewards</span>
-                      <span className="font-semibold text-green-500">
-                        +{parseFloat(stake.pendingReward).toFixed(6)} {pool.tokenSymbol}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        <Clock className="w-3 h-3 inline mr-1" />
-                        Lock Status
-                      </span>
-                      <span className={`text-sm ${stake.canUnstake ? 'text-green-500' : 'text-yellow-500'}`}>
-                        {formatTimeRemaining(stake.unlockTime)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Stake/Unstake Actions */}
-                {pool.active && (
-                  <div className="flex gap-2">
-                    <div className="flex-1 flex gap-2">
-                      <Input
-                        type="number"
-                        placeholder={`Min: ${pool.minStake}`}
-                        value={stakeAmounts[pool.pid] || ''}
-                        onChange={(e) => setStakeAmounts({ ...stakeAmounts, [pool.pid]: e.target.value })}
-                        className="flex-1"
-                      />
-                      <Button
-                        onClick={() => handleStake(pool.pid, pool.token)}
-                        disabled={stakingPid === pool.pid || !walletAddress}
-                        className="gap-1"
-                      >
-                        {stakingPid === pool.pid ? (
-                          'Staking...'
-                        ) : (
-                          <>
-                            <ArrowUpRight className="w-4 h-4" />
-                            Stake
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                    {hasStake && (
-                      <Button
-                        variant="outline"
-                        onClick={() => handleUnstake(pool.pid)}
-                        disabled={unstakingPid === pool.pid || !stake?.canUnstake}
-                        className="gap-1"
-                      >
-                        {unstakingPid === pool.pid ? 'Unstaking...' : 'Unstake'}
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-                {!walletAddress && (
-                  <p className="text-xs text-center text-muted-foreground">
-                    Connect wallet to stake
-                  </p>
-                )}
+                <Badge className="bg-primary/20 text-primary border-primary/30">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  Staking
+                </Badge>
               </div>
-            );
-          })
-        )}
-      </CardContent>
-    </Card>
+
+              {/* Stats Row */}
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">APR</span>
+                  <span className="font-bold text-primary">{pool.apr}%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">Lock</span>
+                  <span className="font-medium">{formatLockPeriod(pool.lockPeriod)}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Coins className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">TVL</span>
+                  <span className="font-medium">{calculateTVL(pool.totalStaked)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* User Stats */}
+            <div className="p-4 space-y-2 bg-muted/20">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Your Staked</span>
+                <span className="font-semibold">
+                  {hasStake ? `${parseFloat(stake.amount).toFixed(4)} ${pool.tokenSymbol}` : `0.0000 ${pool.tokenSymbol}`}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Earned</span>
+                <span className="font-semibold text-primary">
+                  {stake ? `${parseFloat(stake.pendingReward).toFixed(4)} ${pool.tokenSymbol}` : `0.0000 ${pool.tokenSymbol}`}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Lock Status
+                </span>
+                <span className={`font-medium ${stake?.canUnstake ? 'text-green-500' : 'text-yellow-500'}`}>
+                  {hasStake ? formatTimeRemaining(stake.unlockTime) : '-'}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground pt-1 border-t border-border/30">
+                Min. Stake: {pool.minStake} {pool.tokenSymbol}
+              </div>
+            </div>
+
+            {/* Expandable Section */}
+            <Collapsible open={isExpanded} onOpenChange={() => toggleExpand(pool.pid)}>
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="w-full rounded-none border-t border-border/30 flex items-center justify-center gap-2"
+                >
+                  {isExpanded ? (
+                    <>
+                      <span>Hide</span>
+                      <ChevronUp className="w-4 h-4" />
+                    </>
+                  ) : (
+                    <>
+                      <span>Show</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 space-y-4 border-t border-border/30">
+                  {/* Stake/Unstake Buttons */}
+                  <div className="flex gap-2">
+                    <Button 
+                      className="flex-1"
+                      disabled={stakingPid === pool.pid || hasStake}
+                      onClick={() => {
+                        if (!hasStake && stakeAmounts[pool.pid]) {
+                          handleStake(pool.pid, pool.token);
+                        }
+                      }}
+                    >
+                      {stakingPid === pool.pid ? 'Staking...' : 'Stake'}
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="flex-1"
+                      disabled={unstakingPid === pool.pid || !hasStake || !stake?.canUnstake}
+                      onClick={() => handleUnstake(pool.pid)}
+                    >
+                      {unstakingPid === pool.pid ? 'Unstaking...' : 'Unstake'}
+                    </Button>
+                  </div>
+
+                  {/* Already Staking Warning */}
+                  {hasStake && (
+                    <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                      <p className="text-sm font-medium text-yellow-500">Already staking in this pool</p>
+                      <p className="text-xs text-muted-foreground">Unstake first to stake a different amount.</p>
+                    </div>
+                  )}
+
+                  {/* Input Section */}
+                  {!hasStake && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Available</span>
+                        <span className="font-medium">
+                          {balance ? parseFloat(balance.formatted).toFixed(4) : '0.0000'} {pool.tokenSymbol}
+                        </span>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          placeholder="0.0"
+                          value={stakeAmounts[pool.pid] || ''}
+                          onChange={(e) => setStakeAmounts({ ...stakeAmounts, [pool.pid]: e.target.value })}
+                          className="flex-1"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleSetMax(pool.pid)}
+                        >
+                          MAX
+                        </Button>
+                      </div>
+
+                      <Button 
+                        className="w-full bg-primary hover:bg-primary/90"
+                        disabled={stakingPid === pool.pid || !walletAddress || !stakeAmounts[pool.pid]}
+                        onClick={() => handleStake(pool.pid, pool.token)}
+                      >
+                        {stakingPid === pool.pid ? 'Staking...' : `Stake ${pool.tokenSymbol}`}
+                      </Button>
+                    </>
+                  )}
+
+                  {!walletAddress && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Connect wallet to stake
+                    </p>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        );
+      })}
+    </div>
   );
 };
 

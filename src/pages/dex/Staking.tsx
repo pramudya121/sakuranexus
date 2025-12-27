@@ -35,8 +35,8 @@ const Staking = () => {
           <StakingAdminPanel />
         </div>
 
-        {/* Main Content */}
-        <div className="max-w-2xl mx-auto mb-16">
+        {/* Main Content - Full Width Grid */}
+        <div className="mb-16">
           <LPStaking />
         </div>
 
