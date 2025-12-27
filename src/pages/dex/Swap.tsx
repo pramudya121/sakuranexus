@@ -9,7 +9,8 @@ import RecentTrades from '@/components/dex/RecentTrades';
 import TokenStats from '@/components/dex/TokenStats';
 import OrderBook from '@/components/dex/OrderBook';
 import PriceAlerts from '@/components/dex/PriceAlerts';
-import TrendingSection from '@/components/dex/TrendingSection';
+import LPStaking from '@/components/dex/LPStaking';
+import StakingAdminPanel from '@/components/dex/StakingAdminPanel';
 import { ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, LayoutGrid, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
@@ -49,7 +50,7 @@ const Swap = () => {
           </p>
         </div>
 
-        {/* Layout Toggle & Chart Toggle */}
+        {/* Layout Toggle & Chart Toggle & Admin */}
         <div className="flex justify-center gap-2 mb-6">
           <Button
             variant="outline"
@@ -69,6 +70,7 @@ const Swap = () => {
             {layout === 'pro' ? <Maximize2 className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
             {layout === 'pro' ? 'Pro View' : 'Standard View'}
           </Button>
+          <StakingAdminPanel />
         </div>
 
         {/* Token Stats */}
@@ -95,9 +97,9 @@ const Swap = () => {
               </div>
             </div>
             
-            {/* Right Column - Trending */}
+            {/* Right Column - LP Staking */}
             <div className="lg:col-span-1">
-              <TrendingSection />
+              <LPStaking />
             </div>
           </div>
         ) : (
@@ -117,10 +119,10 @@ const Swap = () => {
               </div>
             </div>
             
-            {/* Right Column - Recent Trades & Trending */}
+            {/* Right Column - Recent Trades & LP Staking */}
             <div className="lg:col-span-4 space-y-4">
               <RecentTrades tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
-              <TrendingSection />
+              <LPStaking />
             </div>
           </div>
         )}
