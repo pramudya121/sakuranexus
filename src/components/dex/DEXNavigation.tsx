@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowLeftRight, Droplets, Waves, Menu } from 'lucide-react';
+import { ArrowLeftRight, Droplets, Waves, Coins, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -18,6 +18,7 @@ const DEXNavigation = () => {
     { path: '/dex/swap', label: 'Swap', icon: ArrowLeftRight },
     { path: '/dex/liquidity', label: 'Liquidity', icon: Droplets },
     { path: '/dex/pools', label: 'Pools', icon: Waves },
+    { path: '/dex/staking', label: 'Staking', icon: Coins },
   ];
 
   return (
