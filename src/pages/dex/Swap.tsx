@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import SwapBox from '@/components/dex/SwapBox';
 import DEXNavigation from '@/components/dex/DEXNavigation';
 import TransactionHistory from '@/components/dex/TransactionHistory';
 import TradingChart from '@/components/dex/TradingChart';
-import { ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import RecentTrades from '@/components/dex/RecentTrades';
+import TokenStats from '@/components/dex/TokenStats';
+import OrderBook from '@/components/dex/OrderBook';
+import PriceAlerts from '@/components/dex/PriceAlerts';
+import TrendingSection from '@/components/dex/TrendingSection';
+import { ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, LayoutGrid, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
 
@@ -13,6 +18,12 @@ const Swap = () => {
   const [showChart, setShowChart] = useState(true);
   const [chartTokenIn, setChartTokenIn] = useState<Token>(DEFAULT_TOKENS[0]); // NEX
   const [chartTokenOut, setChartTokenOut] = useState<Token>(DEFAULT_TOKENS[2]); // NXSA
+  const [layout, setLayout] = useState<'standard' | 'pro'>('standard');
+
+  const handleTokenChange = useCallback((tokenIn: Token, tokenOut: Token) => {
+    setChartTokenIn(tokenIn);
+    setChartTokenOut(tokenOut);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -38,8 +49,8 @@ const Swap = () => {
           </p>
         </div>
 
-        {/* Chart Toggle */}
-        <div className="flex justify-center mb-4">
+        {/* Layout Toggle & Chart Toggle */}
+        <div className="flex justify-center gap-2 mb-6">
           <Button
             variant="outline"
             size="sm"
@@ -49,6 +60,20 @@ const Swap = () => {
             {showChart ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             {showChart ? 'Hide Chart' : 'Show Chart'}
           </Button>
+          <Button
+            variant={layout === 'pro' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setLayout(layout === 'standard' ? 'pro' : 'standard')}
+            className="gap-2"
+          >
+            {layout === 'pro' ? <Maximize2 className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+            {layout === 'pro' ? 'Pro View' : 'Standard View'}
+          </Button>
+        </div>
+
+        {/* Token Stats */}
+        <div className="max-w-5xl mx-auto mb-6">
+          <TokenStats token={chartTokenIn} />
         </div>
 
         {/* Trading Chart */}
@@ -58,11 +83,47 @@ const Swap = () => {
           </div>
         )}
 
-        {/* Swap Interface + Transaction History */}
-        <div className="grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
-          <SwapBox />
-          <TransactionHistory />
-        </div>
+        {/* Main Content */}
+        {layout === 'standard' ? (
+          /* Standard Layout */
+          <div className="grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
+            {/* Left Column - Swap Box & History */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <SwapBox />
+                <TransactionHistory />
+              </div>
+            </div>
+            
+            {/* Right Column - Trending */}
+            <div className="lg:col-span-1">
+              <TrendingSection />
+            </div>
+          </div>
+        ) : (
+          /* Pro Layout with Order Book and Recent Trades */
+          <div className="grid lg:grid-cols-12 gap-4 max-w-[1600px] mx-auto mb-16">
+            {/* Left Column - Order Book */}
+            <div className="lg:col-span-3">
+              <OrderBook tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
+            </div>
+            
+            {/* Center Column - Swap Box & History */}
+            <div className="lg:col-span-5 space-y-4">
+              <SwapBox />
+              <div className="grid md:grid-cols-2 gap-4">
+                <TransactionHistory />
+                <PriceAlerts />
+              </div>
+            </div>
+            
+            {/* Right Column - Recent Trades & Trending */}
+            <div className="lg:col-span-4 space-y-4">
+              <RecentTrades tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
+              <TrendingSection />
+            </div>
+          </div>
+        )}
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
