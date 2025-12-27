@@ -19,13 +19,13 @@ const Staking = () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
             <Coins className="w-4 h-4" />
-            <span className="text-sm font-medium">LP STAKING</span>
+            <span className="text-sm font-medium">TOKEN STAKING</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="gradient-text">Stake & Earn</span>
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Stake your tokens to earn additional rewards. 
+            Stake your individual tokens to earn additional rewards. 
             Lock your assets and earn high APR on your holdings.
           </p>
         </div>

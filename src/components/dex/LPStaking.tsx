@@ -17,12 +17,14 @@ import {
 import { ethers } from 'ethers';
 import { toast } from 'sonner';
 import { STAKING_CONTRACT, STAKING_ABI } from '@/lib/web3/staking-config';
-import { ERC20_ABI } from '@/lib/web3/dex-config';
+import { ERC20_ABI, DEFAULT_TOKENS } from '@/lib/web3/dex-config';
 
 interface StakingPool {
   pid: number;
   token: string;
   tokenSymbol: string;
+  tokenName: string;
+  tokenLogo?: string;
   apr: number;
   lockPeriod: number;
   minStake: string;
@@ -38,6 +40,13 @@ interface UserStake {
   canUnstake: boolean;
   unlockTime: number;
 }
+
+// Helper function to get token info from DEFAULT_TOKENS
+const getTokenInfo = (address: string) => {
+  const normalizedAddress = address.toLowerCase();
+  const token = DEFAULT_TOKENS.find(t => t.address.toLowerCase() === normalizedAddress);
+  return token || null;
+};
 
 const LPStaking = () => {
   const [pools, setPools] = useState<StakingPool[]>([]);
@@ -76,29 +85,8 @@ const LPStaking = () => {
     setLoading(true);
     try {
       if (typeof window.ethereum === 'undefined') {
-        // Demo pools for non-connected users
-        setPools([
-          {
-            pid: 0,
-            token: '0xeAbCC511340116574E5507cA732e378EFDAC7Fba',
-            tokenSymbol: 'NXSA',
-            apr: 50,
-            lockPeriod: 604800, // 7 days
-            minStake: '100',
-            totalStaked: '10000',
-            active: true,
-          },
-          {
-            pid: 1,
-            token: '0xe7B71a77525fB695C4D5843D69498aD07fE95E83',
-            tokenSymbol: 'WNEX',
-            apr: 30,
-            lockPeriod: 2592000, // 30 days
-            minStake: '50',
-            totalStaked: '25000',
-            active: true,
-          },
-        ]);
+        // No wallet - show empty state
+        setPools([]);
         setLoading(false);
         return;
       }
@@ -115,29 +103,45 @@ const LPStaking = () => {
       for (let i = 0; i < 10; i++) {
         try {
           const pool = await stakingContract.pools(i);
-          if (pool.token === ethers.ZeroAddress) break;
+          // Check if pool exists (token address should not be zero)
+          if (!pool || pool.token === ethers.ZeroAddress) break;
           
-          // Get token symbol
-          let tokenSymbol = 'TOKEN';
-          try {
-            const tokenContract = new ethers.Contract(pool.token, ERC20_ABI, provider);
-            tokenSymbol = await tokenContract.symbol();
-          } catch (e) {
-            console.warn('Could not get token symbol:', e);
+          // Get token info from our token list first
+          const tokenInfo = getTokenInfo(pool.token);
+          let tokenSymbol = tokenInfo?.symbol || 'TOKEN';
+          let tokenName = tokenInfo?.name || 'Unknown Token';
+          let tokenLogo = tokenInfo?.logoURI;
+
+          // If not in our list, try to get from contract
+          if (!tokenInfo) {
+            try {
+              const tokenContract = new ethers.Contract(pool.token, ERC20_ABI, provider);
+              tokenSymbol = await tokenContract.symbol();
+              tokenName = await tokenContract.name();
+            } catch (e) {
+              console.warn('Could not get token info:', e);
+            }
           }
 
           loadedPools.push({
             pid: i,
             token: pool.token,
             tokenSymbol,
+            tokenName,
+            tokenLogo,
             apr: Number(pool.apr),
             lockPeriod: Number(pool.lockPeriod),
             minStake: ethers.formatEther(pool.minStake),
             totalStaked: ethers.formatEther(pool.totalStaked),
             active: pool.active,
           });
-        } catch (error) {
-          // No more pools
+        } catch (error: any) {
+          // Check if it's "missing revert data" - means no pool at this index
+          if (error.message?.includes('missing revert data') || error.message?.includes('could not coalesce')) {
+            break;
+          }
+          // Log other errors but continue
+          console.warn(`Could not load pool ${i}:`, error.message);
           break;
         }
       }
@@ -321,9 +325,9 @@ const LPStaking = () => {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Coins className="w-5 h-5 text-primary" />
-              LP Staking
+              Token Staking
             </CardTitle>
-            <CardDescription>Stake tokens to earn rewards</CardDescription>
+            <CardDescription>Stake individual tokens to earn rewards</CardDescription>
           </div>
           <Badge variant="outline" className="gap-1">
             <Gift className="w-3 h-3" />
@@ -350,13 +354,24 @@ const LPStaking = () => {
                 {/* Pool Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center">
-                      <Coins className="w-5 h-5 text-white" />
-                    </div>
+                    {pool.tokenLogo ? (
+                      <img 
+                        src={pool.tokenLogo} 
+                        alt={pool.tokenSymbol}
+                        className="w-10 h-10 rounded-full"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center">
+                        <Coins className="w-5 h-5 text-white" />
+                      </div>
+                    )}
                     <div>
                       <h4 className="font-semibold">{pool.tokenSymbol}</h4>
                       <p className="text-xs text-muted-foreground">
-                        Pool #{pool.pid}
+                        {pool.tokenName}
                       </p>
                     </div>
                   </div>
