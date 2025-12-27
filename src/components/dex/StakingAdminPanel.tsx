@@ -109,7 +109,8 @@ const StakingAdminPanel = () => {
       for (let i = 0; i < 20; i++) {
         try {
           const pool = await stakingContract.pools(i);
-          if (pool.token === ethers.ZeroAddress) break;
+          // Check if pool exists (token address should not be zero)
+          if (!pool || pool.token === ethers.ZeroAddress) break;
           
           loadedPools.push({
             pid: i,
@@ -120,7 +121,12 @@ const StakingAdminPanel = () => {
             totalStaked: ethers.formatEther(pool.totalStaked),
             active: pool.active,
           });
-        } catch {
+        } catch (error: any) {
+          // Check if it's "missing revert data" - means no pool at this index
+          if (error.message?.includes('missing revert data') || error.message?.includes('could not coalesce')) {
+            break;
+          }
+          console.warn(`Could not load pool ${i}:`, error.message);
           break;
         }
       }
@@ -171,7 +177,8 @@ const StakingAdminPanel = () => {
       await loadPools(provider);
     } catch (error: any) {
       console.error('Add pool error:', error);
-      toast.error(error.reason || 'Failed to add pool');
+      const errorMsg = error.reason || error.message || 'Failed to add pool';
+      toast.error(errorMsg.includes('could not coalesce') ? 'Transaction failed - check your inputs' : errorMsg);
     } finally {
       setAddingPool(false);
     }
