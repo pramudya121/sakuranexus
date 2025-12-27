@@ -9,8 +9,6 @@ import RecentTrades from '@/components/dex/RecentTrades';
 import TokenStats from '@/components/dex/TokenStats';
 import OrderBook from '@/components/dex/OrderBook';
 import PriceAlerts from '@/components/dex/PriceAlerts';
-import LPStaking from '@/components/dex/LPStaking';
-import StakingAdminPanel from '@/components/dex/StakingAdminPanel';
 import { ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, LayoutGrid, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
@@ -50,7 +48,7 @@ const Swap = () => {
           </p>
         </div>
 
-        {/* Layout Toggle & Chart Toggle & Admin */}
+        {/* Layout Toggle & Chart Toggle */}
         <div className="flex justify-center gap-2 mb-6">
           <Button
             variant="outline"
@@ -70,7 +68,6 @@ const Swap = () => {
             {layout === 'pro' ? <Maximize2 className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
             {layout === 'pro' ? 'Pro View' : 'Standard View'}
           </Button>
-          <StakingAdminPanel />
         </div>
 
         {/* Token Stats */}
@@ -88,19 +85,9 @@ const Swap = () => {
         {/* Main Content */}
         {layout === 'standard' ? (
           /* Standard Layout */
-          <div className="grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
-            {/* Left Column - Swap Box & History */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <SwapBox />
-                <TransactionHistory />
-              </div>
-            </div>
-            
-            {/* Right Column - LP Staking */}
-            <div className="lg:col-span-1">
-              <LPStaking />
-            </div>
+          <div className="grid lg:grid-cols-2 gap-6 max-w-4xl mx-auto mb-16">
+            <SwapBox />
+            <TransactionHistory />
           </div>
         ) : (
           /* Pro Layout with Order Book and Recent Trades */
@@ -119,10 +106,9 @@ const Swap = () => {
               </div>
             </div>
             
-            {/* Right Column - Recent Trades & LP Staking */}
-            <div className="lg:col-span-4 space-y-4">
+            {/* Right Column - Recent Trades */}
+            <div className="lg:col-span-4">
               <RecentTrades tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
-              <LPStaking />
             </div>
           </div>
         )}

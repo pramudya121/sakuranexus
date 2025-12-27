@@ -21,6 +21,7 @@ import Liquidity from "./pages/dex/Liquidity";
 import Pools from "./pages/dex/Pools";
 import PoolDetail from "./pages/dex/PoolDetail";
 import TokenAnalytics from "./pages/dex/TokenAnalytics";
+import Staking from "./pages/dex/Staking";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/dex/swap" element={<Swap />} />
             <Route path="/dex/liquidity" element={<Liquidity />} />
             <Route path="/dex/pools" element={<Pools />} />
+            <Route path="/dex/staking" element={<Staking />} />
             <Route path="/dex/pool/:pairAddress" element={<PoolDetail />} />
             <Route path="/dex/token/:tokenAddress" element={<TokenAnalytics />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
