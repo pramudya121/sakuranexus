@@ -11,7 +11,8 @@ import {
   Lock,
   ChevronDown,
   ChevronUp,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { ethers } from 'ethers';
 import { toast } from 'sonner';
@@ -254,11 +255,17 @@ const LPStaking = () => {
       const signer = await provider.getSigner();
       
       const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
-      const amountWei = ethers.parseEther(amount);
+      const pool = pools.find(p => p.pid === pid);
+      const decimals = pool?.tokenDecimals || 18;
+      const amountWei = ethers.parseUnits(amount, decimals);
       
-      toast.info('Approving tokens...');
-      const approveTx = await tokenContract.approve(STAKING_CONTRACT.address, amountWei);
-      await approveTx.wait();
+      // Check allowance first
+      const currentAllowance = await tokenContract.allowance(walletAddress, STAKING_CONTRACT.address);
+      if (currentAllowance < amountWei) {
+        toast.info('Approving tokens...');
+        const approveTx = await tokenContract.approve(STAKING_CONTRACT.address, amountWei);
+        await approveTx.wait();
+      }
 
       const stakingContract = new ethers.Contract(
         STAKING_CONTRACT.address,
@@ -277,9 +284,84 @@ const LPStaking = () => {
       loadTokenBalances();
     } catch (error: any) {
       console.error('Stake error:', error);
-      toast.error(error.reason || 'Failed to stake');
+      // Better error handling for missing revert data
+      if (error.message?.includes('missing revert data') || error.message?.includes('could not coalesce')) {
+        toast.error('Contract call failed. Make sure the staking contract has enough reward tokens.');
+      } else if (error.reason) {
+        toast.error(error.reason);
+      } else if (error.message?.includes('user rejected')) {
+        toast.error('Transaction rejected by user');
+      } else {
+        toast.error('Failed to stake. Check console for details.');
+      }
     } finally {
       setStakingPid(null);
+    }
+  };
+
+  const [compoundingPid, setCompoundingPid] = useState<number | null>(null);
+
+  const handleCompound = async (pid: number, tokenAddress: string) => {
+    if (!walletAddress) {
+      toast.error('Please connect your wallet');
+      return;
+    }
+
+    const stake = userStakes[pid];
+    if (!stake || parseFloat(stake.pendingReward) <= 0) {
+      toast.error('No rewards to compound');
+      return;
+    }
+
+    setCompoundingPid(pid);
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum!);
+      const signer = await provider.getSigner();
+      
+      const stakingContract = new ethers.Contract(
+        STAKING_CONTRACT.address,
+        STAKING_ABI,
+        signer
+      );
+      
+      // First unstake to claim rewards
+      toast.info('Claiming rewards...');
+      const unstakeTx = await stakingContract.unstake(pid);
+      await unstakeTx.wait();
+
+      // Then restake with principal + rewards
+      const pool = pools.find(p => p.pid === pid);
+      const decimals = pool?.tokenDecimals || 18;
+      
+      // Get new balance after unstake
+      const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
+      const newBalance = await tokenContract.balanceOf(walletAddress);
+      
+      if (newBalance > 0n) {
+        toast.info('Approving for compound...');
+        const approveTx = await tokenContract.approve(STAKING_CONTRACT.address, newBalance);
+        await approveTx.wait();
+
+        toast.info('Restaking with rewards...');
+        const stakeTx = await stakingContract.stake(pid, newBalance);
+        await stakeTx.wait();
+      }
+
+      toast.success('Successfully compounded rewards!');
+      loadPools();
+      loadUserStakes();
+      loadTokenBalances();
+    } catch (error: any) {
+      console.error('Compound error:', error);
+      if (error.message?.includes('missing revert data') || error.message?.includes('could not coalesce')) {
+        toast.error('Compound failed. Contract may need reward tokens.');
+      } else if (error.reason) {
+        toast.error(error.reason);
+      } else {
+        toast.error('Failed to compound');
+      }
+    } finally {
+      setCompoundingPid(null);
     }
   };
 
@@ -501,11 +583,33 @@ const LPStaking = () => {
                     </Button>
                   </div>
 
+                  {/* Compound Button */}
+                  {hasStake && parseFloat(stake.pendingReward) > 0 && stake.canUnstake && (
+                    <Button 
+                      variant="secondary"
+                      className="w-full"
+                      disabled={compoundingPid === pool.pid}
+                      onClick={() => handleCompound(pool.pid, pool.token)}
+                    >
+                      {compoundingPid === pool.pid ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Compounding...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Compound Rewards
+                        </>
+                      )}
+                    </Button>
+                  )}
+
                   {/* Already Staking Warning */}
                   {hasStake && (
                     <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-                      <p className="text-sm font-medium text-yellow-500">Already staking in this pool</p>
-                      <p className="text-xs text-muted-foreground">Unstake first to stake a different amount.</p>
+                      <p className="text-sm font-medium text-yellow-500">Already staking in this token</p>
+                      <p className="text-xs text-muted-foreground">Unstake first to stake a different amount, or compound your rewards.</p>
                     </div>
                   )}
 

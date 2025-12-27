@@ -31,6 +31,13 @@ export interface Token {
   logoURI?: string;
 }
 
+// Additional external token logos
+const USDT_LOGO = 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png';
+const DAI_LOGO = 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EessdFCC7E49F/logo.png';
+const LINK_LOGO = 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x514910771AF9Ca656af840dff83E8264EcF986CA/logo.png';
+const UNI_LOGO = 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984/logo.png';
+const AAVE_LOGO = 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9/logo.png';
+
 export const DEFAULT_TOKENS: Token[] = [
   {
     address: '0x0000000000000000000000000000000000000000',
@@ -73,6 +80,41 @@ export const DEFAULT_TOKENS: Token[] = [
     name: 'USD Coin',
     decimals: 6,
     logoURI: USDC_LOGO,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000001', // Placeholder - replace with actual USDT address
+    symbol: 'USDT',
+    name: 'Tether USD',
+    decimals: 6,
+    logoURI: USDT_LOGO,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000002', // Placeholder - replace with actual DAI address
+    symbol: 'DAI',
+    name: 'Dai Stablecoin',
+    decimals: 18,
+    logoURI: DAI_LOGO,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000003', // Placeholder - replace with actual LINK address
+    symbol: 'LINK',
+    name: 'Chainlink',
+    decimals: 18,
+    logoURI: LINK_LOGO,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000004', // Placeholder - replace with actual UNI address
+    symbol: 'UNI',
+    name: 'Uniswap',
+    decimals: 18,
+    logoURI: UNI_LOGO,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000005', // Placeholder - replace with actual AAVE address
+    symbol: 'AAVE',
+    name: 'Aave',
+    decimals: 18,
+    logoURI: AAVE_LOGO,
   },
 ];
 
