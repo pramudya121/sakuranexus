@@ -190,10 +190,13 @@ const StakingAdminPanel = () => {
         signer
       );
 
+      // Convert days to seconds
+      const lockPeriodInSeconds = parseInt(newPoolLockPeriod) * 86400;
+      
       const tx = await stakingContract.addPool(
         selectedToken,
         parseInt(newPoolApr),
-        parseInt(newPoolLockPeriod),
+        lockPeriodInSeconds,
         ethers.parseEther(newPoolMinStake)
       );
 
@@ -360,15 +363,15 @@ const StakingAdminPanel = () => {
                     />
                   </div>
                   <div>
-                    <Label>Lock Period (seconds)</Label>
+                    <Label>Lock Period (days)</Label>
                     <Input
                       type="number"
-                      placeholder="e.g., 604800 for 7 days"
+                      placeholder="e.g., 7"
                       value={newPoolLockPeriod}
                       onChange={(e) => setNewPoolLockPeriod(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      86400 = 1 day, 604800 = 7 days
+                      Enter number of days (will be converted to seconds)
                     </p>
                   </div>
                 </div>
