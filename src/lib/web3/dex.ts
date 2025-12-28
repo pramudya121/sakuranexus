@@ -70,7 +70,7 @@ export const getDeadline = async (minutes: number = 30): Promise<number> => {
 
 // Simple cache for balances to reduce RPC calls
 const balanceCache: Map<string, { balance: string; timestamp: number }> = new Map();
-const CACHE_DURATION = 30000; // 30 seconds - increased to reduce RPC calls
+const CACHE_DURATION = 15000; // 15 seconds for fresher data
 
 // Token decimals cache to avoid repeated calls
 const decimalsCache: Map<string, number> = new Map();
@@ -80,12 +80,14 @@ const getTokenDecimals = async (tokenAddress: string, provider: ethers.BrowserPr
   const cached = decimalsCache.get(tokenAddress.toLowerCase());
   if (cached !== undefined) return cached;
   
-  // Default to 18 for known tokens
+  // Default decimals for known tokens
   const knownDecimals: Record<string, number> = {
     [DEX_CONTRACTS.WNEX.toLowerCase()]: 18,
     [DEX_CONTRACTS.NXSA.toLowerCase()]: 18,
     [DEX_CONTRACTS.WETH.toLowerCase()]: 18,
     [DEX_CONTRACTS.WETH9.toLowerCase()]: 18,
+    [DEX_CONTRACTS.USDC.toLowerCase()]: 6,
+    '0x7f5ca558679a7bc8f111dbf709f37b61ca7e3055': 6, // USDT
   };
   
   const known = knownDecimals[tokenAddress.toLowerCase()];
@@ -105,7 +107,7 @@ const getTokenDecimals = async (tokenAddress: string, provider: ethers.BrowserPr
   }
 };
 
-// Get token balance with caching and retry
+// Get token balance with caching and improved retry logic
 export const getTokenBalance = async (tokenAddress: string, account: string, forceRefresh = false): Promise<string> => {
   const cacheKey = `${tokenAddress.toLowerCase()}-${account.toLowerCase()}`;
   const cached = balanceCache.get(cacheKey);
@@ -141,15 +143,17 @@ export const getTokenBalance = async (tokenAddress: string, account: string, for
       return balance;
     } catch (error: any) {
       lastError = error;
-      // If rate limited or contract error, wait before retry
+      console.warn(`Balance fetch attempt ${attempt + 1} failed:`, error?.message);
+      // If rate limited or contract error, wait before retry with exponential backoff
       if (error?.error?.code === -32002 || error?.code === 'UNKNOWN_ERROR' || error?.code === 'CALL_EXCEPTION') {
-        await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
         continue;
       }
       break;
     }
   }
 
+  console.error('All balance fetch attempts failed:', lastError?.message);
   // Return cached value if available, even if expired
   if (cached) return cached.balance;
   return '0';
