@@ -3,6 +3,7 @@ import SakuraFalling from '@/components/SakuraFalling';
 import DEXNavigation from '@/components/dex/DEXNavigation';
 import LPStaking from '@/components/dex/LPStaking';
 import StakingAdminPanel from '@/components/dex/StakingAdminPanel';
+import StakingStats from '@/components/dex/StakingStats';
 import { Coins, TrendingUp, Shield, Lock } from 'lucide-react';
 
 const Staking = () => {
@@ -29,6 +30,9 @@ const Staking = () => {
             Lock your assets and earn high APR on your holdings.
           </p>
         </div>
+
+        {/* Statistics Dashboard */}
+        <StakingStats />
 
         {/* Admin Button */}
         <div className="flex justify-center mb-6">
