@@ -179,6 +179,16 @@ const Marketplace = () => {
       return;
     }
 
+    // Check if trying to buy own NFT
+    if (account.toLowerCase() === nft.owner_address.toLowerCase()) {
+      toast({
+        title: 'Cannot Buy',
+        description: 'You cannot buy your own NFT',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const result = await buyNFT(nft.listing_id, nft.price, account, nft.token_id);
@@ -186,20 +196,23 @@ const Marketplace = () => {
       if (result.success) {
         toast({
           title: 'Success!',
-          description: 'NFT purchased successfully!',
+          description: `You now own ${nft.name}!`,
         });
-        fetchListings();
+        // Delay refresh to allow blockchain and database to update
+        setTimeout(() => fetchListings(), 2000);
       } else {
+        const errorMessage = parseNFTError(result.error || 'Failed to buy NFT');
         toast({
           title: 'Purchase Failed',
-          description: result.error || 'Failed to buy NFT',
+          description: errorMessage,
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = parseNFTError(error.message || 'An error occurred during purchase');
       toast({
         title: 'Error',
-        description: 'An error occurred during purchase',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -220,6 +233,27 @@ const Marketplace = () => {
       return;
     }
 
+    // Validate offer price
+    const offerPriceNum = parseFloat(offerPrice);
+    if (isNaN(offerPriceNum) || offerPriceNum <= 0) {
+      toast({
+        title: 'Invalid Offer',
+        description: 'Please enter a valid offer amount',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check if making offer on own NFT
+    if (account.toLowerCase() === selectedNFT.owner_address.toLowerCase()) {
+      toast({
+        title: 'Cannot Make Offer',
+        description: 'You cannot make an offer on your own NFT',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const result = await makeOffer(selectedNFT.token_id, offerPrice, account);
@@ -227,27 +261,49 @@ const Marketplace = () => {
       if (result.success) {
         toast({
           title: 'Offer Submitted!',
-          description: 'Your offer has been sent to the owner',
+          description: `Your offer of ${offerPrice} NEX has been sent to the owner`,
         });
         setShowOfferDialog(false);
         setOfferPrice('');
         setSelectedNFT(null);
       } else {
+        const errorMessage = parseNFTError(result.error || 'Failed to make offer');
         toast({
           title: 'Offer Failed',
-          description: result.error || 'Failed to make offer',
+          description: errorMessage,
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = parseNFTError(error.message || 'An error occurred while making offer');
       toast({
         title: 'Error',
-        description: 'An error occurred while making offer',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Parse common NFT error messages for better UX
+  const parseNFTError = (error: string): string => {
+    if (error.includes('insufficient') || error.includes('INSUFFICIENT')) {
+      return 'Insufficient balance for this transaction';
+    }
+    if (error.includes('rejected') || error.includes('denied')) {
+      return 'Transaction was rejected by user';
+    }
+    if (error.includes('gas') || error.includes('fee')) {
+      return 'Not enough gas for transaction';
+    }
+    if (error.includes('not listed') || error.includes('invalid listing')) {
+      return 'This NFT is no longer listed for sale';
+    }
+    if (error.includes('already')) {
+      return 'You already have a pending offer on this NFT';
+    }
+    return error.length > 100 ? error.substring(0, 100) + '...' : error;
   };
 
   return (

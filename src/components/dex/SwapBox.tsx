@@ -71,8 +71,17 @@ const SwapBox = () => {
   }, [amountIn, tokenIn, tokenOut]);
 
   const loadAccount = async () => {
-    const acc = await getCurrentAccount();
-    setAccount(acc);
+    try {
+      const acc = await getCurrentAccount();
+      setAccount(acc);
+    } catch (error) {
+      console.error('Error loading account:', error);
+      toast({
+        title: 'Connection Error',
+        description: 'Failed to connect to wallet. Please refresh and try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const loadBalances = useCallback(async (forceRefresh = false) => {
@@ -80,16 +89,19 @@ const SwapBox = () => {
     if (forceRefresh) setIsRefreshing(true);
     
     try {
-      // Fetch sequentially to reduce RPC load
-      const balIn = await getTokenBalance(tokenIn.address, account, forceRefresh);
-      setBalanceIn(balIn);
+      // Fetch balances with error handling
+      const [balIn, balOut] = await Promise.allSettled([
+        getTokenBalance(tokenIn.address, account, forceRefresh),
+        getTokenBalance(tokenOut.address, account, forceRefresh)
+      ]);
       
-      // Small delay between calls to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const balOut = await getTokenBalance(tokenOut.address, account, forceRefresh);
-      setBalanceOut(balOut);
+      setBalanceIn(balIn.status === 'fulfilled' ? balIn.value : '0');
+      setBalanceOut(balOut.status === 'fulfilled' ? balOut.value : '0');
       setLastRefresh(new Date());
+      
+      if (balIn.status === 'rejected' || balOut.status === 'rejected') {
+        console.warn('Some balances failed to load');
+      }
     } catch (error) {
       console.error('Error loading balances:', error);
     }
@@ -102,6 +114,12 @@ const SwapBox = () => {
   };
 
   const calculateAmountOut = async () => {
+    if (!amountIn || parseFloat(amountIn) <= 0) {
+      setAmountOut('');
+      setPriceImpact(0);
+      return;
+    }
+    
     setIsCalculating(true);
     setBestRoute(null);
     setAllRoutes([]);
@@ -114,50 +132,52 @@ const SwapBox = () => {
         if (routeResult.bestRoute) {
           setBestRoute(routeResult.bestRoute);
           setAllRoutes(routeResult.allRoutes);
-          setAmountOut(routeResult.bestRoute.amounts[1]);
+          setAmountOut(routeResult.bestRoute.amounts[routeResult.bestRoute.amounts.length - 1] || '0');
           setPriceImpact(routeResult.bestRoute.priceImpact);
         } else {
           // Fallback to direct swap calculation
-          const output = await getAmountOut(amountIn, tokenIn, tokenOut);
-          setAmountOut(output);
-          
-          const pairAddress = await getPairAddress(tokenIn.address, tokenOut.address);
-          if (pairAddress) {
-            const reserves = await getReserves(pairAddress);
-            if (reserves) {
-              const impact = calculatePriceImpact(
-                amountIn,
-                output,
-                reserves.reserve0.toString(),
-                reserves.reserve1.toString()
-              );
-              setPriceImpact(impact);
-            }
-          }
+          await calculateDirectSwap();
         }
       } else {
         // Direct swap only
-        const output = await getAmountOut(amountIn, tokenIn, tokenOut);
-        setAmountOut(output);
-        
-        const pairAddress = await getPairAddress(tokenIn.address, tokenOut.address);
-        if (pairAddress) {
-          const reserves = await getReserves(pairAddress);
-          if (reserves) {
-            const impact = calculatePriceImpact(
-              amountIn,
-              output,
-              reserves.reserve0.toString(),
-              reserves.reserve1.toString()
-            );
-            setPriceImpact(impact);
-          }
-        }
+        await calculateDirectSwap();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calculating output:', error);
+      // Try direct swap as last fallback
+      try {
+        await calculateDirectSwap();
+      } catch (fallbackError) {
+        console.error('Fallback calculation also failed:', fallbackError);
+        setAmountOut('0');
+        setPriceImpact(0);
+        toast({
+          title: 'Calculation Error',
+          description: 'Unable to calculate swap amount. The pair may not have liquidity.',
+          variant: 'destructive',
+        });
+      }
     }
     setIsCalculating(false);
+  };
+  
+  const calculateDirectSwap = async () => {
+    const output = await getAmountOut(amountIn, tokenIn, tokenOut);
+    setAmountOut(output);
+    
+    const pairAddress = await getPairAddress(tokenIn.address, tokenOut.address);
+    if (pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000') {
+      const reserves = await getReserves(pairAddress);
+      if (reserves && reserves.reserve0 > 0n && reserves.reserve1 > 0n) {
+        const impact = calculatePriceImpact(
+          amountIn,
+          output,
+          reserves.reserve0.toString(),
+          reserves.reserve1.toString()
+        );
+        setPriceImpact(impact);
+      }
+    }
   };
 
   const handleSwitch = () => {
@@ -178,6 +198,16 @@ const SwapBox = () => {
 
   const handleSwap = async () => {
     if (!account || !amountIn || !amountOut) return;
+
+    // Validate balance before swap
+    if (parseFloat(amountIn) > parseFloat(balanceIn)) {
+      toast({
+        title: 'Insufficient Balance',
+        description: `You don't have enough ${tokenIn.symbol}`,
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -212,29 +242,53 @@ const SwapBox = () => {
 
         toast({
           title: 'Swap Successful!',
-          description: `Swapped via ${routePath}`,
+          description: `Swapped ${amountIn} ${tokenIn.symbol} for ${parseFloat(amountOut).toFixed(6)} ${tokenOut.symbol}`,
         });
         setAmountIn('');
         setAmountOut('');
         setBestRoute(null);
         setAllRoutes([]);
         setShowConfirmModal(false);
-        loadBalances();
+        // Refresh balances after successful swap
+        setTimeout(() => loadBalances(true), 2000);
       } else {
+        // Parse error message for better UX
+        const errorMessage = parseSwapError(result.error || 'Unknown error');
         toast({
           title: 'Swap Failed',
-          description: result.error,
+          description: errorMessage,
           variant: 'destructive',
         });
       }
     } catch (error: any) {
+      const errorMessage = parseSwapError(error.message || 'Transaction failed');
       toast({
         title: 'Swap Failed',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     }
     setIsLoading(false);
+  };
+  
+  // Parse common error messages for better UX
+  const parseSwapError = (error: string): string => {
+    if (error.includes('insufficient') || error.includes('INSUFFICIENT')) {
+      return 'Insufficient balance or liquidity for this trade';
+    }
+    if (error.includes('slippage') || error.includes('EXPIRED') || error.includes('deadline')) {
+      return 'Transaction expired. Please try again with higher slippage.';
+    }
+    if (error.includes('rejected') || error.includes('denied')) {
+      return 'Transaction was rejected by user';
+    }
+    if (error.includes('gas') || error.includes('fee')) {
+      return 'Not enough gas for transaction';
+    }
+    if (error.includes('pair') || error.includes('liquidity') || error.includes('K')) {
+      return 'Insufficient liquidity in the pool';
+    }
+    return error.length > 100 ? error.substring(0, 100) + '...' : error;
   };
 
   const minReceived = amountOut ? (parseFloat(amountOut) * (1 - slippage / 100)).toFixed(6) : '0';
