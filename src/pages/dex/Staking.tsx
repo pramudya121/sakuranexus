@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import DEXNavigation from '@/components/dex/DEXNavigation';
@@ -7,6 +8,12 @@ import StakingStats from '@/components/dex/StakingStats';
 import { Coins, TrendingUp, Shield, Lock } from 'lucide-react';
 
 const Staking = () => {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background relative">
       <SakuraFalling />
@@ -32,7 +39,7 @@ const Staking = () => {
         </div>
 
         {/* Statistics Dashboard */}
-        <StakingStats />
+        <StakingStats refreshTrigger={refreshTrigger} />
 
         {/* Admin Button */}
         <div className="flex justify-center mb-6">
@@ -41,7 +48,7 @@ const Staking = () => {
 
         {/* Main Content - Full Width Grid */}
         <div className="mb-16">
-          <LPStaking />
+          <LPStaking onRefresh={handleRefresh} />
         </div>
 
         {/* Features */}
