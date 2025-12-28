@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import { Wallet, TrendingUp, Droplets, RefreshCw, ChevronRight } from 'lucide-react';
 import { getAllPairs, getPoolInfo, getLPBalance, PoolInfo } from '@/lib/web3/dex';
 import { getCurrentAccount } from '@/lib/web3/wallet';
-import { ethers } from 'ethers';
 
 interface Position extends PoolInfo {
   lpBalance: string;
@@ -51,22 +50,27 @@ const MyPositions = () => {
         
         if (parseFloat(lpBalance) > 0) {
           const poolInfo = await getPoolInfo(pairAddress);
+          if (!poolInfo) continue;
           
-          // Calculate share and value
-          const totalSupplyBigInt = BigInt(poolInfo.totalSupply || '1');
-          const lpBalanceBigInt = ethers.parseEther(lpBalance);
-          const share = totalSupplyBigInt > 0 
-            ? Number((lpBalanceBigInt * BigInt(10000)) / totalSupplyBigInt) / 100 
+          // Calculate share and value - totalSupply is already formatted as a decimal string
+          // So we need to parse it properly, not directly to BigInt
+          const totalSupplyNum = parseFloat(poolInfo.totalSupply || '1');
+          const lpBalanceNum = parseFloat(lpBalance);
+          
+          // Calculate share as percentage
+          const share = totalSupplyNum > 0 
+            ? (lpBalanceNum / totalSupplyNum) * 100
             : 0;
 
-          const reserve0BigInt = ethers.parseEther(poolInfo.reserve0);
-          const reserve1BigInt = ethers.parseEther(poolInfo.reserve1);
+          const reserve0Num = parseFloat(poolInfo.reserve0);
+          const reserve1Num = parseFloat(poolInfo.reserve1);
           
-          const valueToken0 = totalSupplyBigInt > 0 
-            ? ethers.formatEther((reserve0BigInt * lpBalanceBigInt) / totalSupplyBigInt)
+          // Calculate user's share of each token
+          const valueToken0 = totalSupplyNum > 0 
+            ? ((reserve0Num * lpBalanceNum) / totalSupplyNum).toString()
             : '0';
-          const valueToken1 = totalSupplyBigInt > 0 
-            ? ethers.formatEther((reserve1BigInt * lpBalanceBigInt) / totalSupplyBigInt)
+          const valueToken1 = totalSupplyNum > 0 
+            ? ((reserve1Num * lpBalanceNum) / totalSupplyNum).toString()
             : '0';
 
           positionsWithBalance.push({

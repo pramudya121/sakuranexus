@@ -471,6 +471,24 @@ const LiquidityForm = () => {
   const handleAddLiquidity = async () => {
     if (!account || !amountA || !amountB) return;
 
+    // Validate balances
+    if (parseFloat(amountA) > parseFloat(balanceA)) {
+      toast({
+        title: 'Insufficient Balance',
+        description: `You don't have enough ${tokenA.symbol}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (parseFloat(amountB) > parseFloat(balanceB)) {
+      toast({
+        title: 'Insufficient Balance',
+        description: `You don't have enough ${tokenB.symbol}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const result = await addLiquidity(tokenA, tokenB, amountA, amountB, account, slippage);
@@ -496,19 +514,24 @@ const LiquidityForm = () => {
         setAllowanceA(BigInt(0));
         setAllowanceB(BigInt(0));
         setShowConfirmModal(false);
-        loadBalances();
-        loadPairInfo();
+        // Delay refresh to allow blockchain to update
+        setTimeout(() => {
+          loadBalances(true);
+          loadPairInfo();
+        }, 2000);
       } else {
+        const errorMessage = parseLiquidityError(result.error || 'Unknown error');
         toast({
           title: 'Failed to Add Liquidity',
-          description: result.error,
+          description: errorMessage,
           variant: 'destructive',
         });
       }
     } catch (error: any) {
+      const errorMessage = parseLiquidityError(error.message || 'Transaction failed');
       toast({
         title: 'Failed',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -517,6 +540,16 @@ const LiquidityForm = () => {
 
   const handleRemoveLiquidity = async () => {
     if (!account || !lpAmount) return;
+
+    // Validate LP balance
+    if (parseFloat(lpAmount) > parseFloat(lpBalance)) {
+      toast({
+        title: 'Insufficient LP Tokens',
+        description: `You don't have enough LP tokens`,
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -551,23 +584,48 @@ const LiquidityForm = () => {
         setEstimatedRemoveB('0');
         setAllowanceLP(BigInt(0));
         setShowConfirmModal(false);
-        loadBalances();
-        loadPairInfo();
+        // Delay refresh to allow blockchain to update
+        setTimeout(() => {
+          loadBalances(true);
+          loadPairInfo();
+        }, 2000);
       } else {
+        const errorMessage = parseLiquidityError(result.error || 'Unknown error');
         toast({
           title: 'Failed to Remove Liquidity',
-          description: result.error,
+          description: errorMessage,
           variant: 'destructive',
         });
       }
     } catch (error: any) {
+      const errorMessage = parseLiquidityError(error.message || 'Transaction failed');
       toast({
         title: 'Failed',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
     }
     setIsLoading(false);
+  };
+
+  // Parse common error messages for better UX
+  const parseLiquidityError = (error: string): string => {
+    if (error.includes('insufficient') || error.includes('INSUFFICIENT')) {
+      return 'Insufficient balance or allowance';
+    }
+    if (error.includes('slippage') || error.includes('EXPIRED') || error.includes('deadline')) {
+      return 'Transaction expired. Please try again.';
+    }
+    if (error.includes('rejected') || error.includes('denied')) {
+      return 'Transaction was rejected by user';
+    }
+    if (error.includes('gas') || error.includes('fee')) {
+      return 'Not enough gas for transaction';
+    }
+    if (error.includes('TRANSFER_FAILED')) {
+      return 'Token transfer failed. Please check approval.';
+    }
+    return error.length > 100 ? error.substring(0, 100) + '...' : error;
   };
 
   // Show skeleton while initial loading
