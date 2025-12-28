@@ -25,13 +25,17 @@ const getTokenInfo = (address: string) => {
   return DEFAULT_TOKENS.find(t => t.address.toLowerCase() === normalizedAddress) || null;
 };
 
-const StakingStats = () => {
+interface StakingStatsProps {
+  refreshTrigger?: number;
+}
+
+const StakingStats = ({ refreshTrigger }: StakingStatsProps = {}) => {
   const [stats, setStats] = useState<StakingStatsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadStats();
-  }, []);
+  }, [refreshTrigger]);
 
   const loadStats = async () => {
     setLoading(true);

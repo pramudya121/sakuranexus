@@ -54,20 +54,33 @@ const getTokenInfo = (address: string) => {
   return token || null;
 };
 
-const LPStaking = () => {
+interface LPStakingProps {
+  onRefresh?: () => void;
+}
+
+const LPStaking = ({ onRefresh }: LPStakingProps = {}) => {
   const [pools, setPools] = useState<StakingPool[]>([]);
   const [userStakes, setUserStakes] = useState<Record<number, UserStake>>({});
   const [tokenBalances, setTokenBalances] = useState<Record<number, TokenBalance>>({});
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [stakeAmounts, setStakeAmounts] = useState<Record<number, string>>({});
   const [stakingPid, setStakingPid] = useState<number | null>(null);
   const [unstakingPid, setUnstakingPid] = useState<number | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [expandedPools, setExpandedPools] = useState<Record<number, boolean>>({});
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   useEffect(() => {
     checkWallet();
     loadPools();
+    
+    // Listen for wallet changes
+    if (typeof window.ethereum !== 'undefined') {
+      window.ethereum.on('accountsChanged', (accounts: string[]) => {
+        setWalletAddress(accounts[0] || null);
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -76,6 +89,24 @@ const LPStaking = () => {
       loadTokenBalances();
     }
   }, [walletAddress, pools]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadPools();
+      if (walletAddress) {
+        await loadUserStakes();
+        await loadTokenBalances();
+      }
+      setLastUpdate(new Date());
+      toast.success('Data refreshed');
+      onRefresh?.();
+    } catch (error) {
+      console.error('Refresh error:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const checkWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -443,13 +474,30 @@ const LPStaking = () => {
       <div className="text-center py-16">
         <AlertCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
         <h3 className="text-xl font-semibold mb-2">No Staking Pools Available</h3>
-        <p className="text-muted-foreground">Check back later for staking opportunities</p>
+        <p className="text-muted-foreground mb-4">Check back later for staking opportunities</p>
+        <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="space-y-4">
+      {/* Refresh Header */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          {lastUpdate && `Last updated: ${lastUpdate.toLocaleTimeString()}`}
+        </div>
+        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </Button>
+      </div>
+      
+      {/* Pools Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {pools.filter(p => p.active).map((pool) => {
         const stake = userStakes[pool.pid];
         const hasStake = stake && parseFloat(stake.amount) > 0;
@@ -661,6 +709,7 @@ const LPStaking = () => {
           </div>
         );
       })}
+      </div>
     </div>
   );
 };
