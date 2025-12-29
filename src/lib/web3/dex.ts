@@ -48,7 +48,7 @@ export const isNativeToken = (address: string) => {
   return address === '0x0000000000000000000000000000000000000000';
 };
 
-// Get deadline from blockchain timestamp (more reliable than Date.now())
+// Get deadline - use generous buffer to prevent EXPIRED errors
 export const getDeadline = async (minutes: number = 30): Promise<number> => {
   try {
     const provider = getProvider();
@@ -56,16 +56,16 @@ export const getDeadline = async (minutes: number = 30): Promise<number> => {
       const block = await provider.getBlock('latest');
       if (block) {
         const blockTimestamp = Number(block.timestamp);
-        const deadline = blockTimestamp + (60 * minutes);
-        console.log('Blockchain timestamp:', blockTimestamp, 'Deadline:', deadline);
+        // Add extra 5 minute buffer to prevent edge cases
+        const deadline = blockTimestamp + (60 * (minutes + 5));
         return deadline;
       }
     }
   } catch (error) {
-    console.warn('Could not get block timestamp, using Date.now():', error);
+    // Silent fallback - no need to log this
   }
-  // Fallback to Date.now() with extra buffer
-  return Math.floor(Date.now() / 1000) + (60 * minutes);
+  // Fallback to Date.now() with generous buffer (add extra 10 minutes)
+  return Math.floor(Date.now() / 1000) + (60 * (minutes + 10));
 };
 
 // Simple cache for balances to reduce RPC calls
@@ -230,7 +230,7 @@ export const getAmountOut = async (
   }
 };
 
-// Approve token
+// Approve token with improved error handling
 export const approveToken = async (
   tokenAddress: string,
   spender: string,
@@ -238,13 +238,43 @@ export const approveToken = async (
 ): Promise<boolean> => {
   try {
     const tokenContract = await getTokenContract(tokenAddress);
-    if (!tokenContract) return false;
+    if (!tokenContract) {
+      console.warn('Token contract not available for approval');
+      return false;
+    }
 
-    const tx = await tokenContract.approve(spender, amount);
-    await tx.wait();
-    return true;
-  } catch (error) {
-    console.error('Error approving token:', error);
+    // Check if already approved to avoid unnecessary transactions
+    try {
+      const provider = getProvider();
+      if (provider) {
+        const signer = await provider.getSigner();
+        const owner = await signer.getAddress();
+        const currentAllowance = await checkAllowance(tokenAddress, owner, spender);
+        if (currentAllowance >= amount) {
+          return true; // Already approved
+        }
+      }
+    } catch {
+      // Continue with approval if check fails
+    }
+
+    // Use max uint256 for approval to avoid repeated approvals
+    const maxApproval = ethers.MaxUint256;
+    
+    const tx = await tokenContract.approve(spender, maxApproval, {
+      gasLimit: 100000, // Set explicit gas limit
+    });
+    
+    const receipt = await tx.wait();
+    return receipt?.status === 1;
+  } catch (error: any) {
+    // Parse error for better debugging
+    const reason = error?.reason || error?.message || 'Unknown error';
+    if (reason.includes('user rejected') || reason.includes('denied')) {
+      console.warn('User rejected token approval');
+    } else {
+      console.warn('Token approval failed:', reason);
+    }
     return false;
   }
 };
