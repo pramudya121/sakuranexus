@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Wallet, Droplets, Coins } from 'lucide-react';
 import PortfolioHeader from './portfolio/PortfolioHeader';
 import PortfolioOverview from './portfolio/PortfolioOverview';
+import PortfolioChart from './portfolio/PortfolioChart';
 import TokenBalances from './portfolio/TokenBalances';
 import MyLPPositions from './portfolio/MyLPPositions';
 import MyStaking from './portfolio/MyStaking';
@@ -55,6 +56,9 @@ const PortfolioTab = ({ walletAddress }: PortfolioTabProps) => {
         onRefresh={handleRefresh}
         lastRefresh={lastRefresh}
       />
+
+      {/* Portfolio Value Chart */}
+      <PortfolioChart totalValue={totalValue} />
 
       {/* Portfolio Overview */}
       <PortfolioOverview
