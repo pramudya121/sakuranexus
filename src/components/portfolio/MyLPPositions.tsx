@@ -51,21 +51,27 @@ const MyLPPositions = ({ walletAddress, refreshTrigger, onPositionsLoaded }: MyL
       const positionsWithBalance: Position[] = [];
 
       for (const pairAddress of pairs) {
-        const lpBalance = await getLPBalance(pairAddress, walletAddress);
-        
-        if (parseFloat(lpBalance) > 0) {
+        try {
+          const lpBalance = await getLPBalance(pairAddress, walletAddress);
+          
+          // Skip if no balance or invalid
+          if (!lpBalance || parseFloat(lpBalance) <= 0) continue;
+          
           const poolInfo = await getPoolInfo(pairAddress);
           if (!poolInfo) continue;
           
           const totalSupplyNum = parseFloat(poolInfo.totalSupply || '1');
           const lpBalanceNum = parseFloat(lpBalance);
           
+          // Skip if invalid numbers
+          if (isNaN(totalSupplyNum) || isNaN(lpBalanceNum)) continue;
+          
           const share = totalSupplyNum > 0 
             ? (lpBalanceNum / totalSupplyNum) * 100
             : 0;
 
-          const reserve0Num = parseFloat(poolInfo.reserve0);
-          const reserve1Num = parseFloat(poolInfo.reserve1);
+          const reserve0Num = parseFloat(poolInfo.reserve0) || 0;
+          const reserve1Num = parseFloat(poolInfo.reserve1) || 0;
           
           const valueToken0 = totalSupplyNum > 0 
             ? ((reserve0Num * lpBalanceNum) / totalSupplyNum).toString()
@@ -87,6 +93,9 @@ const MyLPPositions = ({ walletAddress, refreshTrigger, onPositionsLoaded }: MyL
             valueToken1,
             estimatedValue,
           });
+        } catch {
+          // Skip this pair if there's an error
+          continue;
         }
       }
 
@@ -94,8 +103,11 @@ const MyLPPositions = ({ walletAddress, refreshTrigger, onPositionsLoaded }: MyL
       setPositions(positionsWithBalance);
       setTotalLPValue(positionsWithBalance.reduce((sum, p) => sum + p.estimatedValue, 0));
       onPositionsLoaded?.(positionsWithBalance);
-    } catch (error) {
-      console.error('Error loading positions:', error);
+    } catch (error: any) {
+      // Silently handle - user may not have any LP positions
+      setPositions([]);
+      setTotalLPValue(0);
+      onPositionsLoaded?.([]);
     }
     
     setIsLoading(false);

@@ -69,6 +69,19 @@ const MyStaking = ({ walletAddress, refreshTrigger, onStakingLoaded }: MyStaking
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
+      
+      // Check if staking contract exists on chain
+      const code = await provider.getCode(STAKING_CONTRACT.address);
+      if (code === '0x') {
+        // Contract doesn't exist, silently set empty state
+        setPositions([]);
+        setTotalStakedValue(0);
+        setTotalPendingRewards(0);
+        onStakingLoaded?.([]);
+        setIsLoading(false);
+        return;
+      }
+
       const stakingContract = new ethers.Contract(
         STAKING_CONTRACT.address,
         STAKING_ABI,
@@ -78,14 +91,18 @@ const MyStaking = ({ walletAddress, refreshTrigger, onStakingLoaded }: MyStaking
       const stakedPositions: StakedPosition[] = [];
       const currentTime = Math.floor(Date.now() / 1000);
 
-      // Check up to 20 pools
-      for (let pid = 0; pid < 20; pid++) {
+      // Check up to 10 pools with better error handling
+      for (let pid = 0; pid < 10; pid++) {
         try {
           const pool = await stakingContract.pools(pid);
-          if (!pool || pool.token === ethers.ZeroAddress) break;
+          
+          // If pool doesn't exist or has zero address token, stop iteration
+          if (!pool || !pool.token || pool.token === ethers.ZeroAddress) {
+            break;
+          }
           
           const userStake = await stakingContract.userStakes(pid, walletAddress);
-          const stakedAmount = userStake.amount;
+          const stakedAmount = userStake?.amount || 0n;
           
           if (stakedAmount > 0n) {
             const tokenInfo = getTokenInfo(pool.token);
@@ -96,12 +113,12 @@ const MyStaking = ({ walletAddress, refreshTrigger, onStakingLoaded }: MyStaking
             try {
               const reward = await stakingContract.pendingReward(pid, walletAddress);
               pendingReward = ethers.formatUnits(reward, decimals);
-            } catch (e) {
-              console.error('Error fetching pending reward:', e);
+            } catch {
+              // Silently handle reward fetch error
             }
 
-            const lockPeriod = Number(pool.lockPeriod);
-            const startTime = Number(userStake.startTime);
+            const lockPeriod = Number(pool.lockPeriod || 0);
+            const startTime = Number(userStake.startTime || 0);
             const unlockTime = startTime + lockPeriod;
             const isLocked = currentTime < unlockTime;
 
@@ -116,7 +133,7 @@ const MyStaking = ({ walletAddress, refreshTrigger, onStakingLoaded }: MyStaking
               tokenLogo: tokenInfo?.logoURI,
               amount,
               startTime,
-              apr: Number(pool.apr),
+              apr: Number(pool.apr || 0),
               pendingReward,
               lockPeriod,
               isLocked,
@@ -125,9 +142,7 @@ const MyStaking = ({ walletAddress, refreshTrigger, onStakingLoaded }: MyStaking
             });
           }
         } catch (error: any) {
-          if (error.message?.includes('missing revert data') || error.message?.includes('could not coalesce')) {
-            break;
-          }
+          // Pool doesn't exist at this index, stop iteration
           break;
         }
       }
@@ -141,8 +156,12 @@ const MyStaking = ({ walletAddress, refreshTrigger, onStakingLoaded }: MyStaking
       setTotalStakedValue(totalValue);
       setTotalPendingRewards(totalRewards);
       onStakingLoaded?.(stakedPositions);
-    } catch (error) {
-      console.error('Error loading staking:', error);
+    } catch (error: any) {
+      // Silently handle contract errors - user may not have staking positions
+      setPositions([]);
+      setTotalStakedValue(0);
+      setTotalPendingRewards(0);
+      onStakingLoaded?.([]);
     }
     
     setIsLoading(false);
