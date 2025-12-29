@@ -97,21 +97,34 @@ const StakingAdminPanel = () => {
       setWalletAddress(userAddress);
 
       const provider = new ethers.BrowserProvider(window.ethereum);
+      
+      // First check if staking contract exists
+      const code = await provider.getCode(STAKING_CONTRACT.address);
+      if (code === '0x' || code === '0x0') {
+        // Contract doesn't exist on this network
+        setLoading(false);
+        return;
+      }
+
       const stakingContract = new ethers.Contract(
         STAKING_CONTRACT.address,
         STAKING_ABI,
         provider
       );
 
-      const owner = await stakingContract.owner();
-      setOwnerAddress(owner.toLowerCase());
-      setIsOwner(userAddress === owner.toLowerCase());
+      try {
+        const owner = await stakingContract.owner();
+        setOwnerAddress(owner.toLowerCase());
+        setIsOwner(userAddress === owner.toLowerCase());
 
-      if (userAddress === owner.toLowerCase()) {
-        await loadPools(provider);
+        if (userAddress === owner.toLowerCase()) {
+          await loadPools(provider);
+        }
+      } catch {
+        // Contract exists but owner() call failed - not a valid staking contract
       }
-    } catch (error) {
-      console.error('Error checking ownership:', error);
+    } catch {
+      // Silent fail - wallet or network issues
     } finally {
       setLoading(false);
     }
