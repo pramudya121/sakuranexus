@@ -45,27 +45,29 @@ const TokenBalances = ({ walletAddress, onTotalValueChange, refreshTrigger }: To
       for (const token of DEFAULT_TOKENS) {
         try {
           const balance = await getTokenBalance(token.address, walletAddress, true);
-          const balanceNum = parseFloat(balance);
+          const balanceNum = parseFloat(balance) || 0;
           const tokenData = TOKEN_DATA[token.symbol] || { price: 0, change: 0 };
           const usdValue = balanceNum * tokenData.price;
           
           tokenBalances.push({
             token,
-            balance,
+            balance: balance || '0',
             balanceFormatted: balanceNum > 0 ? (balanceNum > 1000 ? balanceNum.toFixed(2) : balanceNum.toFixed(4)) : '0',
             usdValue,
             change24h: tokenData.change,
           });
           
-          await new Promise(resolve => setTimeout(resolve, 150));
-        } catch (error) {
-          console.error(`Error fetching balance for ${token.symbol}:`, error);
+          // Reduced delay between calls
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch {
+          // Silently handle - add zero balance entry
+          const tokenData = TOKEN_DATA[token.symbol] || { price: 0, change: 0 };
           tokenBalances.push({
             token,
             balance: '0',
             balanceFormatted: '0',
             usdValue: 0,
-            change24h: 0,
+            change24h: tokenData.change,
           });
         }
       }
@@ -73,8 +75,10 @@ const TokenBalances = ({ walletAddress, onTotalValueChange, refreshTrigger }: To
       tokenBalances.sort((a, b) => b.usdValue - a.usdValue);
       setBalances(tokenBalances);
       onTotalValueChange(tokenBalances.reduce((sum, t) => sum + t.usdValue, 0));
-    } catch (error) {
-      console.error('Error loading balances:', error);
+    } catch {
+      // Silently handle overall error
+      setBalances([]);
+      onTotalValueChange(0);
     }
     
     setIsLoading(false);
