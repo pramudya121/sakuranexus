@@ -1,13 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import NFTCard from '@/components/NFTCard';
+import MarketplaceStats from '@/components/marketplace/MarketplaceStats';
+import TrendingNFTs from '@/components/marketplace/TrendingNFTs';
+import RecentActivity from '@/components/marketplace/RecentActivity';
+import NFTGridSkeleton from '@/components/marketplace/NFTGridSkeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import { buyNFT, makeOffer } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, Search, SlidersHorizontal, Package, X } from 'lucide-react';
+import { Loader2, Search, SlidersHorizontal, Package, X, Grid3X3, LayoutGrid, RefreshCw, Sparkles } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -25,6 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 interface NFTListing {
   id: string;
@@ -40,6 +46,7 @@ const Marketplace = () => {
   const [listings, setListings] = useState<NFTListing[]>([]);
   const [filteredListings, setFilteredListings] = useState<NFTListing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNFT, setSelectedNFT] = useState<NFTListing | null>(null);
   const [offerPrice, setOfferPrice] = useState('');
@@ -50,6 +57,8 @@ const Marketplace = () => {
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [gridSize, setGridSize] = useState<'normal' | 'compact'>('normal');
+  const [activeTab, setActiveTab] = useState('all');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -306,6 +315,19 @@ const Marketplace = () => {
     return error.length > 100 ? error.substring(0, 100) + '...' : error;
   };
 
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await fetchListings();
+    setIsRefreshing(false);
+  }, []);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (priceMin) count++;
+    if (priceMax) count++;
+    return count;
+  }, [priceMin, priceMax]);
+
   return (
     <div className="min-h-screen relative">
       <div 
@@ -319,183 +341,276 @@ const Marketplace = () => {
       
       <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
         {/* Header with enhanced styling */}
-        <div className="text-center mb-12">
-          <div className="inline-block px-6 py-2 rounded-full bg-gradient-sakura text-white font-medium shadow-elegant mb-4">
-            <Package className="inline-block mr-2 h-4 w-4" />
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-sakura text-white font-medium shadow-elegant mb-4">
+            <Sparkles className="h-4 w-4" />
             NFT Marketplace
           </div>
-          <h1 className="text-6xl font-bold mb-4">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4">
             <span className="gradient-text">Explore Collections</span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Discover and collect extraordinary NFTs on NEXUSLABS Testnet
           </p>
         </div>
 
-        {/* Search and Filters with enhanced design */}
-        <div className="max-w-4xl mx-auto mb-12 space-y-4">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or token ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 text-lg border-2 focus:border-primary shadow-card"
-              />
-            </div>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[200px] h-12 shadow-card">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button 
-              variant={showFilters ? "default" : "outline"} 
-              onClick={() => setShowFilters(!showFilters)}
-              className="gap-2 h-12 px-6 shadow-card hover:shadow-elegant transition-all"
-            >
-              <SlidersHorizontal className="w-5 h-5" />
-              Filters
-            </Button>
+        {/* Market Stats */}
+        <div className="mb-8">
+          <MarketplaceStats />
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-12 gap-6">
+          {/* Left Sidebar - Trending & Activity */}
+          <div className="lg:col-span-3 space-y-6 order-2 lg:order-1">
+            <TrendingNFTs />
+            <RecentActivity />
           </div>
 
-          {/* Advanced Filters Panel */}
-          {showFilters && (
-            <div className="glass p-6 rounded-xl shadow-card border-2 border-primary/20">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-lg">Advanced Filters</h3>
+          {/* Main Content Area */}
+          <div className="lg:col-span-9 order-1 lg:order-2">
+            {/* Search and Filters */}
+            <div className="mb-6 space-y-4">
+              <div className="flex flex-wrap gap-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name or token ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-12 h-11 border-2 focus:border-primary shadow-card"
+                  />
+                </div>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[180px] h-11 shadow-card">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="oldest">Oldest First</SelectItem>
+                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => {
-                    setPriceMin('');
-                    setPriceMax('');
-                  }}
+                  variant={showFilters ? "default" : "outline"} 
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="gap-2 h-11 shadow-card hover:shadow-elegant transition-all relative"
                 >
-                  Clear All
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Filters
+                  {activeFiltersCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-primary">
+                      {activeFiltersCount}
+                    </Badge>
+                  )}
+                </Button>
+                <div className="flex items-center gap-1 border rounded-lg p-1">
+                  <Button 
+                    variant={gridSize === 'normal' ? 'secondary' : 'ghost'}
+                    size="icon" 
+                    className="h-9 w-9"
+                    onClick={() => setGridSize('normal')}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant={gridSize === 'compact' ? 'secondary' : 'ghost'}
+                    size="icon" 
+                    className="h-9 w-9"
+                    onClick={() => setGridSize('compact')}
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-11 w-11"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="price-min">Min Price (NEX)</Label>
-                  <Input
-                    id="price-min"
-                    type="number"
-                    step="0.01"
-                    placeholder="0"
-                    value={priceMin}
-                    onChange={(e) => setPriceMin(e.target.value)}
-                    className="border-2 focus:border-primary"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="price-max">Max Price (NEX)</Label>
-                  <Input
-                    id="price-max"
-                    type="number"
-                    step="0.01"
-                    placeholder="Any"
-                    value={priceMax}
-                    onChange={(e) => setPriceMax(e.target.value)}
-                    className="border-2 focus:border-primary"
-                  />
-                </div>
-              </div>
-              {(priceMin || priceMax) && (
-                <div className="mt-4 flex gap-2 flex-wrap">
-                  {priceMin && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full text-sm">
-                      Min: {priceMin} NEX
-                      <button onClick={() => setPriceMin('')}>
-                        <X className="w-3 h-3" />
-                      </button>
+
+              {/* Advanced Filters Panel */}
+              {showFilters && (
+                <div className="glass p-6 rounded-xl shadow-card border-2 border-primary/20 animate-fade-in-up">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-lg">Advanced Filters</h3>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        setPriceMin('');
+                        setPriceMax('');
+                      }}
+                    >
+                      Clear All
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="price-min">Min Price (NEX)</Label>
+                      <Input
+                        id="price-min"
+                        type="number"
+                        step="0.01"
+                        placeholder="0"
+                        value={priceMin}
+                        onChange={(e) => setPriceMin(e.target.value)}
+                        className="border-2 focus:border-primary"
+                      />
                     </div>
-                  )}
-                  {priceMax && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full text-sm">
-                      Max: {priceMax} NEX
-                      <button onClick={() => setPriceMax('')}>
-                        <X className="w-3 h-3" />
-                      </button>
+                    <div className="space-y-2">
+                      <Label htmlFor="price-max">Max Price (NEX)</Label>
+                      <Input
+                        id="price-max"
+                        type="number"
+                        step="0.01"
+                        placeholder="Any"
+                        value={priceMax}
+                        onChange={(e) => setPriceMax(e.target.value)}
+                        className="border-2 focus:border-primary"
+                      />
+                    </div>
+                  </div>
+                  {(priceMin || priceMax) && (
+                    <div className="mt-4 flex gap-2 flex-wrap">
+                      {priceMin && (
+                        <Badge variant="secondary" className="gap-2 px-3 py-1">
+                          Min: {priceMin} NEX
+                          <button onClick={() => setPriceMin('')}>
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      )}
+                      {priceMax && (
+                        <Badge variant="secondary" className="gap-2 px-3 py-1">
+                          Max: {priceMax} NEX
+                          <button onClick={() => setPriceMax('')}>
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      )}
                     </div>
                   )}
                 </div>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Listings Grid */}
-        {isLoading ? (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            {/* Results Count */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-muted-foreground">
+                Showing <span className="font-semibold text-foreground">{filteredListings.length}</span> items
+              </p>
+            </div>
+
+            {/* Listings Grid */}
+            {isLoading ? (
+              <NFTGridSkeleton count={gridSize === 'compact' ? 12 : 8} />
+            ) : filteredListings.length === 0 ? (
+              <div className="text-center py-20 glass rounded-2xl">
+                <div className="text-6xl mb-4">🌸</div>
+                <h3 className="text-2xl font-bold mb-2">No NFTs Listed</h3>
+                <p className="text-muted-foreground mb-6">
+                  {searchQuery ? 'No NFTs match your search' : 'Be the first to list an NFT!'}
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchQuery('');
+                    setPriceMin('');
+                    setPriceMax('');
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            ) : (
+              <div className={`grid gap-4 ${
+                gridSize === 'compact' 
+                  ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' 
+                  : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+              }`}>
+                {filteredListings.map((nft) => (
+                  <NFTCard
+                    key={nft.id}
+                    tokenId={nft.token_id}
+                    name={nft.name}
+                    imageUrl={nft.image_url}
+                    price={nft.price}
+                    owner={nft.owner_address}
+                    isListed={true}
+                    nftId={nft.id}
+                    walletAddress={walletAddress}
+                    onBuy={() => handleBuy(nft)}
+                    onMakeOffer={() => {
+                      setSelectedNFT(nft);
+                      setShowOfferDialog(true);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        ) : filteredListings.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">🌸</div>
-            <h3 className="text-2xl font-bold mb-2">No NFTs Listed</h3>
-            <p className="text-muted-foreground">
-              {searchQuery ? 'No NFTs match your search' : 'Be the first to list an NFT!'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredListings.map((nft) => (
-              <NFTCard
-                key={nft.id}
-                tokenId={nft.token_id}
-                name={nft.name}
-                imageUrl={nft.image_url}
-                price={nft.price}
-                owner={nft.owner_address}
-                isListed={true}
-                nftId={nft.id}
-                walletAddress={walletAddress}
-                onBuy={() => handleBuy(nft)}
-                onMakeOffer={() => {
-                  setSelectedNFT(nft);
-                  setShowOfferDialog(true);
-                }}
-              />
-            ))}
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Make Offer Dialog */}
       <Dialog open={showOfferDialog} onOpenChange={setShowOfferDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Make an Offer</DialogTitle>
+            <DialogTitle className="text-xl">Make an Offer</DialogTitle>
             <DialogDescription>
-              Submit your offer for {selectedNFT?.name}
+              Submit your offer for <span className="font-semibold text-foreground">{selectedNFT?.name}</span>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Current Price: {selectedNFT?.price} NEX
-              </label>
+            {selectedNFT && (
+              <div className="flex items-center gap-4 p-4 rounded-lg bg-secondary/50">
+                <div className="w-16 h-16 rounded-lg overflow-hidden">
+                  {selectedNFT.image_url ? (
+                    <img src={selectedNFT.image_url} alt={selectedNFT.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-sakura text-white text-2xl">
+                      🌸
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-semibold">{selectedNFT.name}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Listed Price: <span className="font-bold gradient-text">{selectedNFT.price} NEX</span>
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Your Offer (NEX)</Label>
               <Input
                 type="number"
                 step="0.001"
-                placeholder="Enter your offer in NEX"
+                placeholder="Enter your offer amount"
                 value={offerPrice}
                 onChange={(e) => setOfferPrice(e.target.value)}
+                className="h-12 text-lg"
               />
             </div>
           </div>
           <DialogFooter>
             <Button
+              variant="outline"
+              onClick={() => setShowOfferDialog(false)}
+              disabled={isProcessing}
+            >
+              Cancel
+            </Button>
+            <Button
               onClick={handleMakeOffer}
               disabled={!offerPrice || isProcessing}
-              className="btn-hero w-full"
+              className="btn-hero"
             >
               {isProcessing ? (
                 <>
