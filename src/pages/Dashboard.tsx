@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -20,99 +20,53 @@ import {
   BarChart3,
   Activity,
   Flame,
-  Eye,
   ExternalLink,
   RefreshCw,
   Zap,
   DollarSign,
   Percent,
   ArrowRightLeft,
-  Image
+  Image,
+  AlertCircle
 } from 'lucide-react';
-import { useMultipleTokenPrices } from '@/hooks/usePriceWebSocket';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-
-// Mock data for recent trades
-const generateRecentTrades = () => {
-  const types = ['swap', 'add_liquidity', 'remove_liquidity', 'stake', 'unstake'] as const;
-  const tokens = ['NEX', 'NXSA', 'WETH', 'BNB', 'USDC'];
-  const trades = [];
-  
-  for (let i = 0; i < 15; i++) {
-    const type = types[Math.floor(Math.random() * types.length)];
-    const tokenA = tokens[Math.floor(Math.random() * tokens.length)];
-    let tokenB = tokens[Math.floor(Math.random() * tokens.length)];
-    while (tokenB === tokenA) {
-      tokenB = tokens[Math.floor(Math.random() * tokens.length)];
-    }
-    
-    trades.push({
-      id: `trade-${i}`,
-      type,
-      tokenA,
-      tokenB,
-      amountA: (Math.random() * 1000).toFixed(2),
-      amountB: (Math.random() * 500).toFixed(2),
-      value: (Math.random() * 2000).toFixed(2),
-      time: new Date(Date.now() - i * 3600000 * Math.random() * 24),
-      status: Math.random() > 0.1 ? 'completed' : 'pending',
-    });
-  }
-  
-  return trades.sort((a, b) => b.time.getTime() - a.time.getTime());
-};
-
-// Mock market data
-const generateMarketData = () => {
-  return [
-    { name: 'NEX', price: 1.25, change: 5.2, volume: '2.5M', marketCap: '125M', trending: true },
-    { name: 'NXSA', price: 0.85, change: -2.1, volume: '1.8M', marketCap: '85M', trending: true },
-    { name: 'WETH', price: 2450, change: 3.8, volume: '15M', marketCap: '295B', trending: false },
-    { name: 'BNB', price: 320.5, change: 1.2, volume: '8M', marketCap: '48B', trending: true },
-    { name: 'USDC', price: 1.00, change: 0.01, volume: '50M', marketCap: '25B', trending: false },
-  ];
-};
-
-// Mock volume data for chart
-const generateVolumeData = () => {
-  const data = [];
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    data.push({
-      date: date.toLocaleDateString('en-US', { weekday: 'short' }),
-      volume: Math.floor(Math.random() * 500000) + 100000,
-      trades: Math.floor(Math.random() * 500) + 100,
-    });
-  }
-  return data;
-};
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { getCurrentAccount } from '@/lib/web3/wallet';
 
 const Dashboard = () => {
-  const { prices, isConnected } = useMultipleTokenPrices();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [recentTrades] = useState(generateRecentTrades);
-  const [marketData] = useState(generateMarketData);
-  const [volumeData] = useState(generateVolumeData);
+  const [walletAddress, setWalletAddress] = useState<string | undefined>();
+  
+  // Get wallet address on mount
+  useEffect(() => {
+    const fetchWallet = async () => {
+      const account = await getCurrentAccount();
+      setWalletAddress(account || undefined);
+    };
+    fetchWallet();
+
+    // Listen for wallet changes
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accounts: string[]) => {
+        setWalletAddress(accounts[0] || undefined);
+      });
+    }
+  }, []);
+
+  const {
+    isLoading,
+    isRefreshing,
+    isConnected,
+    portfolio,
+    activities,
+    stats,
+    volumeChartData,
+    marketData,
+    refresh,
+  } = useDashboardData(walletAddress);
 
   useEffect(() => {
     document.title = 'Dashboard - NEXUSAKURA';
   }, []);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsRefreshing(false);
-  };
-
-  // Calculate total stats
-  const totalStats = useMemo(() => {
-    const totalVolume = volumeData.reduce((sum, d) => sum + d.volume, 0);
-    const totalTrades = volumeData.reduce((sum, d) => sum + d.trades, 0);
-    const avgVolume = totalVolume / volumeData.length;
-    
-    return { totalVolume, totalTrades, avgVolume };
-  }, [volumeData]);
 
   const formatTime = (date: Date) => {
     const now = new Date();
@@ -128,21 +82,19 @@ const Dashboard = () => {
   const getTradeIcon = (type: string) => {
     switch (type) {
       case 'swap': return <ArrowRightLeft className="w-4 h-4" />;
-      case 'add_liquidity': return <TrendingUp className="w-4 h-4" />;
-      case 'remove_liquidity': return <TrendingDown className="w-4 h-4" />;
-      case 'stake': return <Zap className="w-4 h-4" />;
-      case 'unstake': return <Wallet className="w-4 h-4" />;
+      case 'mint': return <Zap className="w-4 h-4" />;
+      case 'transfer': return <ArrowUpRight className="w-4 h-4" />;
+      case 'offer': return <DollarSign className="w-4 h-4" />;
       default: return <Activity className="w-4 h-4" />;
     }
   };
 
   const getTradeLabel = (type: string) => {
     switch (type) {
-      case 'swap': return 'Swap';
-      case 'add_liquidity': return 'Add Liquidity';
-      case 'remove_liquidity': return 'Remove Liquidity';
-      case 'stake': return 'Stake';
-      case 'unstake': return 'Unstake';
+      case 'swap': return 'Sale';
+      case 'mint': return 'Mint';
+      case 'transfer': return 'Transfer';
+      case 'offer': return 'Offer';
       default: return type;
     }
   };
@@ -163,7 +115,10 @@ const Dashboard = () => {
               Dashboard
             </h1>
             <p className="text-muted-foreground mt-2">
-              Overview lengkap portfolio, trades, dan market insights
+              {walletAddress 
+                ? `Portfolio & insights untuk ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+                : 'Hubungkan wallet untuk melihat portfolio Anda'
+              }
             </p>
           </div>
           
@@ -175,7 +130,8 @@ const Dashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleRefresh}
+              onClick={refresh}
+              disabled={isRefreshing}
               className="gap-2"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -183,6 +139,18 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
+
+        {/* No Wallet Warning */}
+        {!walletAddress && (
+          <Card className="mb-6 border-orange-500/30 bg-orange-500/5">
+            <CardContent className="flex items-center gap-3 p-4">
+              <AlertCircle className="w-5 h-5 text-orange-500" />
+              <p className="text-sm text-orange-600 dark:text-orange-400">
+                Hubungkan wallet Anda untuk melihat data portfolio real-time
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -193,12 +161,19 @@ const Dashboard = () => {
                   <DollarSign className="w-5 h-5 text-primary" />
                 </div>
                 <Badge variant="outline" className="text-green-500 border-green-500/30 bg-green-500/10">
-                  +12.5%
+                  7D
                 </Badge>
               </div>
-              <p className="text-2xl font-bold mt-3">
-                ${(totalStats.totalVolume / 1000000).toFixed(2)}M
-              </p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-24 mt-3" />
+              ) : (
+                <p className="text-2xl font-bold mt-3">
+                  {stats.totalVolume7d > 0 
+                    ? `${stats.totalVolume7d.toFixed(2)} NEX`
+                    : '$0.00'
+                  }
+                </p>
+              )}
               <p className="text-sm text-muted-foreground">7D Volume</p>
             </CardContent>
           </Card>
@@ -210,13 +185,17 @@ const Dashboard = () => {
                   <Activity className="w-5 h-5 text-blue-500" />
                 </div>
                 <Badge variant="outline" className="text-blue-500 border-blue-500/30 bg-blue-500/10">
-                  Active
+                  Total
                 </Badge>
               </div>
-              <p className="text-2xl font-bold mt-3">
-                {totalStats.totalTrades.toLocaleString()}
-              </p>
-              <p className="text-sm text-muted-foreground">Total Trades</p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-16 mt-3" />
+              ) : (
+                <p className="text-2xl font-bold mt-3">
+                  {stats.totalTrades.toLocaleString()}
+                </p>
+              )}
+              <p className="text-sm text-muted-foreground">Total Activities</p>
             </CardContent>
           </Card>
 
@@ -230,7 +209,7 @@ const Dashboard = () => {
                   APR
                 </Badge>
               </div>
-              <p className="text-2xl font-bold mt-3">24.5%</p>
+              <p className="text-2xl font-bold mt-3">{stats.stakingAPR}%</p>
               <p className="text-sm text-muted-foreground">Avg Staking APR</p>
             </CardContent>
           </Card>
@@ -245,7 +224,11 @@ const Dashboard = () => {
                   NFTs
                 </Badge>
               </div>
-              <p className="text-2xl font-bold mt-3">156</p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-12 mt-3" />
+              ) : (
+                <p className="text-2xl font-bold mt-3">{stats.nftsOwned}</p>
+              )}
               <p className="text-sm text-muted-foreground">NFTs Owned</p>
             </CardContent>
           </Card>
@@ -256,11 +239,68 @@ const Dashboard = () => {
           {/* Left Column - Portfolio */}
           <div className="lg:col-span-2 space-y-6">
             {/* Portfolio Overview */}
-            <PortfolioOverview 
-              tokenValue={4850.50} 
-              lpValue={2340.25} 
-              stakingValue={1560.75} 
-            />
+            {isLoading ? (
+              <Card className="glass border-border/50 p-6">
+                <Skeleton className="h-6 w-40 mb-4" />
+                <Skeleton className="h-3 w-full mb-4" />
+                <div className="grid grid-cols-3 gap-3">
+                  <Skeleton className="h-20" />
+                  <Skeleton className="h-20" />
+                  <Skeleton className="h-20" />
+                </div>
+              </Card>
+            ) : (
+              <PortfolioOverview 
+                tokenValue={portfolio.tokenValue} 
+                lpValue={portfolio.lpValue} 
+                stakingValue={portfolio.stakingValue} 
+              />
+            )}
+
+            {/* Token Balances */}
+            {walletAddress && portfolio.balances.length > 0 && (
+              <Card className="glass border-border/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Wallet className="w-5 h-5 text-primary" />
+                    Token Balances
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {portfolio.balances.map((token) => (
+                      <div 
+                        key={token.symbol}
+                        className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center font-bold text-sm">
+                            {token.symbol.slice(0, 2)}
+                          </div>
+                          <div>
+                            <p className="font-medium">{token.symbol}</p>
+                            <p className="text-xs text-muted-foreground">{token.name}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">
+                            {parseFloat(token.balance).toLocaleString(undefined, { 
+                              maximumFractionDigits: 4 
+                            })}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ≈ ${token.value.toLocaleString(undefined, { 
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2 
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Portfolio Performance Chart */}
             <PortfolioPerformance />
@@ -270,13 +310,13 @@ const Dashboard = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <BarChart3 className="w-5 h-5 text-primary" />
-                  Trading Volume (7 Days)
+                  Trading Activity (7 Days)
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={volumeData}>
+                    <BarChart data={volumeChartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                       <XAxis 
                         dataKey="date" 
@@ -288,7 +328,7 @@ const Dashboard = () => {
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         tickLine={false}
-                        tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`}
+                        tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}
                       />
                       <Tooltip
                         contentStyle={{
@@ -296,7 +336,10 @@ const Dashboard = () => {
                           border: '1px solid hsl(var(--border))',
                           borderRadius: '8px',
                         }}
-                        formatter={(value: number) => [`$${value.toLocaleString()}`, 'Volume']}
+                        formatter={(value: number, name: string) => [
+                          name === 'volume' ? `${value.toLocaleString()} NEX` : value,
+                          name === 'volume' ? 'Volume' : 'Trades'
+                        ]}
                       />
                       <Bar 
                         dataKey="volume" 
@@ -313,15 +356,15 @@ const Dashboard = () => {
 
           {/* Right Column - Trades & Market */}
           <div className="space-y-6">
-            {/* Recent Trades */}
+            {/* Recent Activities */}
             <Card className="glass border-border/50">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Clock className="w-5 h-5 text-primary" />
-                    Recent Trades
+                    Recent Activity
                   </CardTitle>
-                  <Link to="/dex/history">
+                  <Link to="/activity">
                     <Button variant="ghost" size="sm" className="gap-1 text-xs">
                       View All
                       <ExternalLink className="w-3 h-3" />
@@ -331,35 +374,57 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <ScrollArea className="h-[320px]">
-                  <div className="divide-y divide-border/50">
-                    {recentTrades.slice(0, 8).map((trade) => (
-                      <div 
-                        key={trade.id}
-                        className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${
-                            trade.type === 'swap' ? 'bg-primary/10 text-primary' :
-                            trade.type.includes('liquidity') ? 'bg-blue-500/10 text-blue-500' :
-                            'bg-purple-500/10 text-purple-500'
-                          }`}>
-                            {getTradeIcon(trade.type)}
+                  {isLoading ? (
+                    <div className="p-4 space-y-3">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <Skeleton className="w-10 h-10 rounded-lg" />
+                          <div className="flex-1">
+                            <Skeleton className="h-4 w-24 mb-2" />
+                            <Skeleton className="h-3 w-32" />
                           </div>
-                          <div>
-                            <p className="font-medium text-sm">{getTradeLabel(trade.type)}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {trade.amountA} {trade.tokenA}
-                              {trade.type === 'swap' && ` → ${trade.amountB} ${trade.tokenB}`}
+                          <Skeleton className="h-4 w-16" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : activities.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      <Activity className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                      <p>No recent activities</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border/50">
+                      {activities.slice(0, 8).map((activity) => (
+                        <div 
+                          key={activity.id}
+                          className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${
+                              activity.type === 'swap' ? 'bg-primary/10 text-primary' :
+                              activity.type === 'mint' ? 'bg-green-500/10 text-green-500' :
+                              activity.type === 'offer' ? 'bg-blue-500/10 text-blue-500' :
+                              'bg-purple-500/10 text-purple-500'
+                            }`}>
+                              {getTradeIcon(activity.type)}
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{getTradeLabel(activity.type)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {activity.price ? `${activity.price} NEX` : 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-sm">
+                              {activity.value > 0 ? `${activity.value.toFixed(2)} NEX` : '-'}
                             </p>
+                            <p className="text-xs text-muted-foreground">{formatTime(activity.time)}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium text-sm">${trade.value}</p>
-                          <p className="text-xs text-muted-foreground">{formatTime(trade.time)}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </ScrollArea>
               </CardContent>
             </Card>
@@ -407,7 +472,7 @@ const Dashboard = () => {
                       </div>
                       <div className="text-right">
                         <p className="font-medium">
-                          ${token.price.toLocaleString()}
+                          ${token.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </p>
                         <div className={`flex items-center justify-end gap-1 text-sm ${
                           token.change >= 0 ? 'text-green-500' : 'text-red-500'
@@ -417,7 +482,7 @@ const Dashboard = () => {
                           ) : (
                             <ArrowDownRight className="w-3 h-3" />
                           )}
-                          <span>{Math.abs(token.change)}%</span>
+                          <span>{Math.abs(token.change).toFixed(1)}%</span>
                         </div>
                       </div>
                     </div>
