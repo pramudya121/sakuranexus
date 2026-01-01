@@ -23,6 +23,7 @@ import PoolDetail from "./pages/dex/PoolDetail";
 import TokenAnalytics from "./pages/dex/TokenAnalytics";
 import Staking from "./pages/dex/Staking";
 import TransactionHistoryPage from "./pages/dex/TransactionHistoryPage";
+import NFTAnalytics from "./pages/NFTAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/nft/:tokenId" element={<NFTDetail />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/nft-analytics" element={<NFTAnalytics />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/dex/swap" element={<Swap />} />

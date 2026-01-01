@@ -12,6 +12,7 @@ import SlippageSettings from './SlippageSettings';
 import PriceImpactWarning from './PriceImpactWarning';
 import SwapConfirmModal from './SwapConfirmModal';
 import SwapRouteDisplay from './SwapRouteDisplay';
+import GasEstimator from './GasEstimator';
 import { saveTransaction } from './TransactionHistory';
 import { useToast } from '@/hooks/use-toast';
 
@@ -455,9 +456,10 @@ const SwapBox = () => {
                 <span>{minReceived} {tokenOut.symbol}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Slippage</span>
+              <span className="text-muted-foreground">Slippage</span>
                 <span>{slippage}%</span>
               </div>
+              <GasEstimator compact />
             </div>
           )}
 
