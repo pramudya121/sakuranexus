@@ -297,37 +297,42 @@ const SwapBox = () => {
 
   return (
     <>
-      <Card className="w-full max-w-md mx-auto glass border-border/50 overflow-hidden">
-        <div className="p-4 border-b border-border/50 flex items-center justify-between">
-          <h3 className="text-lg font-bold">Swap</h3>
+      <Card className="w-full max-w-md mx-auto glass border-border/50 overflow-hidden shadow-xl backdrop-blur-xl">
+        {/* Header */}
+        <div className="p-4 border-b border-border/50 flex items-center justify-between bg-gradient-to-r from-primary/5 to-transparent">
           <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <h3 className="text-lg font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Swap</h3>
+          </div>
+          <div className="flex items-center gap-1">
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={handleManualRefresh}
               disabled={isRefreshing}
+              className="h-8 w-8 hover:bg-primary/10"
               title={`Last refresh: ${lastRefresh.toLocaleTimeString()}`}
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-              <Settings className="w-5 h-5" />
+            <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} className="h-8 w-8 hover:bg-primary/10">
+              <Settings className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
         <div className="p-4 space-y-2">
           {/* Token In */}
-          <div className="bg-secondary/30 rounded-xl p-4">
+          <div className="bg-secondary/40 rounded-xl p-4 border border-border/30 hover:border-primary/30 transition-colors">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">You Pay</span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">You Pay</span>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  Balance: {parseFloat(balanceIn).toFixed(4)}
+                <span className="text-xs text-muted-foreground">
+                  Balance: <span className="text-foreground font-medium">{parseFloat(balanceIn).toFixed(4)}</span>
                 </span>
                 <Button
-                  variant="link"
-                  className="text-xs text-primary p-0 h-auto"
+                  variant="ghost"
+                  className="text-xs text-primary p-0 h-auto hover:bg-transparent hover:text-primary/80 font-semibold"
                   onClick={() => setAmountIn(balanceIn)}
                 >
                   MAX
@@ -340,22 +345,22 @@ const SwapBox = () => {
                 placeholder="0.0"
                 value={amountIn}
                 onChange={(e) => setAmountIn(e.target.value)}
-                className="border-0 bg-transparent text-2xl font-semibold focus-visible:ring-0 p-0"
+                className="border-0 bg-transparent text-2xl font-bold focus-visible:ring-0 p-0 h-auto"
               />
               <Button
                 variant="outline"
                 onClick={() => setShowTokenSelectorIn(true)}
-                className="flex items-center gap-2 min-w-[120px]"
+                className="flex items-center gap-2 min-w-[130px] h-10 rounded-full bg-background/60 border-border/50 hover:bg-background/80 hover:border-primary/30"
               >
                 {tokenIn.logoURI ? (
-                  <img src={tokenIn.logoURI} alt={tokenIn.symbol} className="w-6 h-6 rounded-full object-cover" />
+                  <img src={tokenIn.logoURI} alt={tokenIn.symbol} className="w-6 h-6 rounded-full object-cover ring-2 ring-background" />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold ring-2 ring-background">
                     {tokenIn.symbol.charAt(0)}
                   </div>
                 )}
-                {tokenIn.symbol}
-                <ChevronDown className="w-4 h-4" />
+                <span className="font-semibold">{tokenIn.symbol}</span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </Button>
             </div>
           </div>
@@ -366,57 +371,64 @@ const SwapBox = () => {
               variant="outline"
               size="icon"
               onClick={handleSwitch}
-              className="rounded-full bg-background border-border/50 hover:bg-secondary"
+              className="rounded-full bg-background border-2 border-border/50 hover:bg-primary/10 hover:border-primary/50 hover:rotate-180 transition-all duration-300 shadow-lg"
             >
               <ArrowDown className="w-4 h-4" />
             </Button>
           </div>
 
           {/* Token Out */}
-          <div className="bg-secondary/30 rounded-xl p-4">
+          <div className="bg-secondary/40 rounded-xl p-4 border border-border/30 hover:border-primary/30 transition-colors">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">You Receive</span>
-              <span className="text-sm text-muted-foreground">
-                Balance: {parseFloat(balanceOut).toFixed(4)}
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">You Receive</span>
+              <span className="text-xs text-muted-foreground">
+                Balance: <span className="text-foreground font-medium">{parseFloat(balanceOut).toFixed(4)}</span>
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-1 text-2xl font-semibold">
+              <div className="flex-1 text-2xl font-bold min-h-[32px] flex items-center">
                 {isCalculating ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="text-sm">Calculating...</span>
+                  </div>
+                ) : amountOut ? (
+                  <span className={parseFloat(amountOut) > 0 ? 'text-green-500' : ''}>
+                    {parseFloat(amountOut).toFixed(6)}
+                  </span>
                 ) : (
-                  amountOut || '0.0'
+                  <span className="text-muted-foreground">0.0</span>
                 )}
               </div>
               <Button
                 variant="outline"
                 onClick={() => setShowTokenSelectorOut(true)}
-                className="flex items-center gap-2 min-w-[120px]"
+                className="flex items-center gap-2 min-w-[130px] h-10 rounded-full bg-background/60 border-border/50 hover:bg-background/80 hover:border-primary/30"
               >
                 {tokenOut.logoURI ? (
-                  <img src={tokenOut.logoURI} alt={tokenOut.symbol} className="w-6 h-6 rounded-full object-cover" />
+                  <img src={tokenOut.logoURI} alt={tokenOut.symbol} className="w-6 h-6 rounded-full object-cover ring-2 ring-background" />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold ring-2 ring-background">
                     {tokenOut.symbol.charAt(0)}
                   </div>
                 )}
-                {tokenOut.symbol}
-                <ChevronDown className="w-4 h-4" />
+                <span className="font-semibold">{tokenOut.symbol}</span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </Button>
             </div>
           </div>
 
           {/* Smart Routing Toggle */}
-          <div className="flex items-center justify-between text-sm px-1">
+          <div className="flex items-center justify-between text-sm px-2 py-1">
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="text-muted-foreground">Smart Routing</span>
+              <Zap className={`w-4 h-4 ${useSmartRouting ? 'text-primary' : 'text-muted-foreground'}`} />
+              <span className="text-muted-foreground text-xs">Smart Routing</span>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setUseSmartRouting(!useSmartRouting)}
-              className={`h-6 px-2 ${useSmartRouting ? 'text-primary' : 'text-muted-foreground'}`}
+              className={`h-6 px-3 text-xs rounded-full ${useSmartRouting ? 'bg-primary/20 text-primary hover:bg-primary/30' : 'text-muted-foreground hover:bg-secondary'}`}
             >
               {useSmartRouting ? 'On' : 'Off'}
             </Button>
@@ -438,26 +450,26 @@ const SwapBox = () => {
 
           {/* Swap Info */}
           {amountIn && amountOut && (
-            <div className="bg-secondary/20 rounded-lg p-3 space-y-2 text-sm">
+            <div className="bg-secondary/20 rounded-xl p-3 space-y-2 text-sm border border-border/20">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Rate</span>
-                <span>
+                <span className="text-muted-foreground text-xs">Rate</span>
+                <span className="font-medium text-xs">
                   1 {tokenIn.symbol} = {(parseFloat(amountOut) / parseFloat(amountIn)).toFixed(6)} {tokenOut.symbol}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Price Impact</span>
-                <span className={priceImpact > 5 ? 'text-destructive' : priceImpact > 2 ? 'text-yellow-500' : 'text-green-500'}>
+                <span className="text-muted-foreground text-xs">Price Impact</span>
+                <span className={`font-medium text-xs ${priceImpact > 5 ? 'text-destructive' : priceImpact > 2 ? 'text-yellow-500' : 'text-green-500'}`}>
                   {priceImpact.toFixed(2)}%
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Min. Received</span>
-                <span>{minReceived} {tokenOut.symbol}</span>
+                <span className="text-muted-foreground text-xs">Min. Received</span>
+                <span className="font-medium text-xs">{minReceived} {tokenOut.symbol}</span>
               </div>
               <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Slippage</span>
-                <span>{slippage}%</span>
+                <span className="text-muted-foreground text-xs">Slippage</span>
+                <span className="font-medium text-xs bg-primary/10 px-2 py-0.5 rounded-full">{slippage}%</span>
               </div>
               <GasEstimator compact />
             </div>
@@ -467,14 +479,28 @@ const SwapBox = () => {
           <Button
             onClick={handleSwapClick}
             disabled={!account || !amountIn || !amountOut || isLoading || parseFloat(amountIn) > parseFloat(balanceIn)}
-            className="w-full h-14 text-lg font-bold bg-gradient-sakura hover:shadow-sakura"
+            className={`w-full h-14 text-lg font-bold rounded-xl transition-all duration-300 ${
+              !account 
+                ? 'bg-secondary text-muted-foreground' 
+                : parseFloat(amountIn) > parseFloat(balanceIn) 
+                  ? 'bg-destructive/20 text-destructive border border-destructive/30' 
+                  : 'bg-gradient-sakura hover:shadow-sakura hover:scale-[1.02]'
+            }`}
           >
-            {!account ? (
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Swapping...</span>
+              </div>
+            ) : !account ? (
               'Connect Wallet'
             ) : !amountIn ? (
               'Enter Amount'
             ) : parseFloat(amountIn) > parseFloat(balanceIn) ? (
-              'Insufficient Balance'
+              <span className="flex items-center gap-2">
+                <span>⚠️</span>
+                Insufficient {tokenIn.symbol}
+              </span>
             ) : (
               'Swap'
             )}

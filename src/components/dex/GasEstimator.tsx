@@ -40,26 +40,29 @@ const GasEstimator = ({ onGasPriceSelect, compact = false }: GasEstimatorProps) 
         // Calculate different gas price tiers
         const baseGwei = Number(ethers.formatUnits(gasPrice, 'gwei'));
         
-        const newPrices = {
-          slow: (baseGwei * 0.8).toFixed(2),
-          standard: baseGwei.toFixed(2),
-          fast: (baseGwei * 1.2).toFixed(2),
-          instant: (baseGwei * 1.5).toFixed(2),
-        };
+        // Validate the gas price is reasonable
+        if (baseGwei > 0 && baseGwei < 10000) {
+          const newPrices = {
+            slow: (baseGwei * 0.8).toFixed(2),
+            standard: baseGwei.toFixed(2),
+            fast: (baseGwei * 1.2).toFixed(2),
+            instant: (baseGwei * 1.5).toFixed(2),
+          };
 
-        // Determine trend
-        const prevStandard = parseFloat(gasPrices.standard);
-        if (prevStandard > 0) {
-          if (baseGwei > prevStandard * 1.05) setTrend('up');
-          else if (baseGwei < prevStandard * 0.95) setTrend('down');
-          else setTrend('stable');
+          // Determine trend
+          const prevStandard = parseFloat(gasPrices.standard);
+          if (prevStandard > 0) {
+            if (baseGwei > prevStandard * 1.05) setTrend('up');
+            else if (baseGwei < prevStandard * 0.95) setTrend('down');
+            else setTrend('stable');
+          }
+
+          setGasPrices(newPrices);
+          setLastUpdate(new Date());
         }
-
-        setGasPrices(newPrices);
-        setLastUpdate(new Date());
       }
-    } catch (error) {
-      console.error('Error fetching gas prices:', error);
+    } catch {
+      // Silent fail - gas prices will just show previous values or defaults
     } finally {
       setIsLoading(false);
     }

@@ -12,7 +12,109 @@ import {
 } from './dex-config';
 import * as UniswapV2Library from './uniswap-library';
 
-// Get contract instances
+// ============= Request Queue & Rate Limiting =============
+const requestQueue: Array<() => Promise<any>> = [];
+let isProcessingQueue = false;
+const MIN_REQUEST_INTERVAL = 200; // 200ms between requests
+let lastRequestTime = 0;
+
+const processQueue = async () => {
+  if (isProcessingQueue || requestQueue.length === 0) return;
+  isProcessingQueue = true;
+  
+  while (requestQueue.length > 0) {
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTime;
+    
+    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+      await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
+    }
+    
+    const request = requestQueue.shift();
+    if (request) {
+      lastRequestTime = Date.now();
+      try {
+        await request();
+      } catch {
+        // Continue processing even if one request fails
+      }
+    }
+  }
+  
+  isProcessingQueue = false;
+};
+
+const queueRequest = <T>(fn: () => Promise<T>): Promise<T> => {
+  return new Promise((resolve, reject) => {
+    requestQueue.push(async () => {
+      try {
+        const result = await fn();
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    });
+    processQueue();
+  });
+};
+
+// ============= Enhanced Caching =============
+interface CacheEntry<T> {
+  value: T;
+  timestamp: number;
+  expiry: number;
+}
+
+class SmartCache<T> {
+  private cache: Map<string, CacheEntry<T>> = new Map();
+  private defaultExpiry: number;
+
+  constructor(defaultExpiryMs: number = 30000) {
+    this.defaultExpiry = defaultExpiryMs;
+  }
+
+  get(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    
+    if (Date.now() > entry.timestamp + entry.expiry) {
+      // Return stale data but mark for refresh
+      return entry.value;
+    }
+    return entry.value;
+  }
+
+  getIfValid(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    if (Date.now() > entry.timestamp + entry.expiry) return null;
+    return entry.value;
+  }
+
+  set(key: string, value: T, customExpiry?: number): void {
+    this.cache.set(key, {
+      value,
+      timestamp: Date.now(),
+      expiry: customExpiry ?? this.defaultExpiry,
+    });
+  }
+
+  invalidate(key: string): void {
+    this.cache.delete(key);
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
+// Initialize caches
+const balanceCache = new SmartCache<string>(20000); // 20 seconds
+const decimalsCache = new SmartCache<number>(300000); // 5 minutes
+const pairAddressCache = new SmartCache<string | null>(60000); // 1 minute
+const contractExistsCache = new SmartCache<boolean>(120000); // 2 minutes
+
+// ============= Contract Instance Helpers =============
 export const getRouterContract = async () => {
   const signer = await getSigner();
   if (!signer) return null;
@@ -48,6 +150,25 @@ export const isNativeToken = (address: string) => {
   return address === '0x0000000000000000000000000000000000000000';
 };
 
+// Check if a contract exists at the given address
+const checkContractExists = async (address: string): Promise<boolean> => {
+  const cacheKey = `exists_${address.toLowerCase()}`;
+  const cached = contractExistsCache.getIfValid(cacheKey);
+  if (cached !== null) return cached;
+
+  try {
+    const provider = getProvider();
+    if (!provider) return false;
+    
+    const code = await provider.getCode(address);
+    const exists = code !== '0x' && code !== '0x0';
+    contractExistsCache.set(cacheKey, exists);
+    return exists;
+  } catch {
+    return false;
+  }
+};
+
 // Get deadline - use generous buffer to prevent EXPIRED errors
 export const getDeadline = async (minutes: number = 30): Promise<number> => {
   try {
@@ -56,29 +177,20 @@ export const getDeadline = async (minutes: number = 30): Promise<number> => {
       const block = await provider.getBlock('latest');
       if (block) {
         const blockTimestamp = Number(block.timestamp);
-        // Add extra 5 minute buffer to prevent edge cases
-        const deadline = blockTimestamp + (60 * (minutes + 5));
-        return deadline;
+        return blockTimestamp + (60 * (minutes + 5));
       }
     }
-  } catch (error) {
-    // Silent fallback - no need to log this
+  } catch {
+    // Silent fallback
   }
-  // Fallback to Date.now() with generous buffer (add extra 10 minutes)
   return Math.floor(Date.now() / 1000) + (60 * (minutes + 10));
 };
 
-// Simple cache for balances to reduce RPC calls
-const balanceCache: Map<string, { balance: string; timestamp: number }> = new Map();
-const CACHE_DURATION = 15000; // 15 seconds for fresher data
-
-// Token decimals cache to avoid repeated calls
-const decimalsCache: Map<string, number> = new Map();
-
 // Get token decimals with caching
 const getTokenDecimals = async (tokenAddress: string, provider: ethers.BrowserProvider): Promise<number> => {
-  const cached = decimalsCache.get(tokenAddress.toLowerCase());
-  if (cached !== undefined) return cached;
+  const cacheKey = tokenAddress.toLowerCase();
+  const cached = decimalsCache.getIfValid(cacheKey);
+  if (cached !== null) return cached;
   
   // Default decimals for known tokens
   const knownDecimals: Record<string, number> = {
@@ -87,133 +199,193 @@ const getTokenDecimals = async (tokenAddress: string, provider: ethers.BrowserPr
     [DEX_CONTRACTS.WETH.toLowerCase()]: 18,
     [DEX_CONTRACTS.WETH9.toLowerCase()]: 18,
     [DEX_CONTRACTS.USDC.toLowerCase()]: 6,
+    [DEX_CONTRACTS.BNB.toLowerCase()]: 18,
     '0x7f5ca558679a7bc8f111dbf709f37b61ca7e3055': 6, // USDT
   };
   
-  const known = knownDecimals[tokenAddress.toLowerCase()];
+  const known = knownDecimals[cacheKey];
   if (known !== undefined) {
-    decimalsCache.set(tokenAddress.toLowerCase(), known);
+    decimalsCache.set(cacheKey, known);
     return known;
   }
   
   try {
+    // Check if contract exists first
+    const exists = await checkContractExists(tokenAddress);
+    if (!exists) {
+      decimalsCache.set(cacheKey, 18);
+      return 18;
+    }
+
     const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
     const decimals = await tokenContract.decimals();
-    decimalsCache.set(tokenAddress.toLowerCase(), Number(decimals));
+    decimalsCache.set(cacheKey, Number(decimals));
     return Number(decimals);
   } catch {
-    // Default to 18 if we can't get decimals
+    decimalsCache.set(cacheKey, 18);
     return 18;
   }
 };
 
-// Get token balance with caching and improved retry logic
+// Get token balance with improved caching and silent error handling
 export const getTokenBalance = async (tokenAddress: string, account: string, forceRefresh = false): Promise<string> => {
   const cacheKey = `${tokenAddress.toLowerCase()}-${account.toLowerCase()}`;
-  const cached = balanceCache.get(cacheKey);
   
   // Return cached value if valid and not forcing refresh
-  if (!forceRefresh && cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.balance;
+  if (!forceRefresh) {
+    const cached = balanceCache.getIfValid(cacheKey);
+    if (cached !== null) return cached;
   }
 
-  const maxRetries = 3;
-  let lastError: any;
+  // Check for stale cache value to return on error
+  const staleValue = balanceCache.get(cacheKey);
 
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      const provider = getProvider();
-      if (!provider) return cached?.balance || '0';
+  try {
+    const provider = getProvider();
+    if (!provider) return staleValue || '0';
 
-      let balance: string;
+    let balance: string;
 
-      if (isNativeToken(tokenAddress)) {
-        const rawBalance = await provider.getBalance(account);
-        balance = ethers.formatEther(rawBalance);
-      } else {
-        const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-        // Get decimals from cache first to reduce RPC calls
-        const decimals = await getTokenDecimals(tokenAddress, provider);
-        const rawBalance = await tokenContract.balanceOf(account);
-        balance = ethers.formatUnits(rawBalance, decimals);
+    if (isNativeToken(tokenAddress)) {
+      // Native token balance - queue to prevent rate limiting
+      const rawBalance = await queueRequest(() => provider.getBalance(account));
+      balance = ethers.formatEther(rawBalance);
+    } else {
+      // Check if token contract exists first
+      const exists = await checkContractExists(tokenAddress);
+      if (!exists) {
+        // Token contract doesn't exist - return 0 silently
+        balanceCache.set(cacheKey, '0');
+        return '0';
       }
 
-      // Cache the result
-      balanceCache.set(cacheKey, { balance, timestamp: Date.now() });
-      return balance;
-    } catch (error: any) {
-      lastError = error;
-      console.warn(`Balance fetch attempt ${attempt + 1} failed:`, error?.message);
-      // If rate limited or contract error, wait before retry with exponential backoff
-      if (error?.error?.code === -32002 || error?.code === 'UNKNOWN_ERROR' || error?.code === 'CALL_EXCEPTION') {
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
-        continue;
-      }
-      break;
+      const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+      const decimals = await getTokenDecimals(tokenAddress, provider);
+      const rawBalance = await queueRequest(() => tokenContract.balanceOf(account));
+      balance = ethers.formatUnits(rawBalance, decimals);
     }
-  }
 
-  console.error('All balance fetch attempts failed:', lastError?.message);
-  // Return cached value if available, even if expired
-  if (cached) return cached.balance;
-  return '0';
+    balanceCache.set(cacheKey, balance);
+    return balance;
+  } catch (error: any) {
+    // Silent handling - just return stale cache or 0
+    if (staleValue) return staleValue;
+    return '0';
+  }
 };
 
-// Get pair address
+// Get pair address with caching and silent error handling
 export const getPairAddress = async (tokenA: string, tokenB: string): Promise<string | null> => {
+  // Use WETH for native token
+  const addressA = isNativeToken(tokenA) ? DEX_CONTRACTS.WETH9 : tokenA;
+  const addressB = isNativeToken(tokenB) ? DEX_CONTRACTS.WETH9 : tokenB;
+  
+  // Create a consistent cache key (sorted addresses)
+  const sortedAddresses = [addressA.toLowerCase(), addressB.toLowerCase()].sort();
+  const cacheKey = `pair_${sortedAddresses[0]}_${sortedAddresses[1]}`;
+  
+  // Check cache first
+  const cached = pairAddressCache.getIfValid(cacheKey);
+  if (cached !== undefined) return cached;
+
   try {
     const provider = getProvider();
     if (!provider) return null;
 
-    const factory = new ethers.Contract(DEX_CONTRACTS.UniswapV2Factory, UNISWAP_V2_FACTORY_ABI, provider);
-    
-    // Use WETH for native token
-    const addressA = isNativeToken(tokenA) ? DEX_CONTRACTS.WETH9 : tokenA;
-    const addressB = isNativeToken(tokenB) ? DEX_CONTRACTS.WETH9 : tokenB;
-
-    const pairAddress = await factory.getPair(addressA, addressB);
-    if (pairAddress === '0x0000000000000000000000000000000000000000') {
+    // Check if factory exists
+    const factoryExists = await checkContractExists(DEX_CONTRACTS.UniswapV2Factory);
+    if (!factoryExists) {
+      pairAddressCache.set(cacheKey, null);
       return null;
     }
+
+    const factory = new ethers.Contract(DEX_CONTRACTS.UniswapV2Factory, UNISWAP_V2_FACTORY_ABI, provider);
+    const pairAddress = await queueRequest(() => factory.getPair(addressA, addressB));
+    
+    if (pairAddress === '0x0000000000000000000000000000000000000000') {
+      pairAddressCache.set(cacheKey, null);
+      return null;
+    }
+    
+    pairAddressCache.set(cacheKey, pairAddress);
     return pairAddress;
-  } catch (error) {
-    console.error('Error getting pair address:', error);
+  } catch {
+    // Silent fail - return null without logging
+    pairAddressCache.set(cacheKey, null);
     return null;
   }
 };
 
-// Get reserves
+// Cache for reserves
+const reservesCache = new SmartCache<{ reserve0: bigint; reserve1: bigint; token0: string; token1: string } | null>(10000); // 10 seconds
+
+// Get reserves with caching
 export const getReserves = async (pairAddress: string) => {
+  if (!pairAddress || pairAddress === '0x0000000000000000000000000000000000000000') {
+    return null;
+  }
+
+  const cacheKey = `reserves_${pairAddress.toLowerCase()}`;
+  const cached = reservesCache.getIfValid(cacheKey);
+  if (cached !== undefined) return cached;
+
   try {
     const provider = getProvider();
     if (!provider) return null;
 
-    const pair = new ethers.Contract(pairAddress, UNISWAP_V2_PAIR_ABI, provider);
-    const reserves = await pair.getReserves();
-    const token0 = await pair.token0();
-    const token1 = await pair.token1();
+    // Check if pair contract exists
+    const pairExists = await checkContractExists(pairAddress);
+    if (!pairExists) {
+      reservesCache.set(cacheKey, null);
+      return null;
+    }
 
-    return {
+    const pair = new ethers.Contract(pairAddress, UNISWAP_V2_PAIR_ABI, provider);
+    
+    // Batch the calls to reduce RPC requests
+    const [reserves, token0, token1] = await Promise.all([
+      queueRequest(() => pair.getReserves()),
+      queueRequest(() => pair.token0()),
+      queueRequest(() => pair.token1()),
+    ]);
+
+    const result = {
       reserve0: reserves[0],
       reserve1: reserves[1],
       token0,
       token1,
     };
-  } catch (error) {
-    console.error('Error getting reserves:', error);
+    
+    reservesCache.set(cacheKey, result);
+    return result;
+  } catch {
+    // Silent fail
+    reservesCache.set(cacheKey, null);
     return null;
   }
 };
 
-// Calculate output amount
+// Calculate output amount with better error handling
 export const getAmountOut = async (
   amountIn: string,
   tokenIn: Token,
   tokenOut: Token
 ): Promise<string> => {
+  if (!amountIn || parseFloat(amountIn) === 0) return '0';
+  
   try {
     const provider = getProvider();
-    if (!provider || !amountIn || parseFloat(amountIn) === 0) return '0';
+    if (!provider) return '0';
+
+    // Check if tokens exist (for non-native tokens)
+    if (!isNativeToken(tokenIn.address)) {
+      const tokenInExists = await checkContractExists(tokenIn.address);
+      if (!tokenInExists) return '0';
+    }
+    if (!isNativeToken(tokenOut.address)) {
+      const tokenOutExists = await checkContractExists(tokenOut.address);
+      if (!tokenOutExists) return '0';
+    }
 
     const router = new ethers.Contract(DEX_CONTRACTS.UniswapV2Router02, UNISWAP_V2_ROUTER_ABI, provider);
     
@@ -221,11 +393,11 @@ export const getAmountOut = async (
     const addressOut = isNativeToken(tokenOut.address) ? DEX_CONTRACTS.WETH9 : tokenOut.address;
 
     const amountInWei = ethers.parseUnits(amountIn, tokenIn.decimals);
-    const amounts = await router.getAmountsOut(amountInWei, [addressIn, addressOut]);
+    const amounts = await queueRequest(() => router.getAmountsOut(amountInWei, [addressIn, addressOut]));
     
     return ethers.formatUnits(amounts[1], tokenOut.decimals);
-  } catch (error) {
-    console.error('Error calculating amount out:', error);
+  } catch {
+    // Silent fail - return 0 for pairs without liquidity
     return '0';
   }
 };
@@ -279,7 +451,7 @@ export const approveToken = async (
   }
 };
 
-// Check allowance
+// Check allowance with silent error handling
 export const checkAllowance = async (
   tokenAddress: string,
   owner: string,
@@ -289,10 +461,14 @@ export const checkAllowance = async (
     const provider = getProvider();
     if (!provider) return BigInt(0);
 
+    // Check if token exists
+    const exists = await checkContractExists(tokenAddress);
+    if (!exists) return BigInt(0);
+
     const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-    return await tokenContract.allowance(owner, spender);
-  } catch (error) {
-    console.error('Error checking allowance:', error);
+    return await queueRequest(() => tokenContract.allowance(owner, spender));
+  } catch {
+    // Silent fail
     return BigInt(0);
   }
 };
@@ -356,7 +532,7 @@ export const swapTokens = async (
   }
 };
 
-// Add liquidity
+// Add liquidity with improved error handling
 export const addLiquidity = async (
   tokenA: Token,
   tokenB: Token,
@@ -367,9 +543,19 @@ export const addLiquidity = async (
 ): Promise<{ success: boolean; hash?: string; error?: string }> => {
   try {
     const router = await getRouterContract();
-    if (!router) return { success: false, error: 'Router not found' };
+    if (!router) return { success: false, error: 'Wallet not connected' };
 
-    const deadline = await getDeadline(30); // Get deadline from blockchain
+    // Validate tokens exist
+    if (!isNativeToken(tokenA.address)) {
+      const tokenAExists = await checkContractExists(tokenA.address);
+      if (!tokenAExists) return { success: false, error: `Token ${tokenA.symbol} not found on this network` };
+    }
+    if (!isNativeToken(tokenB.address)) {
+      const tokenBExists = await checkContractExists(tokenB.address);
+      if (!tokenBExists) return { success: false, error: `Token ${tokenB.symbol} not found on this network` };
+    }
+
+    const deadline = await getDeadline(30);
     const amountAWei = ethers.parseUnits(amountA, tokenA.decimals);
     const amountBWei = ethers.parseUnits(amountB, tokenB.decimals);
     const amountAMin = ethers.parseUnits((parseFloat(amountA) * (1 - slippage / 100)).toFixed(tokenA.decimals), tokenA.decimals);
@@ -378,7 +564,6 @@ export const addLiquidity = async (
     let tx;
 
     if (isNativeToken(tokenA.address)) {
-      // ETH + Token (no approval needed for native token)
       tx = await router.addLiquidityETH(
         tokenB.address,
         amountBWei,
@@ -389,7 +574,6 @@ export const addLiquidity = async (
         { value: amountAWei }
       );
     } else if (isNativeToken(tokenB.address)) {
-      // Token + ETH (no approval needed for native token)
       tx = await router.addLiquidityETH(
         tokenA.address,
         amountAWei,
@@ -400,7 +584,6 @@ export const addLiquidity = async (
         { value: amountBWei }
       );
     } else {
-      // Token + Token (approvals already done separately in LiquidityForm)
       tx = await router.addLiquidity(
         tokenA.address,
         tokenB.address,
@@ -414,10 +597,25 @@ export const addLiquidity = async (
     }
 
     const receipt = await tx.wait();
+    
+    // Invalidate related caches after successful transaction
+    pairAddressCache.clear();
+    reservesCache.clear();
+    
     return { success: true, hash: receipt.hash };
   } catch (error: any) {
-    console.error('Add liquidity error:', error);
-    return { success: false, error: error.message || 'Add liquidity failed' };
+    // Parse error for user-friendly message
+    const message = error?.message || 'Add liquidity failed';
+    if (message.includes('user rejected') || message.includes('denied')) {
+      return { success: false, error: 'Transaction rejected by user' };
+    }
+    if (message.includes('insufficient') || message.includes('INSUFFICIENT')) {
+      return { success: false, error: 'Insufficient balance or allowance' };
+    }
+    if (message.includes('EXPIRED') || message.includes('deadline')) {
+      return { success: false, error: 'Transaction expired. Please try again.' };
+    }
+    return { success: false, error: 'Add liquidity failed. Please check your balances and try again.' };
   }
 };
 
