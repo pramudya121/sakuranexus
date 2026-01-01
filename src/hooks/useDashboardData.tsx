@@ -11,6 +11,7 @@ interface TokenBalance {
   balance: string;
   value: number;
   price: number;
+  logoURI?: string;
 }
 
 interface RecentActivity {
@@ -84,6 +85,7 @@ export const useDashboardData = (walletAddress?: string) => {
           balance,
           value,
           price,
+          logoURI: token.logoURI,
         };
       } catch {
         return {
@@ -93,6 +95,7 @@ export const useDashboardData = (walletAddress?: string) => {
           balance: '0',
           value: 0,
           price: 0,
+          logoURI: token.logoURI,
         };
       }
     });

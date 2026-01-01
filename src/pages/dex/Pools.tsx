@@ -1,49 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import PoolCard from '@/components/dex/PoolCard';
 import DEXNavigation from '@/components/dex/DEXNavigation';
 import MyPositions from '@/components/dex/MyPositions';
 import PoolFavorites from '@/components/dex/PoolFavorites';
+import { PoolCardSkeleton } from '@/components/ui/loading-skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Loader2, Waves, TrendingUp, BarChart3, RefreshCw, Droplets, Star, Wallet } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, Plus, Waves, TrendingUp, BarChart3, RefreshCw, Droplets, Zap, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getAllPairs, getPoolInfo, PoolInfo } from '@/lib/web3/dex';
 import { DEFAULT_TOKENS } from '@/lib/web3/dex-config';
-
-const PoolSkeleton = () => (
-  <Card className="glass border-border/50 p-4">
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-3">
-        <div className="flex -space-x-2">
-          <Skeleton className="w-10 h-10 rounded-full" />
-          <Skeleton className="w-10 h-10 rounded-full" />
-        </div>
-        <div>
-          <Skeleton className="h-5 w-24 mb-1" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-      </div>
-      <Skeleton className="h-6 w-20" />
-    </div>
-    <Skeleton className="h-16 mb-4" />
-    <div className="flex justify-between mb-4">
-      <Skeleton className="h-4 w-20" />
-      <Skeleton className="h-4 w-12" />
-    </div>
-    <div className="grid grid-cols-3 gap-4 mb-4">
-      <Skeleton className="h-16 rounded-lg" />
-      <Skeleton className="h-16 rounded-lg" />
-      <Skeleton className="h-16 rounded-lg" />
-    </div>
-    <Skeleton className="h-10 w-full" />
-  </Card>
-);
 
 const Pools = () => {
   const navigate = useNavigate();
@@ -76,11 +47,9 @@ const Pools = () => {
         if (info) {
           poolInfos.push(info);
         }
-        // Small delay to avoid RPC rate limiting
         await new Promise(resolve => setTimeout(resolve, 200));
       }
 
-      // If no pools from blockchain, show demo pools with real reserves display
       if (poolInfos.length === 0) {
         const demoPool1Token0 = DEFAULT_TOKENS.find(t => t.symbol === 'WNEX') || DEFAULT_TOKENS[1];
         const demoPool1Token1 = DEFAULT_TOKENS.find(t => t.symbol === 'NXSA') || DEFAULT_TOKENS[2];
@@ -138,14 +107,13 @@ const Pools = () => {
     setIsRefreshing(false);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     loadPools(true);
-  };
+  }, []);
 
-  const filterAndSortPools = () => {
+  const filterAndSortPools = useCallback(() => {
     let filtered = [...pools];
 
-    // Filter by search
     if (search) {
       filtered = filtered.filter(
         (pool) =>
@@ -156,93 +124,96 @@ const Pools = () => {
       );
     }
 
-    // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'tvl':
-          return b.tvl - a.tvl;
-        case 'volume':
-          return b.volume24h - a.volume24h;
-        case 'apr':
-          return b.apr - a.apr;
-        default:
-          return 0;
+        case 'tvl': return b.tvl - a.tvl;
+        case 'volume': return b.volume24h - a.volume24h;
+        case 'apr': return b.apr - a.apr;
+        default: return 0;
       }
     });
 
     setFilteredPools(filtered);
+  }, [pools, search, sortBy]);
+
+  const totalTVL = useMemo(() => pools.reduce((sum, p) => sum + p.tvl, 0), [pools]);
+  const totalVolume = useMemo(() => pools.reduce((sum, p) => sum + p.volume24h, 0), [pools]);
+  const avgAPR = useMemo(() => pools.length > 0 ? pools.reduce((sum, p) => sum + p.apr, 0) / pools.length : 0, [pools]);
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
+    if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
+    return `$${num.toFixed(0)}`;
   };
 
-  // Stats summary
-  const totalTVL = pools.reduce((sum, p) => sum + p.tvl, 0);
-  const totalVolume = pools.reduce((sum, p) => sum + p.volume24h, 0);
-  const avgAPR = pools.length > 0 ? pools.reduce((sum, p) => sum + p.apr, 0) / pools.length : 0;
+  const stats = [
+    { icon: Waves, label: 'Total Pools', value: pools.length.toString(), color: 'text-primary' },
+    { icon: DollarSign, label: 'Total TVL', value: formatNumber(totalTVL), color: 'text-blue-500' },
+    { icon: BarChart3, label: '24h Volume', value: formatNumber(totalVolume), color: 'text-purple-500' },
+    { icon: Zap, label: 'Avg APR', value: `${avgAPR.toFixed(1)}%`, color: 'text-green-500' },
+  ];
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[150px] animate-pulse-soft" />
+        <div className="absolute bottom-20 right-10 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[120px] animate-pulse-soft" style={{ animationDelay: '2s' }} />
+      </div>
+
       <SakuraFalling />
       <Navigation />
       
-      <main className="container mx-auto px-4 pt-24 pb-12">
-        {/* DEX Navigation */}
+      <main className="container mx-auto px-4 pt-24 pb-12 relative z-10">
         <DEXNavigation />
         
         {/* Hero Section */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
-            <Waves className="w-4 h-4" />
-            <span className="text-sm font-medium">Liquidity Pools</span>
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-6 animate-fade-in-up">
+            <Waves className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Liquidity Pools</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up stagger-1">
             <span className="gradient-text">All Pools</span>
           </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Explore all available liquidity pools. Add liquidity to earn trading fees.
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto animate-fade-in-up stagger-2">
+            Explore liquidity pools and earn trading fees by providing liquidity
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
-          <div className="glass rounded-xl p-4 text-center border border-border/50 animate-fade-in-up">
-            <Droplets className="w-6 h-6 mx-auto mb-2 text-primary" />
-            <p className="text-sm text-muted-foreground">Total Pools</p>
-            <p className="text-2xl font-bold number-transition">{pools.length}</p>
-          </div>
-          <div className="glass rounded-xl p-4 text-center border border-border/50 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
-            <Waves className="w-6 h-6 mx-auto mb-2 text-primary" />
-            <p className="text-sm text-muted-foreground">Total TVL</p>
-            <p className="text-2xl font-bold number-transition">${totalTVL.toLocaleString()}</p>
-          </div>
-          <div className="glass rounded-xl p-4 text-center border border-border/50 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            <BarChart3 className="w-6 h-6 mx-auto mb-2 text-primary" />
-            <p className="text-sm text-muted-foreground">24h Volume</p>
-            <p className="text-2xl font-bold number-transition">${totalVolume.toLocaleString()}</p>
-          </div>
-          <div className="glass rounded-xl p-4 text-center border border-border/50 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
-            <TrendingUp className="w-6 h-6 mx-auto mb-2 text-primary" />
-            <p className="text-sm text-muted-foreground">Average APR</p>
-            <p className="text-2xl font-bold text-green-500 number-transition">{avgAPR.toFixed(1)}%</p>
-          </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-10 animate-fade-in-up stagger-3">
+          {stats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={index} className="glass border-border/50 p-5 text-center hover:shadow-elegant transition-all duration-300 hover:-translate-y-1">
+                <Icon className={`w-7 h-7 mx-auto mb-3 ${stat.color}`} />
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{stat.label}</p>
+                <p className="text-2xl font-bold">{stat.value}</p>
+              </Card>
+            );
+          })}
         </div>
 
         {/* My Positions & Favorites */}
-        <div className="grid lg:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
+        <div className="grid lg:grid-cols-2 gap-6 max-w-6xl mx-auto mb-10">
           <MyPositions />
           <PoolFavorites />
         </div>
+
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8 max-w-4xl mx-auto">
+        <div className="flex flex-col md:flex-row gap-4 mb-8 max-w-5xl mx-auto animate-fade-in-up stagger-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="Search pools..."
+              placeholder="Search pools by token..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 bg-secondary/50 border-border/50"
+              className="pl-12 h-12 rounded-xl border-2 border-border/50 focus:border-primary/50 bg-card/50 backdrop-blur-sm"
             />
           </div>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full md:w-[180px] bg-secondary/50 border-border/50">
+            <SelectTrigger className="w-full md:w-[200px] h-12 rounded-xl border-2 border-border/50 bg-card/50 backdrop-blur-sm">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -252,20 +223,20 @@ const Pools = () => {
             </SelectContent>
           </Select>
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={handleRefresh}
             disabled={isRefreshing}
             title={`Last refresh: ${lastRefresh.toLocaleTimeString()}`}
-            className="transition-transform duration-300 hover:scale-110"
+            className="h-12 w-12 rounded-xl border-2 border-border/50 hover:border-primary/50"
           >
             <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
           <Button
             onClick={() => navigate('/dex/liquidity')}
-            className="bg-gradient-sakura hover:shadow-sakura"
+            className="btn-hero h-12 px-6 rounded-xl"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-5 h-5 mr-2" />
             Add Liquidity
           </Button>
         </div>
@@ -274,21 +245,23 @@ const Pools = () => {
         {isLoading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {[1, 2, 3].map((i) => (
-              <PoolSkeleton key={i} />
+              <PoolCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredPools.length === 0 ? (
-          <div className="text-center py-20">
-            <Waves className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-semibold mb-2">No Pools Found</h3>
-            <p className="text-muted-foreground mb-4">
+          <div className="text-center py-20 max-w-md mx-auto">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted/50 flex items-center justify-center">
+              <Waves className="w-10 h-10 text-muted-foreground" />
+            </div>
+            <h3 className="text-2xl font-bold mb-3">No Pools Found</h3>
+            <p className="text-muted-foreground mb-6">
               {search ? 'Try a different search term' : 'Be the first to create a liquidity pool!'}
             </p>
             <Button
               onClick={() => navigate('/dex/liquidity')}
-              className="bg-gradient-sakura hover:shadow-sakura"
+              className="btn-hero px-8 py-6 h-auto rounded-xl"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-5 h-5 mr-2" />
               Create Pool
             </Button>
           </div>
