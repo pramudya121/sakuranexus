@@ -11,8 +11,13 @@ import OrderBook from '@/components/dex/OrderBook';
 import PriceAlerts from '@/components/dex/PriceAlerts';
 import LimitOrderPanel from '@/components/dex/LimitOrderPanel';
 import RealTimePriceBar from '@/components/dex/RealTimePriceBar';
-import { ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, LayoutGrid, Maximize2, LineChart } from 'lucide-react';
+import GasEstimator from '@/components/dex/GasEstimator';
+import { 
+  ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, 
+  LayoutGrid, Maximize2, LineChart, Activity, Gauge, BarChart3
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -26,6 +31,15 @@ const Swap = () => {
     setChartTokenIn(tokenIn);
     setChartTokenOut(tokenOut);
   }, []);
+
+  // Mock market stats
+  const marketStats = {
+    price: '1.523',
+    change24h: 5.67,
+    high24h: '1.589',
+    low24h: '1.421',
+    volume24h: '125,432',
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -53,6 +67,51 @@ const Swap = () => {
           <p className="text-muted-foreground max-w-lg mx-auto">
             Trade tokens instantly with low fees. Powered by automated market maker technology.
           </p>
+        </div>
+
+        {/* Market Overview Strip */}
+        <div className="max-w-5xl mx-auto mb-6">
+          <Card className="border-border/50 bg-gradient-to-r from-secondary/30 to-transparent">
+            <CardContent className="p-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-3">
+                    {chartTokenIn.logoURI && (
+                      <img src={chartTokenIn.logoURI} alt={chartTokenIn.symbol} className="w-10 h-10 rounded-full ring-2 ring-background" />
+                    )}
+                    <div>
+                      <div className="text-lg font-bold">{chartTokenIn.symbol}/{chartTokenOut.symbol}</div>
+                      <div className="text-xs text-muted-foreground">Trading Pair</div>
+                    </div>
+                  </div>
+                  <div className="h-10 w-px bg-border hidden md:block" />
+                  <div className="hidden md:flex items-center gap-6">
+                    <div>
+                      <div className="text-xl font-bold">${marketStats.price}</div>
+                      <div className={`text-xs flex items-center gap-1 ${marketStats.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {marketStats.change24h >= 0 ? '+' : ''}{marketStats.change24h}%
+                      </div>
+                    </div>
+                    <div className="text-sm">
+                      <div className="text-muted-foreground">24h High</div>
+                      <div className="font-medium">${marketStats.high24h}</div>
+                    </div>
+                    <div className="text-sm">
+                      <div className="text-muted-foreground">24h Low</div>
+                      <div className="font-medium">${marketStats.low24h}</div>
+                    </div>
+                    <div className="text-sm">
+                      <div className="text-muted-foreground">24h Volume</div>
+                      <div className="font-medium">${marketStats.volume24h}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <GasEstimator compact />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Controls */}
@@ -127,8 +186,14 @@ const Swap = () => {
               <div className="lg:col-span-5 space-y-4">
                 <Tabs defaultValue="swap" className="w-full">
                   <TabsList className="w-full grid grid-cols-2 mb-4">
-                    <TabsTrigger value="swap">Market</TabsTrigger>
-                    <TabsTrigger value="limit">Limit</TabsTrigger>
+                    <TabsTrigger value="swap" className="gap-2">
+                      <Zap className="w-4 h-4" />
+                      Market
+                    </TabsTrigger>
+                    <TabsTrigger value="limit" className="gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      Limit
+                    </TabsTrigger>
                   </TabsList>
                   <TabsContent value="swap">
                     <SwapBox />
@@ -156,23 +221,26 @@ const Swap = () => {
         <div className="max-w-4xl mx-auto">
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              { icon: Zap, title: 'Instant Swaps', desc: 'Trade tokens instantly with no order book required' },
-              { icon: TrendingUp, title: 'Best Rates', desc: 'Get optimal exchange rates with minimal price impact' },
-              { icon: Shield, title: 'Secure', desc: 'Non-custodial trading directly from your wallet' },
+              { icon: Zap, title: 'Instant Swaps', desc: 'Trade tokens instantly with no order book required', color: 'from-yellow-500/20 to-orange-500/20' },
+              { icon: TrendingUp, title: 'Best Rates', desc: 'Get optimal exchange rates with minimal price impact', color: 'from-green-500/20 to-emerald-500/20' },
+              { icon: Shield, title: 'Secure', desc: 'Non-custodial trading directly from your wallet', color: 'from-blue-500/20 to-cyan-500/20' },
             ].map((feature, index) => {
               const Icon = feature.icon;
               return (
                 <div 
                   key={index}
-                  className="group p-6 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-elegant transition-all duration-300"
+                  className="group relative p-6 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-elegant transition-all duration-300 overflow-hidden"
                 >
-                  <div className="w-12 h-12 mb-4 rounded-xl bg-gradient-sakura flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Icon className="w-6 h-6 text-white" />
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                  <div className="relative">
+                    <div className="w-12 h-12 mb-4 rounded-xl bg-gradient-sakura flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold mb-2">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {feature.desc}
+                    </p>
                   </div>
-                  <h3 className="font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.desc}
-                  </p>
                 </div>
               );
             })}
