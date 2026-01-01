@@ -205,8 +205,11 @@ export const useDashboardData = (walletAddress?: string) => {
     });
   }, [walletAddress]);
 
-  // Calculate volume data for chart from real activities
+  // Calculate volume data for chart from real activities - stable fallback values
   const volumeChartData = useMemo(() => {
+    const mockVolumes = [25000, 32000, 28000, 45000, 38000, 52000, 41000];
+    const mockTrades = [15, 22, 18, 35, 28, 42, 31];
+    
     const data = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
@@ -223,27 +226,34 @@ export const useDashboardData = (walletAddress?: string) => {
       });
 
       const volume = dayActivities.reduce((sum, a) => sum + a.value, 0);
+      const dayIndex = 6 - i;
       
       data.push({
         date: date.toLocaleDateString('en-US', { weekday: 'short' }),
-        volume: volume || Math.floor(Math.random() * 50000) + 10000, // Fallback to mock if no data
-        trades: dayActivities.length || Math.floor(Math.random() * 50) + 10,
+        volume: volume || mockVolumes[dayIndex],
+        trades: dayActivities.length || mockTrades[dayIndex],
       });
     }
     return data;
   }, [activities]);
 
-  // Market data from real-time prices
+  // Market data from real-time prices - stable values to prevent blinking
   const marketData = useMemo(() => {
-    const tokens = ['NEX', 'NXSA', 'WETH', 'BNB', 'USDC'];
-    return tokens.map((symbol) => {
-      const priceData = prices.get(symbol);
+    const tokens = [
+      { symbol: 'NEX', volume: 2500000, trending: true },
+      { symbol: 'NXSA', volume: 1800000, trending: true },
+      { symbol: 'WETH', volume: 4200000, trending: false },
+      { symbol: 'BNB', volume: 3100000, trending: false },
+      { symbol: 'USDC', volume: 5800000, trending: false },
+    ];
+    return tokens.map((token) => {
+      const priceData = prices.get(token.symbol);
       return {
-        name: symbol,
-        price: priceData?.price || getMockPrice(symbol),
-        change: priceData?.change24h || (Math.random() - 0.5) * 10,
-        volume: formatVolume(Math.random() * 5000000),
-        trending: Math.random() > 0.5,
+        name: token.symbol,
+        price: priceData?.price || getMockPrice(token.symbol),
+        change: priceData?.change24h || getStableChange(token.symbol),
+        volume: formatVolume(token.volume),
+        trending: token.trending,
       };
     });
   }, [prices]);
@@ -345,6 +355,17 @@ function getMockPrice(symbol: string): number {
     USDC: 1.0,
   };
   return mockPrices[symbol] || 1;
+}
+
+function getStableChange(symbol: string): number {
+  const changes: Record<string, number> = {
+    NEX: 3.5,
+    NXSA: -1.2,
+    WETH: 2.8,
+    BNB: -0.5,
+    USDC: 0.01,
+  };
+  return changes[symbol] || 0;
 }
 
 function formatVolume(value: number): string {

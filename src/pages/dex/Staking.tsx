@@ -76,9 +76,17 @@ const Staking = () => {
           <StakingAdminPanel />
         </div>
 
-        {/* Main Staking Content */}
-        <div className="mb-16">
-          <LPStaking onRefresh={handleRefresh} />
+        {/* Main Content - Calculator, Tracker & Staking */}
+        <div className="grid lg:grid-cols-3 gap-6 mb-16">
+          <div className="lg:col-span-1 space-y-6">
+            <StakingCalculator defaultAPR={24.5} />
+          </div>
+          <div className="lg:col-span-1">
+            <RewardsTracker refreshTrigger={refreshTrigger} />
+          </div>
+          <div className="lg:col-span-1">
+            <LPStaking onRefresh={handleRefresh} />
+          </div>
         </div>
 
         {/* How It Works */}
