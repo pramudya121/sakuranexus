@@ -271,19 +271,27 @@ const Dashboard = () => {
                     {portfolio.balances.map((token) => (
                       <div 
                         key={token.symbol}
-                        className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                        className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all duration-300 hover:shadow-sm group"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center font-bold text-sm">
-                            {token.symbol.slice(0, 2)}
-                          </div>
+                          {token.logoURI ? (
+                            <img 
+                              src={token.logoURI} 
+                              alt={token.symbol}
+                              className="w-10 h-10 rounded-full object-cover shadow-md group-hover:scale-110 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center font-bold text-sm text-white shadow-md">
+                              {token.symbol.slice(0, 2)}
+                            </div>
+                          )}
                           <div>
-                            <p className="font-medium">{token.symbol}</p>
+                            <p className="font-semibold">{token.symbol}</p>
                             <p className="text-xs text-muted-foreground">{token.name}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">
+                          <p className="font-bold">
                             {parseFloat(token.balance).toLocaleString(undefined, { 
                               maximumFractionDigits: 4 
                             })}
