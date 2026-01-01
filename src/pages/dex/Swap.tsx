@@ -9,6 +9,8 @@ import RecentTrades from '@/components/dex/RecentTrades';
 import TokenStats from '@/components/dex/TokenStats';
 import OrderBook from '@/components/dex/OrderBook';
 import PriceAlerts from '@/components/dex/PriceAlerts';
+import LimitOrderPanel from '@/components/dex/LimitOrderPanel';
+import RealTimePriceBar from '@/components/dex/RealTimePriceBar';
 import { ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, LayoutGrid, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
@@ -29,7 +31,12 @@ const Swap = () => {
       <SakuraFalling />
       <Navigation />
       
-      <main className="container mx-auto px-4 pt-24 pb-12">
+      {/* Real-time Price Bar */}
+      <div className="fixed top-16 left-0 right-0 z-40">
+        <RealTimePriceBar />
+      </div>
+      
+      <main className="container mx-auto px-4 pt-28 pb-12">
         {/* DEX Navigation */}
         <DEXNavigation />
         
@@ -100,6 +107,7 @@ const Swap = () => {
             {/* Center Column - Swap Box & History */}
             <div className="lg:col-span-5 space-y-4">
               <SwapBox />
+              <LimitOrderPanel />
               <div className="grid md:grid-cols-2 gap-4">
                 <TransactionHistory />
                 <PriceAlerts />
