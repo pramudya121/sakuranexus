@@ -5,6 +5,8 @@ import DEXNavigation from '@/components/dex/DEXNavigation';
 import LPStaking from '@/components/dex/LPStaking';
 import StakingAdminPanel from '@/components/dex/StakingAdminPanel';
 import StakingStats from '@/components/dex/StakingStats';
+import StakingCalculator from '@/components/dex/StakingCalculator';
+import RewardsTracker from '@/components/dex/RewardsTracker';
 import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent } from 'lucide-react';
 
 const Staking = () => {
