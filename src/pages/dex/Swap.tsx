@@ -11,14 +11,15 @@ import OrderBook from '@/components/dex/OrderBook';
 import PriceAlerts from '@/components/dex/PriceAlerts';
 import LimitOrderPanel from '@/components/dex/LimitOrderPanel';
 import RealTimePriceBar from '@/components/dex/RealTimePriceBar';
-import { ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, LayoutGrid, Maximize2 } from 'lucide-react';
+import { ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, LayoutGrid, Maximize2, LineChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Swap = () => {
   const [showChart, setShowChart] = useState(true);
-  const [chartTokenIn, setChartTokenIn] = useState<Token>(DEFAULT_TOKENS[0]); // NEX
-  const [chartTokenOut, setChartTokenOut] = useState<Token>(DEFAULT_TOKENS[2]); // NXSA
+  const [chartTokenIn, setChartTokenIn] = useState<Token>(DEFAULT_TOKENS[0]);
+  const [chartTokenOut, setChartTokenOut] = useState<Token>(DEFAULT_TOKENS[2]);
   const [layout, setLayout] = useState<'standard' | 'pro'>('standard');
 
   const handleTokenChange = useCallback((tokenIn: Token, tokenOut: Token) => {
@@ -27,11 +28,11 @@ const Swap = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background">
       <SakuraFalling />
       <Navigation />
       
-      {/* Real-time Price Bar */}
+      {/* Price Ticker */}
       <div className="fixed top-16 left-0 right-0 z-40">
         <RealTimePriceBar />
       </div>
@@ -42,39 +43,50 @@ const Swap = () => {
         
         {/* Hero Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
             <ArrowLeftRight className="w-4 h-4" />
-            <span className="text-sm font-medium">NEXUSAKURA DEX</span>
+            NEXUSAKURA DEX
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">
             <span className="gradient-text">Swap Tokens</span>
           </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Trade tokens instantly with low fees on Nexus Testnet. 
-            Powered by automated market maker technology.
+          <p className="text-muted-foreground max-w-lg mx-auto">
+            Trade tokens instantly with low fees. Powered by automated market maker technology.
           </p>
         </div>
 
-        {/* Layout Toggle & Chart Toggle */}
-        <div className="flex justify-center gap-2 mb-6">
+        {/* Controls */}
+        <div className="flex items-center justify-center gap-3 mb-6">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowChart(!showChart)}
-            className="gap-2"
+            className="gap-2 rounded-lg"
           >
-            {showChart ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            <LineChart className="w-4 h-4" />
             {showChart ? 'Hide Chart' : 'Show Chart'}
+            {showChart ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </Button>
-          <Button
-            variant={layout === 'pro' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setLayout(layout === 'standard' ? 'pro' : 'standard')}
-            className="gap-2"
-          >
-            {layout === 'pro' ? <Maximize2 className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-            {layout === 'pro' ? 'Pro View' : 'Standard View'}
-          </Button>
+          <div className="flex items-center bg-muted rounded-lg p-1">
+            <Button
+              variant={layout === 'standard' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setLayout('standard')}
+              className="gap-2 rounded-md"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Standard
+            </Button>
+            <Button
+              variant={layout === 'pro' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setLayout('pro')}
+              className="gap-2 rounded-md"
+            >
+              <Maximize2 className="w-4 h-4" />
+              Pro
+            </Button>
+          </div>
         </div>
 
         {/* Token Stats */}
@@ -91,64 +103,79 @@ const Swap = () => {
 
         {/* Main Content */}
         {layout === 'standard' ? (
-          /* Standard Layout */
-          <div className="grid lg:grid-cols-2 gap-6 max-w-4xl mx-auto mb-16">
-            <SwapBox />
-            <TransactionHistory />
-          </div>
-        ) : (
-          /* Pro Layout with Order Book and Recent Trades */
-          <div className="grid lg:grid-cols-12 gap-4 max-w-[1600px] mx-auto mb-16">
-            {/* Left Column - Order Book */}
-            <div className="lg:col-span-3">
-              <OrderBook tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
-            </div>
-            
-            {/* Center Column - Swap Box & History */}
-            <div className="lg:col-span-5 space-y-4">
-              <SwapBox />
-              <LimitOrderPanel />
-              <div className="grid md:grid-cols-2 gap-4">
+          <div className="max-w-4xl mx-auto mb-16">
+            <div className="grid lg:grid-cols-5 gap-6">
+              {/* Swap Box - Takes more space */}
+              <div className="lg:col-span-3">
+                <SwapBox />
+              </div>
+              {/* Transaction History */}
+              <div className="lg:col-span-2">
                 <TransactionHistory />
-                <PriceAlerts />
               </div>
             </div>
-            
-            {/* Right Column - Recent Trades */}
-            <div className="lg:col-span-4">
-              <RecentTrades tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
+          </div>
+        ) : (
+          <div className="max-w-[1600px] mx-auto mb-16">
+            <div className="grid lg:grid-cols-12 gap-4">
+              {/* Left Column - Order Book */}
+              <div className="lg:col-span-3 space-y-4">
+                <OrderBook tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
+              </div>
+              
+              {/* Center Column - Swap & Limit Orders */}
+              <div className="lg:col-span-5 space-y-4">
+                <Tabs defaultValue="swap" className="w-full">
+                  <TabsList className="w-full grid grid-cols-2 mb-4">
+                    <TabsTrigger value="swap">Market</TabsTrigger>
+                    <TabsTrigger value="limit">Limit</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="swap">
+                    <SwapBox />
+                  </TabsContent>
+                  <TabsContent value="limit">
+                    <LimitOrderPanel />
+                  </TabsContent>
+                </Tabs>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <TransactionHistory />
+                  <PriceAlerts />
+                </div>
+              </div>
+              
+              {/* Right Column - Recent Trades */}
+              <div className="lg:col-span-4">
+                <RecentTrades tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
+              </div>
             </div>
           </div>
         )}
 
         {/* Features */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <div className="glass rounded-xl p-6 text-center border border-border/50">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-sakura flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
-            <h3 className="font-bold mb-2">Instant Swaps</h3>
-            <p className="text-sm text-muted-foreground">
-              Trade tokens instantly with no order book required
-            </p>
-          </div>
-          <div className="glass rounded-xl p-6 text-center border border-border/50">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-sakura flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
-            <h3 className="font-bold mb-2">Best Rates</h3>
-            <p className="text-sm text-muted-foreground">
-              Get the best exchange rates with minimal price impact
-            </p>
-          </div>
-          <div className="glass rounded-xl p-6 text-center border border-border/50">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-sakura flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <h3 className="font-bold mb-2">Secure</h3>
-            <p className="text-sm text-muted-foreground">
-              Non-custodial trading directly from your wallet
-            </p>
+        <div className="max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-4">
+            {[
+              { icon: Zap, title: 'Instant Swaps', desc: 'Trade tokens instantly with no order book required' },
+              { icon: TrendingUp, title: 'Best Rates', desc: 'Get optimal exchange rates with minimal price impact' },
+              { icon: Shield, title: 'Secure', desc: 'Non-custodial trading directly from your wallet' },
+            ].map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div 
+                  key={index}
+                  className="group p-6 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-elegant transition-all duration-300"
+                >
+                  <div className="w-12 h-12 mb-4 rounded-xl bg-gradient-sakura flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {feature.desc}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </main>
