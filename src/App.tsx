@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AIChat from "@/components/AIChat";
 import { AppWrapper } from "@/components/AppWrapper";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import Marketplace from "./pages/Marketplace";
 import Mint from "./pages/Mint";
 import Activity from "./pages/Activity";
@@ -36,6 +37,7 @@ const App = () => (
         <AppWrapper>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/collections" element={<Collections />} />
             <Route path="/mint" element={<Mint />} />
