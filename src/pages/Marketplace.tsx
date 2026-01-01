@@ -329,33 +329,38 @@ const Marketplace = () => {
   }, [priceMin, priceMax]);
 
   return (
-    <div className="min-h-screen relative">
-      <div 
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(328 85% 55% / 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(320 90% 60% / 0.15) 0%, transparent 50%)',
-        }}
-      />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[150px] animate-pulse-soft" />
+        <div className="absolute bottom-20 right-10 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[120px] animate-pulse-soft" style={{ animationDelay: '2s' }} />
+      </div>
+      
       <SakuraFalling />
       <Navigation />
       
       <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
-        {/* Header with enhanced styling */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-sakura text-white font-medium shadow-elegant mb-4">
-            <Sparkles className="h-4 w-4" />
-            NFT Marketplace
+        {/* Hero Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-6 animate-fade-in-up">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+            </span>
+            <span className="text-sm font-medium text-primary">
+              NFT Marketplace
+            </span>
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">
-            <span className="gradient-text">Explore Collections</span>
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up stagger-1">
+            <span className="gradient-text">Discover NFTs</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Discover and collect extraordinary NFTs on NEXUSLABS Testnet
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto animate-fade-in-up stagger-2">
+            Explore, collect, and trade extraordinary digital art on Nexus Testnet
           </p>
         </div>
 
         {/* Market Stats */}
-        <div className="mb-8">
+        <div className="mb-10 animate-fade-in-up stagger-3">
           <MarketplaceStats />
         </div>
 
@@ -369,20 +374,23 @@ const Marketplace = () => {
 
           {/* Main Content Area */}
           <div className="lg:col-span-9 order-1 lg:order-2">
-            {/* Search and Filters */}
-            <div className="mb-6 space-y-4">
-              <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-[200px]">
+            {/* Search and Filters - Redesigned */}
+            <div className="mb-8 space-y-4">
+              <div className="flex flex-wrap gap-3 items-center">
+                {/* Search Input */}
+                <div className="relative flex-1 min-w-[280px]">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
-                    placeholder="Search by name or token ID..."
+                    placeholder="Search NFTs by name or ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-11 border-2 focus:border-primary shadow-card"
+                    className="pl-12 h-12 text-base rounded-xl border-2 border-border/50 focus:border-primary/50 bg-card/50 backdrop-blur-sm shadow-sm transition-all"
                   />
                 </div>
+                
+                {/* Sort Dropdown */}
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[180px] h-11 shadow-card">
+                  <SelectTrigger className="w-[180px] h-12 rounded-xl border-2 border-border/50 bg-card/50 backdrop-blur-sm">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -392,53 +400,62 @@ const Marketplace = () => {
                     <SelectItem value="price-high">Price: High to Low</SelectItem>
                   </SelectContent>
                 </Select>
+                
+                {/* Filter Button */}
                 <Button 
                   variant={showFilters ? "default" : "outline"} 
                   onClick={() => setShowFilters(!showFilters)}
-                  className="gap-2 h-11 shadow-card hover:shadow-elegant transition-all relative"
+                  className={`gap-2 h-12 px-5 rounded-xl transition-all ${showFilters ? 'btn-hero' : 'border-2 hover:border-primary/50'}`}
                 >
                   <SlidersHorizontal className="w-4 h-4" />
                   Filters
                   {activeFiltersCount > 0 && (
-                    <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-primary">
+                    <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center bg-white text-primary text-xs">
                       {activeFiltersCount}
                     </Badge>
                   )}
                 </Button>
-                <div className="flex items-center gap-1 border rounded-lg p-1">
+                
+                {/* Grid Toggle */}
+                <div className="flex items-center gap-1 p-1 rounded-xl border-2 border-border/50 bg-card/50 backdrop-blur-sm">
                   <Button 
-                    variant={gridSize === 'normal' ? 'secondary' : 'ghost'}
+                    variant={gridSize === 'normal' ? 'default' : 'ghost'}
                     size="icon" 
-                    className="h-9 w-9"
+                    className={`h-9 w-9 rounded-lg ${gridSize === 'normal' ? 'bg-primary text-primary-foreground' : ''}`}
                     onClick={() => setGridSize('normal')}
                   >
                     <LayoutGrid className="w-4 h-4" />
                   </Button>
                   <Button 
-                    variant={gridSize === 'compact' ? 'secondary' : 'ghost'}
+                    variant={gridSize === 'compact' ? 'default' : 'ghost'}
                     size="icon" 
-                    className="h-9 w-9"
+                    className={`h-9 w-9 rounded-lg ${gridSize === 'compact' ? 'bg-primary text-primary-foreground' : ''}`}
                     onClick={() => setGridSize('compact')}
                   >
                     <Grid3X3 className="w-4 h-4" />
                   </Button>
                 </div>
+                
+                {/* Refresh Button */}
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="h-11 w-11"
+                  className="h-12 w-12 rounded-xl border-2 border-border/50 hover:border-primary/50 transition-all"
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                 >
-                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
 
-              {/* Advanced Filters Panel */}
+              {/* Advanced Filters Panel - Redesigned */}
               {showFilters && (
-                <div className="glass p-6 rounded-xl shadow-card border-2 border-primary/20 animate-fade-in-up">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">Advanced Filters</h3>
+                <div className="glass p-6 rounded-2xl border border-primary/20 animate-fade-in-up shadow-elegant">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                      <SlidersHorizontal className="w-5 h-5 text-primary" />
+                      Advanced Filters
+                    </h3>
                     <Button 
                       variant="ghost" 
                       size="sm"
@@ -446,13 +463,14 @@ const Marketplace = () => {
                         setPriceMin('');
                         setPriceMax('');
                       }}
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       Clear All
                     </Button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="price-min">Min Price (NEX)</Label>
+                      <Label htmlFor="price-min" className="text-sm font-medium">Min Price (NEX)</Label>
                       <Input
                         id="price-min"
                         type="number"
@@ -460,36 +478,36 @@ const Marketplace = () => {
                         placeholder="0"
                         value={priceMin}
                         onChange={(e) => setPriceMin(e.target.value)}
-                        className="border-2 focus:border-primary"
+                        className="h-11 rounded-xl border-2 focus:border-primary"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="price-max">Max Price (NEX)</Label>
+                      <Label htmlFor="price-max" className="text-sm font-medium">Max Price (NEX)</Label>
                       <Input
                         id="price-max"
                         type="number"
                         step="0.01"
-                        placeholder="Any"
+                        placeholder="No limit"
                         value={priceMax}
                         onChange={(e) => setPriceMax(e.target.value)}
-                        className="border-2 focus:border-primary"
+                        className="h-11 rounded-xl border-2 focus:border-primary"
                       />
                     </div>
                   </div>
                   {(priceMin || priceMax) && (
-                    <div className="mt-4 flex gap-2 flex-wrap">
+                    <div className="mt-6 flex gap-2 flex-wrap">
                       {priceMin && (
-                        <Badge variant="secondary" className="gap-2 px-3 py-1">
+                        <Badge variant="secondary" className="gap-2 px-3 py-1.5 rounded-lg text-sm">
                           Min: {priceMin} NEX
-                          <button onClick={() => setPriceMin('')}>
+                          <button onClick={() => setPriceMin('')} className="hover:text-destructive transition-colors">
                             <X className="w-3 h-3" />
                           </button>
                         </Badge>
                       )}
                       {priceMax && (
-                        <Badge variant="secondary" className="gap-2 px-3 py-1">
+                        <Badge variant="secondary" className="gap-2 px-3 py-1.5 rounded-lg text-sm">
                           Max: {priceMax} NEX
-                          <button onClick={() => setPriceMax('')}>
+                          <button onClick={() => setPriceMax('')} className="hover:text-destructive transition-colors">
                             <X className="w-3 h-3" />
                           </button>
                         </Badge>
