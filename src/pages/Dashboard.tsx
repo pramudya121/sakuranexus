@@ -4,10 +4,14 @@ import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import PortfolioOverview from '@/components/portfolio/PortfolioOverview';
 import PortfolioPerformance from '@/components/portfolio/PortfolioPerformance';
+import { TokenList } from '@/components/dashboard/TokenList';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { StableSkeleton, StatsCardSkeleton } from '@/components/ui/stable-skeleton';
+import { TokenLogo } from '@/components/ui/token-logo';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   LayoutDashboard, 
@@ -262,60 +266,12 @@ const Dashboard = () => {
               />
             )}
 
-            {/* Token Balances */}
-            {walletAddress && portfolio.balances.length > 0 && (
-              <Card className="glass border-border/50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Wallet className="w-5 h-5 text-primary" />
-                    Token Balances
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {portfolio.balances.map((token) => (
-                      <div 
-                        key={token.symbol}
-                        className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all duration-300 hover:shadow-sm group"
-                      >
-                        <div className="flex items-center gap-3">
-                          {token.logoURI ? (
-                            <img 
-                              src={token.logoURI} 
-                              alt={`${token.symbol} token logo`}
-                              loading="lazy"
-                              decoding="async"
-                              className="w-10 h-10 rounded-full object-cover shadow-md group-hover:scale-110 transition-transform duration-300"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center font-bold text-sm text-white shadow-md">
-                              {token.symbol.slice(0, 2)}
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-semibold">{token.symbol}</p>
-                            <p className="text-xs text-muted-foreground">{token.name}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold">
-                            {parseFloat(token.balance).toLocaleString(undefined, { 
-                              maximumFractionDigits: 4 
-                            })}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            ≈ ${token.value.toLocaleString(undefined, { 
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2 
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Token Balances - Enhanced with search & favorites */}
+            <TokenList 
+              balances={portfolio.balances}
+              isLoading={isLoading}
+              walletAddress={walletAddress}
+            />
 
             {/* Portfolio Performance Chart */}
             <PortfolioPerformance />
