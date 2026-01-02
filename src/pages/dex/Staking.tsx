@@ -5,8 +5,6 @@ import DEXNavigation from '@/components/dex/DEXNavigation';
 import LPStaking from '@/components/dex/LPStaking';
 import StakingAdminPanel from '@/components/dex/StakingAdminPanel';
 import StakingStats from '@/components/dex/StakingStats';
-import StakingCalculator from '@/components/dex/StakingCalculator';
-import RewardsTracker from '@/components/dex/RewardsTracker';
 import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent } from 'lucide-react';
 
 const Staking = () => {
@@ -78,17 +76,9 @@ const Staking = () => {
           <StakingAdminPanel />
         </div>
 
-        {/* Main Content - Calculator, Tracker & Staking */}
-        <div className="grid lg:grid-cols-3 gap-6 mb-16">
-          <div className="lg:col-span-1 space-y-6">
-            <StakingCalculator defaultAPR={24.5} />
-          </div>
-          <div className="lg:col-span-1">
-            <RewardsTracker refreshTrigger={refreshTrigger} />
-          </div>
-          <div className="lg:col-span-1">
-            <LPStaking onRefresh={handleRefresh} />
-          </div>
+        {/* Main Content - Staking Pools */}
+        <div className="mb-16">
+          <LPStaking onRefresh={handleRefresh} />
         </div>
 
         {/* How It Works */}
