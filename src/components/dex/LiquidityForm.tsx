@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins, Check, Infinity } from 'lucide-react';
+import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins, Check, Infinity, Zap } from 'lucide-react';
 import { Token, DEFAULT_TOKENS, DEX_CONTRACTS } from '@/lib/web3/dex-config';
 import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves, checkAllowance, approveToken, isNativeToken, calculateRemoveLiquidityAmounts } from '@/lib/web3/dex';
 import { getCurrentAccount } from '@/lib/web3/wallet';
@@ -19,6 +19,25 @@ import { ethers } from 'ethers';
 const MAX_UINT256 = ethers.MaxUint256;
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
+
+// Instant calculation helper - no debounce for UX
+const calculateQuote = (
+  amountIn: string,
+  reserveIn: bigint,
+  reserveOut: bigint,
+  decimalsIn: number,
+  decimalsOut: number
+): string => {
+  if (!amountIn || parseFloat(amountIn) === 0 || reserveIn === 0n) return '';
+  try {
+    const amountInWei = ethers.parseUnits(amountIn, decimalsIn);
+    const amountOutWei = (amountInWei * reserveOut) / reserveIn;
+    const result = ethers.formatUnits(amountOutWei, decimalsOut);
+    return parseFloat(result).toFixed(Math.min(6, decimalsOut));
+  } catch {
+    return '';
+  }
+};
 
 const LiquidityForm = () => {
   const { toast } = useToast();
@@ -56,16 +75,23 @@ const LiquidityForm = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [estimatedRemoveA, setEstimatedRemoveA] = useState('0');
   const [estimatedRemoveB, setEstimatedRemoveB] = useState('0');
+  const [isLoadingLPBalance, setIsLoadingLPBalance] = useState(false);
+  
+  // Ref for tracking mount state
+  const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     loadAccount();
+    return () => { mountedRef.current = false; };
   }, []);
 
   const loadAccount = async () => {
     const acc = await getCurrentAccount();
-    setAccount(acc);
-    // Allow a brief moment for initial data fetch
-    setTimeout(() => setIsInitialLoading(false), 1000);
+    if (mountedRef.current) {
+      setAccount(acc);
+      setTimeout(() => setIsInitialLoading(false), 800);
+    }
   };
 
   const loadBalances = useCallback(async (forceRefresh = false) => {
@@ -142,39 +168,63 @@ const LiquidityForm = () => {
     return () => clearInterval(interval);
   }, [account, tokenA, tokenB, loadBalances]);
 
-  // Auto-calculate Token B when Token A changes
+  // Memoized reserve calculation for instant Token B calculation
+  const { reserveA, reserveB, isTokenAToken0 } = useMemo(() => {
+    if (!reserves) return { reserveA: 0n, reserveB: 0n, isTokenAToken0: true };
+    
+    const addressA = isNativeToken(tokenA.address) ? DEX_CONTRACTS.WETH9 : tokenA.address;
+    const isAToken0 = reserves.token0.toLowerCase() === addressA.toLowerCase();
+    
+    return {
+      reserveA: isAToken0 ? reserves.reserve0 : reserves.reserve1,
+      reserveB: isAToken0 ? reserves.reserve1 : reserves.reserve0,
+      isTokenAToken0: isAToken0,
+    };
+  }, [reserves, tokenA.address]);
+
+  // INSTANT calculation - Token B when Token A changes
   useEffect(() => {
-    if (amountA && parseFloat(amountA) > 0 && reserves && !isNewPool) {
-      calculateAmountB(amountA);
-    } else if (!amountA || parseFloat(amountA) === 0) {
-      setAmountB('');
-      setEstimatedLPTokens('0');
+    if (!reserves || isNewPool) {
+      if (!amountA) setAmountB('');
+      return;
     }
-  }, [amountA, reserves, isNewPool]);
+    
+    // Instant calculation using memoized reserves
+    const calculatedB = calculateQuote(amountA, reserveA, reserveB, tokenA.decimals, tokenB.decimals);
+    setAmountB(calculatedB);
+  }, [amountA, reserveA, reserveB, tokenA.decimals, tokenB.decimals, isNewPool, reserves]);
 
   // Calculate estimated LP tokens
   useEffect(() => {
     calculateEstimatedLP();
   }, [amountA, amountB, reserves, totalSupply, isNewPool]);
 
-  // Calculate estimated output when removing liquidity
+  // Calculate estimated output when removing liquidity - INSTANT
   useEffect(() => {
-    const calculateRemoveAmounts = async () => {
-      if (!lpAmount || parseFloat(lpAmount) <= 0 || !pairAddress) {
-        setEstimatedRemoveA('0');
-        setEstimatedRemoveB('0');
-        return;
-      }
-      
-      const amounts = await calculateRemoveLiquidityAmounts(tokenA, tokenB, lpAmount);
-      if (amounts) {
-        setEstimatedRemoveA(amounts.amountA);
-        setEstimatedRemoveB(amounts.amountB);
-      }
-    };
+    if (!lpAmount || parseFloat(lpAmount) <= 0 || !reserves || !totalSupply) {
+      setEstimatedRemoveA('0');
+      setEstimatedRemoveB('0');
+      return;
+    }
     
-    calculateRemoveAmounts();
-  }, [lpAmount, tokenA, tokenB, pairAddress]);
+    // Instant local calculation
+    try {
+      const lpAmountNum = parseFloat(lpAmount);
+      const totalSupplyNum = parseFloat(totalSupply);
+      
+      if (totalSupplyNum > 0) {
+        const shareRatio = lpAmountNum / totalSupplyNum;
+        const amountA = Number(ethers.formatUnits(reserveA, tokenA.decimals)) * shareRatio;
+        const amountB = Number(ethers.formatUnits(reserveB, tokenB.decimals)) * shareRatio;
+        
+        setEstimatedRemoveA(amountA.toFixed(6));
+        setEstimatedRemoveB(amountB.toFixed(6));
+      }
+    } catch {
+      setEstimatedRemoveA('0');
+      setEstimatedRemoveB('0');
+    }
+  }, [lpAmount, reserves, totalSupply, reserveA, reserveB, tokenA.decimals, tokenB.decimals]);
 
   // Check LP token allowance for remove liquidity
   useEffect(() => {
@@ -200,81 +250,85 @@ const LiquidityForm = () => {
     loadPairInfo();
   };
 
-  const loadPairInfo = async () => {
+  const loadPairInfo = useCallback(async (forceRefresh = false) => {
     if (!account) return;
-    const pair = await getPairAddress(tokenA.address, tokenB.address);
-    setPairAddress(pair);
     
-    if (pair && pair !== '0x0000000000000000000000000000000000000000') {
-      const lpBal = await getLPBalance(pair, account);
-      setLpBalance(lpBal);
+    try {
+      const pair = await getPairAddress(tokenA.address, tokenB.address);
+      if (!mountedRef.current) return;
       
-      // Load reserves for ratio calculation
-      const reservesData = await getReserves(pair);
-      if (reservesData && reservesData.reserve0 > 0n && reservesData.reserve1 > 0n) {
-        setReserves(reservesData);
-        setIsNewPool(false);
-        
-        // Get total supply for LP calculation
-        try {
-          const { ethers } = await import('ethers');
-          const { getProvider } = await import('@/lib/web3/wallet');
-          const { UNISWAP_V2_PAIR_ABI } = await import('@/lib/web3/dex-config');
-          const provider = getProvider();
-          if (provider) {
-            const pairContract = new ethers.Contract(pair, UNISWAP_V2_PAIR_ABI, provider);
-            const supply = await pairContract.totalSupply();
-            setTotalSupply(ethers.formatEther(supply));
-          }
-        } catch (error) {
-          console.error('Error getting total supply:', error);
+      setPairAddress(pair);
+      
+      if (pair && pair !== '0x0000000000000000000000000000000000000000') {
+        // Load LP balance with force refresh option
+        setIsLoadingLPBalance(true);
+        const lpBal = await getLPBalance(pair, account, forceRefresh);
+        if (mountedRef.current) {
+          setLpBalance(lpBal);
+          setIsLoadingLPBalance(false);
         }
         
-        // Calculate pool ratio (Token B per Token A)
-        const ratio = Number(reservesData.reserve1) / Number(reservesData.reserve0);
-        setPoolRatio(ratio.toFixed(6));
+        // Load reserves for ratio calculation
+        const reservesData = await getReserves(pair, forceRefresh);
+        if (!mountedRef.current) return;
+        
+        if (reservesData && reservesData.reserve0 > 0n && reservesData.reserve1 > 0n) {
+          setReserves(reservesData);
+          setIsNewPool(false);
+          
+          // Get total supply for LP calculation
+          try {
+            const { getProvider } = await import('@/lib/web3/wallet');
+            const { UNISWAP_V2_PAIR_ABI } = await import('@/lib/web3/dex-config');
+            const provider = getProvider();
+            if (provider && mountedRef.current) {
+              const pairContract = new ethers.Contract(pair, UNISWAP_V2_PAIR_ABI, provider);
+              const supply = await pairContract.totalSupply();
+              if (mountedRef.current) {
+                setTotalSupply(ethers.formatEther(supply));
+              }
+            }
+          } catch (error) {
+            console.error('Error getting total supply:', error);
+          }
+          
+          // Calculate pool ratio
+          const addressA = isNativeToken(tokenA.address) ? DEX_CONTRACTS.WETH9 : tokenA.address;
+          const isTokenAToken0 = reservesData.token0.toLowerCase() === addressA.toLowerCase();
+          const resA = isTokenAToken0 ? reservesData.reserve0 : reservesData.reserve1;
+          const resB = isTokenAToken0 ? reservesData.reserve1 : reservesData.reserve0;
+          const ratio = Number(resB) / Number(resA);
+          if (mountedRef.current) {
+            setPoolRatio(ratio.toFixed(6));
+          }
+        } else {
+          setReserves(null);
+          setIsNewPool(true);
+          setPoolRatio(null);
+          setTotalSupply('0');
+        }
       } else {
+        setLpBalance('0');
         setReserves(null);
         setIsNewPool(true);
         setPoolRatio(null);
         setTotalSupply('0');
       }
-    } else {
-      setLpBalance('0');
-      setReserves(null);
-      setIsNewPool(true);
-      setPoolRatio(null);
-      setTotalSupply('0');
-    }
-  };
-
-  const calculateAmountB = (inputA: string) => {
-    if (!reserves || !inputA || parseFloat(inputA) === 0) {
-      setAmountB('');
-      return;
-    }
-
-    try {
-      // Get the actual token addresses used in the pair (WETH9 for native)
-      const addressA = isNativeToken(tokenA.address) ? DEX_CONTRACTS.WETH9 : tokenA.address;
-      const addressB = isNativeToken(tokenB.address) ? DEX_CONTRACTS.WETH9 : tokenB.address;
-      
-      // Match with reserves.token0 and reserves.token1 from the pair contract
-      const isTokenAToken0 = reserves.token0.toLowerCase() === addressA.toLowerCase();
-      
-      const reserveA = isTokenAToken0 ? reserves.reserve0 : reserves.reserve1;
-      const reserveB = isTokenAToken0 ? reserves.reserve1 : reserves.reserve0;
-
-      // Use proper decimals for calculation
-      const amountAWei = ethers.parseUnits(inputA, tokenA.decimals);
-      const amountBWei = (amountAWei * reserveB) / reserveA;
-      const calculatedB = ethers.formatUnits(amountBWei, tokenB.decimals);
-      
-      // Limit decimal places based on token decimals
-      const decimalPlaces = Math.min(6, tokenB.decimals);
-      setAmountB(parseFloat(calculatedB).toFixed(decimalPlaces));
     } catch (error) {
-      console.error('Error calculating amount B:', error);
+      console.error('Error loading pair info:', error);
+    }
+  }, [account, tokenA, tokenB]);
+
+  // INSTANT reverse calculation - calculates Token A when B is manually changed
+  const handleAmountBChange = (value: string) => {
+    setAmountB(value);
+    
+    if (!reserves || isNewPool || !value || parseFloat(value) === 0) return;
+    
+    // Instant reverse calculation
+    const calculatedA = calculateQuote(value, reserveB, reserveA, tokenB.decimals, tokenA.decimals);
+    if (calculatedA) {
+      setAmountA(calculatedA);
     }
   };
 
@@ -323,33 +377,6 @@ const LiquidityForm = () => {
 
   const handleAmountAChange = (value: string) => {
     setAmountA(value);
-  };
-
-  const handleAmountBChange = (value: string) => {
-    setAmountB(value);
-    // Reverse calculate Token A when user manually inputs Token B
-    if (reserves && !isNewPool && value && parseFloat(value) > 0) {
-      try {
-        // Get the actual token addresses used in the pair (WETH9 for native)
-        const addressA = isNativeToken(tokenA.address) ? DEX_CONTRACTS.WETH9 : tokenA.address;
-        const addressB = isNativeToken(tokenB.address) ? DEX_CONTRACTS.WETH9 : tokenB.address;
-        
-        // Match with reserves.token0 and reserves.token1 from the pair contract
-        const isTokenAToken0 = reserves.token0.toLowerCase() === addressA.toLowerCase();
-        
-        const reserveA = isTokenAToken0 ? reserves.reserve0 : reserves.reserve1;
-        const reserveB = isTokenAToken0 ? reserves.reserve1 : reserves.reserve0;
-
-        const amountBWei = ethers.parseUnits(value, tokenB.decimals);
-        const amountAWei = (amountBWei * reserveA) / reserveB;
-        const calculatedA = ethers.formatUnits(amountAWei, tokenA.decimals);
-        
-        const decimalPlaces = Math.min(6, tokenA.decimals);
-        setAmountA(parseFloat(calculatedA).toFixed(decimalPlaces));
-      } catch (error) {
-        console.error('Error calculating amount A:', error);
-      }
-    }
   };
 
   const handleApproveTokenA = async () => {
