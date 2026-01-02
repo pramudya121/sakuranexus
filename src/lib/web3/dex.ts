@@ -111,8 +111,12 @@ class SmartCache<T> {
 // Initialize caches
 const balanceCache = new SmartCache<string>(20000); // 20 seconds
 const decimalsCache = new SmartCache<number>(300000); // 5 minutes
-const pairAddressCache = new SmartCache<string | null>(60000); // 1 minute
+// NOTE: store ZERO_ADDRESS for "no pair" so cache misses can be distinguished
+const pairAddressCache = new SmartCache<string>(60000); // 1 minute
 const contractExistsCache = new SmartCache<boolean>(120000); // 2 minutes
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
 
 // ============= Contract Instance Helpers =============
 export const getRouterContract = async () => {
@@ -279,14 +283,16 @@ export const getPairAddress = async (tokenA: string, tokenB: string): Promise<st
   // Use WETH for native token
   const addressA = isNativeToken(tokenA) ? DEX_CONTRACTS.WETH9 : tokenA;
   const addressB = isNativeToken(tokenB) ? DEX_CONTRACTS.WETH9 : tokenB;
-  
+
   // Create a consistent cache key (sorted addresses)
   const sortedAddresses = [addressA.toLowerCase(), addressB.toLowerCase()].sort();
   const cacheKey = `pair_${sortedAddresses[0]}_${sortedAddresses[1]}`;
-  
+
   // Check cache first
   const cached = pairAddressCache.getIfValid(cacheKey);
-  if (cached !== undefined) return cached;
+  if (cached !== null) {
+    return cached === ZERO_ADDRESS ? null : cached;
+  }
 
   try {
     const provider = getProvider();
@@ -295,26 +301,27 @@ export const getPairAddress = async (tokenA: string, tokenB: string): Promise<st
     // Check if factory exists
     const factoryExists = await checkContractExists(DEX_CONTRACTS.UniswapV2Factory);
     if (!factoryExists) {
-      pairAddressCache.set(cacheKey, null);
+      pairAddressCache.set(cacheKey, ZERO_ADDRESS);
       return null;
     }
 
     const factory = new ethers.Contract(DEX_CONTRACTS.UniswapV2Factory, UNISWAP_V2_FACTORY_ABI, provider);
     const pairAddress = await queueRequest(() => factory.getPair(addressA, addressB));
-    
-    if (pairAddress === '0x0000000000000000000000000000000000000000') {
-      pairAddressCache.set(cacheKey, null);
+
+    if (pairAddress === ZERO_ADDRESS) {
+      pairAddressCache.set(cacheKey, ZERO_ADDRESS);
       return null;
     }
-    
+
     pairAddressCache.set(cacheKey, pairAddress);
     return pairAddress;
   } catch {
-    // Silent fail - return null without logging
-    pairAddressCache.set(cacheKey, null);
+    // Silent fail - cache as "no pair" to reduce repeated failures
+    pairAddressCache.set(cacheKey, ZERO_ADDRESS);
     return null;
   }
 };
+
 
 // Cache for reserves
 const reservesCache = new SmartCache<{ reserve0: bigint; reserve1: bigint; token0: string; token1: string } | null>(15000); // 15 seconds
@@ -333,8 +340,9 @@ export const getReserves = async (pairAddress: string, forceRefresh = false) => 
   // Return cached if not forcing refresh
   if (!forceRefresh) {
     const cached = reservesCache.getIfValid(cacheKey);
-    if (cached !== undefined) return cached;
+    if (cached !== null) return cached;
   }
+
 
   try {
     const provider = getProvider();
