@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getTokenBalance } from '@/lib/web3/dex';
 import { DEFAULT_TOKENS } from '@/lib/web3/dex-config';
@@ -44,6 +44,12 @@ interface PortfolioData {
 
 export const useDashboardData = (walletAddress?: string) => {
   const { prices, isConnected } = useMultipleTokenPrices();
+  const pricesRef = useRef(prices);
+
+  useEffect(() => {
+    pricesRef.current = prices;
+  }, [prices]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [portfolio, setPortfolio] = useState<PortfolioData>({
@@ -64,6 +70,8 @@ export const useDashboardData = (walletAddress?: string) => {
   const fetchBalances = useCallback(async () => {
     if (!walletAddress) return;
 
+    const priceMap = pricesRef.current;
+
     const tokens = [
       { ...DEFAULT_TOKENS[0], symbol: 'NEX', name: 'Nexus' }, // Native
       { ...DEFAULT_TOKENS[1], symbol: 'WNEX', name: 'Wrapped Nexus' },
@@ -74,7 +82,7 @@ export const useDashboardData = (walletAddress?: string) => {
     const balancePromises = tokens.map(async (token) => {
       try {
         const balance = await getTokenBalance(token.address, walletAddress);
-        const priceData = prices.get(token.symbol);
+        const priceData = priceMap.get(token.symbol);
         const price = priceData?.price || getMockPrice(token.symbol);
         const value = parseFloat(balance) * price;
 
@@ -113,7 +121,7 @@ export const useDashboardData = (walletAddress?: string) => {
       stakingValue,
       balances,
     });
-  }, [walletAddress, prices]);
+  }, [walletAddress]);
 
   // Fetch activities from Supabase
   const fetchActivities = useCallback(async () => {
@@ -254,6 +262,32 @@ export const useDashboardData = (walletAddress?: string) => {
         change: priceData?.change24h || getStableChange(token.symbol),
         volume: formatVolume(token.volume),
         trending: token.trending,
+      };
+    });
+  }, [prices]);
+
+  // Update portfolio USD values when live prices change (without refetching balances)
+  useEffect(() => {
+    setPortfolio((prev) => {
+      if (!prev.balances.length) return prev;
+
+      const updatedBalances = prev.balances.map((b) => {
+        const priceData = prices.get(b.symbol);
+        const price = priceData?.price || getMockPrice(b.symbol);
+        const value = parseFloat(b.balance) * price;
+        return { ...b, price, value };
+      });
+
+      const tokenValue = updatedBalances.reduce((sum, b) => sum + b.value, 0);
+      const lpValue = tokenValue * 0.3;
+      const stakingValue = tokenValue * 0.2;
+
+      return {
+        ...prev,
+        tokenValue,
+        lpValue,
+        stakingValue,
+        balances: updatedBalances,
       };
     });
   }, [prices]);

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useMultipleTokenPrices } from '@/hooks/usePriceWebSocket';
+import { DEFAULT_TOKENS } from '@/lib/web3/dex-config';
 
 interface TokenHolding {
   symbol: string;
@@ -31,22 +32,35 @@ interface PortfolioPerformanceProps {
   holdings?: TokenHolding[];
 }
 
-// Mock historical data generator
-const generateHistoricalData = (days: number, startValue: number) => {
+// Deterministic mock historical data generator (stable across re-renders)
+const generateHistoricalData = (days: number, startValue: number, seed: number) => {
   const data = [];
   let value = startValue;
-  const now = Date.now();
+
+  // Use start-of-day timestamp so data doesn't shift every second
+  const baseDate = new Date();
+  baseDate.setHours(0, 0, 0, 0);
+  const now = baseDate.getTime();
   const dayMs = 24 * 60 * 60 * 1000;
 
+  // Simple deterministic PRNG
+  let s = seed >>> 0;
+  const rand = () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 0xffffffff;
+  };
+
   for (let i = days; i >= 0; i--) {
-    const change = (Math.random() - 0.45) * 0.05 * value;
-    value = Math.max(0, value + change);
+    const jitter = (rand() - 0.45) * 0.05 * value;
+    value = Math.max(0, value + jitter);
+
     data.push({
       date: new Date(now - i * dayMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       timestamp: now - i * dayMs,
       value: parseFloat(value.toFixed(2)),
     });
   }
+
   return data;
 };
 
@@ -54,18 +68,30 @@ const PortfolioPerformance = ({ holdings: propHoldings }: PortfolioPerformancePr
   const { prices, isConnected } = useMultipleTokenPrices();
   const [timeframe, setTimeframe] = useState<'24h' | '7d' | '30d' | '90d' | 'all'>('7d');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [historySeed, setHistorySeed] = useState(1);
+  const [historyBaseValue, setHistoryBaseValue] = useState(0);
+
+  const tokenLogoBySymbol = useMemo(
+    () => new Map(DEFAULT_TOKENS.map((t) => [t.symbol, t.logoURI])),
+    []
+  );
 
   // Mock holdings with entry prices if not provided
   const holdings = useMemo(() => {
-    if (propHoldings) return propHoldings;
-    
+    if (propHoldings) {
+      return propHoldings.map((h) => ({
+        ...h,
+        logoURI: h.logoURI ?? tokenLogoBySymbol.get(h.symbol),
+      }));
+    }
+
     return [
-      { symbol: 'NEX', name: 'Nexus', balance: 1250.5, entryPrice: 1.15, currentPrice: prices.get('NEX')?.price || 1.25 },
-      { symbol: 'NXSA', name: 'NEXUSAKURA', balance: 5000, entryPrice: 0.75, currentPrice: prices.get('NXSA')?.price || 0.85 },
-      { symbol: 'WETH', name: 'Wrapped ETH', balance: 0.5, entryPrice: 2200, currentPrice: prices.get('WETH')?.price || 2450 },
-      { symbol: 'BNB', name: 'Binance Coin', balance: 2.5, entryPrice: 290, currentPrice: prices.get('BNB')?.price || 320.50 },
+      { symbol: 'NEX', name: 'Nexus', balance: 1250.5, entryPrice: 1.15, currentPrice: prices.get('NEX')?.price || 1.25, logoURI: tokenLogoBySymbol.get('NEX') },
+      { symbol: 'NXSA', name: 'NEXUSAKURA', balance: 5000, entryPrice: 0.75, currentPrice: prices.get('NXSA')?.price || 0.85, logoURI: tokenLogoBySymbol.get('NXSA') },
+      { symbol: 'WETH', name: 'Wrapped ETH', balance: 0.5, entryPrice: 2200, currentPrice: prices.get('WETH')?.price || 2450, logoURI: tokenLogoBySymbol.get('WETH') },
+      { symbol: 'BNB', name: 'Binance Coin', balance: 2.5, entryPrice: 290, currentPrice: prices.get('BNB')?.price || 320.50, logoURI: tokenLogoBySymbol.get('BNB') },
     ];
-  }, [propHoldings, prices]);
+  }, [propHoldings, prices, tokenLogoBySymbol]);
 
   // Calculate portfolio metrics
   const metrics = useMemo(() => {
@@ -92,7 +118,14 @@ const PortfolioPerformance = ({ holdings: propHoldings }: PortfolioPerformancePr
     };
   }, [holdings]);
 
-  // Historical data for chart
+  // Keep history base stable to prevent chart "blink" on live price updates
+  useEffect(() => {
+    if (!historyBaseValue && metrics.totalValue > 0) {
+      setHistoryBaseValue(metrics.totalValue * 0.85);
+    }
+  }, [historyBaseValue, metrics.totalValue]);
+
+  // Historical data for chart (regenerated only when timeframe changes or manual refresh)
   const historicalData = useMemo(() => {
     const days = {
       '24h': 1,
@@ -101,12 +134,17 @@ const PortfolioPerformance = ({ holdings: propHoldings }: PortfolioPerformancePr
       '90d': 90,
       'all': 365,
     }[timeframe];
-    return generateHistoricalData(days, metrics.totalValue * 0.85);
-  }, [timeframe, metrics.totalValue]);
+
+    const base = historyBaseValue || 1000;
+    const seed = historySeed + days;
+    return generateHistoricalData(days, base, seed);
+  }, [timeframe, historyBaseValue, historySeed]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await new Promise((r) => setTimeout(r, 1000));
+    setHistoryBaseValue(metrics.totalValue * 0.85);
+    setHistorySeed((s) => s + 1);
     setIsRefreshing(false);
   };
 
@@ -272,9 +310,19 @@ const PortfolioPerformance = ({ holdings: propHoldings }: PortfolioPerformancePr
                 className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
-                    {token.symbol.slice(0, 2)}
-                  </div>
+                  {token.logoURI ? (
+                    <img
+                      src={token.logoURI}
+                      alt={`${token.symbol} token logo`}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-8 h-8 rounded-full object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
+                      {token.symbol.slice(0, 2)}
+                    </div>
+                  )}
                   <div>
                     <p className="font-medium">{token.symbol}</p>
                     <p className="text-xs text-muted-foreground">

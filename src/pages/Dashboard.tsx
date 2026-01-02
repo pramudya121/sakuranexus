@@ -32,7 +32,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { getCurrentAccount } from '@/lib/web3/wallet';
-
+import { DEFAULT_TOKENS } from '@/lib/web3/dex-config';
 const Dashboard = () => {
   const [walletAddress, setWalletAddress] = useState<string | undefined>();
   
@@ -63,6 +63,11 @@ const Dashboard = () => {
     marketData,
     refresh,
   } = useDashboardData(walletAddress);
+
+  const tokenLogoBySymbol = useMemo(
+    () => new Map(DEFAULT_TOKENS.map((t) => [t.symbol, t.logoURI])),
+    []
+  );
 
   useEffect(() => {
     document.title = 'Dashboard - NEXUSAKURA';
@@ -277,7 +282,9 @@ const Dashboard = () => {
                           {token.logoURI ? (
                             <img 
                               src={token.logoURI} 
-                              alt={token.symbol}
+                              alt={`${token.symbol} token logo`}
+                              loading="lazy"
+                              decoding="async"
                               className="w-10 h-10 rounded-full object-cover shadow-md group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : (
@@ -461,9 +468,19 @@ const Dashboard = () => {
                       className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center font-bold text-sm">
-                          {token.name.slice(0, 2)}
-                        </div>
+                        {tokenLogoBySymbol.get(token.name) ? (
+                          <img
+                            src={tokenLogoBySymbol.get(token.name)}
+                            alt={`${token.name} token logo`}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-10 h-10 rounded-full object-cover shadow-md"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center font-bold text-sm">
+                            {token.name.slice(0, 2)}
+                          </div>
+                        )}
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{token.name}</p>
