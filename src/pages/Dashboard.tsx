@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { StableSkeleton, StatsCardSkeleton } from '@/components/ui/stable-skeleton';
-import { TokenLogo } from '@/components/ui/token-logo';
-import { AnimatedNumber } from '@/components/ui/animated-number';
+import { StatsCardSkeleton } from '@/components/ui/loading-skeleton';
+import { TokenLogo, preloadTokenLogos } from '@/components/ui/token-logo';
+import { AnimatedNumber, AnimatedCurrency } from '@/components/ui/animated-number';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   LayoutDashboard, 
@@ -37,7 +37,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import { DEFAULT_TOKENS } from '@/lib/web3/dex-config';
-const Dashboard = () => {
+
+// Preload token logos on module load
+const tokenLogos = DEFAULT_TOKENS.map(t => t.logoURI).filter(Boolean) as string[];
+preloadTokenLogos(tokenLogos);
+
+const Dashboard = memo(function Dashboard() {
   const [walletAddress, setWalletAddress] = useState<string | undefined>();
   
   // Get wallet address on mount
@@ -512,6 +517,6 @@ const Dashboard = () => {
       </main>
     </div>
   );
-};
+});
 
 export default Dashboard;

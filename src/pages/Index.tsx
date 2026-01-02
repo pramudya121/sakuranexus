@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import sakuraHeroBg from '@/assets/sakura-hero-bg.jpg';
 import sakuraLogo from '@/assets/sakura-logo.png';
 
-const Index = () => {
+const Index = memo(function Index() {
   const [stats, setStats] = useState({
     totalNFTs: 0,
     totalVolume: 0,
@@ -405,6 +405,6 @@ const Index = () => {
       </footer>
     </div>
   );
-};
+});
 
 export default Index;
