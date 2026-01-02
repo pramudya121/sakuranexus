@@ -317,17 +317,24 @@ export const getPairAddress = async (tokenA: string, tokenB: string): Promise<st
 };
 
 // Cache for reserves
-const reservesCache = new SmartCache<{ reserve0: bigint; reserve1: bigint; token0: string; token1: string } | null>(10000); // 10 seconds
+const reservesCache = new SmartCache<{ reserve0: bigint; reserve1: bigint; token0: string; token1: string } | null>(15000); // 15 seconds
+
+// Cache for LP balances
+const lpBalanceCache = new SmartCache<string>(10000); // 10 seconds
 
 // Get reserves with caching
-export const getReserves = async (pairAddress: string) => {
+export const getReserves = async (pairAddress: string, forceRefresh = false) => {
   if (!pairAddress || pairAddress === '0x0000000000000000000000000000000000000000') {
     return null;
   }
 
   const cacheKey = `reserves_${pairAddress.toLowerCase()}`;
-  const cached = reservesCache.getIfValid(cacheKey);
-  if (cached !== undefined) return cached;
+  
+  // Return cached if not forcing refresh
+  if (!forceRefresh) {
+    const cached = reservesCache.getIfValid(cacheKey);
+    if (cached !== undefined) return cached;
+  }
 
   try {
     const provider = getProvider();
@@ -829,35 +836,48 @@ export const getPoolInfo = async (pairAddress: string): Promise<PoolInfo | null>
   }
 };
 
-// Get LP token balance with error handling for invalid contracts
-export const getLPBalance = async (pairAddress: string, account: string): Promise<string> => {
+// Get LP token balance with error handling and caching
+export const getLPBalance = async (pairAddress: string, account: string, forceRefresh = false): Promise<string> => {
+  if (!pairAddress || !account) return '0';
+  
+  // Validate address format
+  if (!ethers.isAddress(pairAddress) || !ethers.isAddress(account)) {
+    return '0';
+  }
+
+  const cacheKey = `lp_${pairAddress.toLowerCase()}_${account.toLowerCase()}`;
+  
+  // Return cached if valid and not forcing refresh
+  if (!forceRefresh) {
+    const cached = lpBalanceCache.getIfValid(cacheKey);
+    if (cached !== null) return cached;
+  }
+
+  // Get stale value for fallback
+  const staleValue = lpBalanceCache.get(cacheKey);
+
   try {
     const provider = getProvider();
-    if (!provider || !pairAddress || !account) return '0';
+    if (!provider) return staleValue || '0';
     
-    // Validate address format
-    if (!ethers.isAddress(pairAddress) || !ethers.isAddress(account)) {
+    // Check if contract exists first
+    const pairExists = await checkContractExists(pairAddress);
+    if (!pairExists) {
+      lpBalanceCache.set(cacheKey, '0');
       return '0';
     }
 
     const pair = new ethers.Contract(pairAddress, UNISWAP_V2_PAIR_ABI, provider);
     
-    // Check if contract has code (exists on chain)
-    const code = await provider.getCode(pairAddress);
-    if (code === '0x') {
-      return '0'; // Contract doesn't exist
-    }
+    // Use queueRequest to avoid rate limiting
+    const balance = await queueRequest(() => pair.balanceOf(account));
+    const formattedBalance = ethers.formatEther(balance);
     
-    const balance = await pair.balanceOf(account);
-    return ethers.formatEther(balance);
+    lpBalanceCache.set(cacheKey, formattedBalance);
+    return formattedBalance;
   } catch (error: any) {
-    // Silently handle missing revert data and other contract errors
-    if (error?.message?.includes('missing revert data') || 
-        error?.message?.includes('could not coalesce') ||
-        error?.code === 'CALL_EXCEPTION') {
-      return '0';
-    }
-    console.warn('LP balance fetch error:', error?.message);
+    // Silently handle errors and return stale or 0
+    if (staleValue) return staleValue;
     return '0';
   }
 };

@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ArrowDown, Settings, Loader2, ChevronDown, RefreshCw, Zap } from 'lucide-react';
-import { Token, DEFAULT_TOKENS } from '@/lib/web3/dex-config';
-import { getAmountOut, swapTokens, getTokenBalance, calculatePriceImpact, getPairAddress, getReserves } from '@/lib/web3/dex';
+import { Token, DEFAULT_TOKENS, DEX_CONTRACTS } from '@/lib/web3/dex-config';
+import { getAmountOut, swapTokens, getTokenBalance, calculatePriceImpact, getPairAddress, getReserves, isNativeToken } from '@/lib/web3/dex';
 import { findAllRoutes, executeMultiHopSwap, Route } from '@/lib/web3/swap-router';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
@@ -15,8 +15,31 @@ import SwapRouteDisplay from './SwapRouteDisplay';
 import GasEstimator from './GasEstimator';
 import { saveTransaction } from './TransactionHistory';
 import { useToast } from '@/hooks/use-toast';
+import { ethers } from 'ethers';
 
 const REFRESH_INTERVAL = 30000;
+
+// Instant quote calculation without RPC call
+const calculateInstantQuote = (
+  amountIn: string,
+  reserveIn: bigint,
+  reserveOut: bigint,
+  decimalsIn: number,
+  decimalsOut: number
+): string => {
+  if (!amountIn || parseFloat(amountIn) === 0 || reserveIn === 0n) return '0';
+  try {
+    const amountInWei = ethers.parseUnits(amountIn, decimalsIn);
+    // Uniswap formula: amountOut = (amountIn * 997 * reserveOut) / (reserveIn * 1000 + amountIn * 997)
+    const amountInWithFee = amountInWei * 997n;
+    const numerator = amountInWithFee * reserveOut;
+    const denominator = reserveIn * 1000n + amountInWithFee;
+    const amountOutWei = numerator / denominator;
+    return ethers.formatUnits(amountOutWei, decimalsOut);
+  } catch {
+    return '0';
+  }
+};
 
 const SwapBox = () => {
   const { toast } = useToast();
@@ -40,14 +63,27 @@ const SwapBox = () => {
   const [useSmartRouting, setUseSmartRouting] = useState(true);
   const [bestRoute, setBestRoute] = useState<Route | null>(null);
   const [allRoutes, setAllRoutes] = useState<Route[]>([]);
+  
+  // Cache reserves for instant calculation
+  const [reserves, setReserves] = useState<{ reserve0: bigint; reserve1: bigint; token0: string; token1: string } | null>(null);
+  const mountedRef = useRef(true);
+  const calculationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    mountedRef.current = true;
     loadAccount();
+    return () => { 
+      mountedRef.current = false;
+      if (calculationTimeoutRef.current) {
+        clearTimeout(calculationTimeoutRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
     if (account) {
       loadBalances();
+      loadReserves();
     }
   }, [account, tokenIn, tokenOut]);
 
@@ -57,19 +93,72 @@ const SwapBox = () => {
 
     const interval = setInterval(() => {
       loadBalances(true);
+      loadReserves();
     }, REFRESH_INTERVAL);
 
     return () => clearInterval(interval);
   }, [account, tokenIn, tokenOut]);
 
+  // INSTANT calculation using cached reserves
+  const { reserveIn, reserveOut } = useMemo(() => {
+    if (!reserves) return { reserveIn: 0n, reserveOut: 0n };
+    
+    const addressIn = isNativeToken(tokenIn.address) ? DEX_CONTRACTS.WETH9 : tokenIn.address;
+    const isTokenInToken0 = reserves.token0.toLowerCase() === addressIn.toLowerCase();
+    
+    return {
+      reserveIn: isTokenInToken0 ? reserves.reserve0 : reserves.reserve1,
+      reserveOut: isTokenInToken0 ? reserves.reserve1 : reserves.reserve0,
+    };
+  }, [reserves, tokenIn.address, tokenOut.address]);
+
+  // Instant quote update when amountIn changes
   useEffect(() => {
-    if (amountIn && parseFloat(amountIn) > 0) {
-      calculateAmountOut();
-    } else {
+    if (!amountIn || parseFloat(amountIn) <= 0) {
       setAmountOut('');
       setPriceImpact(0);
+      return;
     }
-  }, [amountIn, tokenIn, tokenOut]);
+    
+    // INSTANT calculation using local reserves (no RPC)
+    if (reserves && reserveIn > 0n && reserveOut > 0n && !useSmartRouting) {
+      const instantQuote = calculateInstantQuote(
+        amountIn, reserveIn, reserveOut, tokenIn.decimals, tokenOut.decimals
+      );
+      setAmountOut(parseFloat(instantQuote).toFixed(6));
+      
+      // Calculate price impact locally
+      const impact = calculatePriceImpact(
+        amountIn, instantQuote, reserveIn.toString(), reserveOut.toString()
+      );
+      setPriceImpact(impact);
+    }
+    
+    // Debounced RPC call for accurate calculation / smart routing
+    if (calculationTimeoutRef.current) {
+      clearTimeout(calculationTimeoutRef.current);
+    }
+    
+    calculationTimeoutRef.current = setTimeout(() => {
+      calculateAmountOut();
+    }, 300); // 300ms debounce for RPC calls
+  }, [amountIn, tokenIn, tokenOut, reserves, useSmartRouting]);
+
+  const loadReserves = async () => {
+    try {
+      const pairAddress = await getPairAddress(tokenIn.address, tokenOut.address);
+      if (pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000') {
+        const reservesData = await getReserves(pairAddress);
+        if (mountedRef.current && reservesData) {
+          setReserves(reservesData);
+        }
+      } else {
+        setReserves(null);
+      }
+    } catch {
+      // Silent fail
+    }
+  };
 
   const loadAccount = async () => {
     try {
@@ -112,6 +201,7 @@ const SwapBox = () => {
 
   const handleManualRefresh = () => {
     loadBalances(true);
+    loadReserves();
   };
 
   const calculateAmountOut = async () => {
