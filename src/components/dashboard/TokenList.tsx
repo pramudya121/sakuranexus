@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TokenLogo } from '@/components/ui/token-logo';
 import { AnimatedNumber } from '@/components/ui/animated-number';
-import { TokenRowSkeleton } from '@/components/ui/stable-skeleton';
+import { TokenRowSkeleton } from '@/components/ui/loading-skeleton';
 import { useTokenFavorites } from '@/hooks/useTokenFavorites';
 import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
 import { 

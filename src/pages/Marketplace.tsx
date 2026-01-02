@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import NFTCard from '@/components/NFTCard';
@@ -42,7 +42,7 @@ interface NFTListing {
   listing_id: number;
 }
 
-const Marketplace = () => {
+const Marketplace = memo(function Marketplace() {
   const [listings, setListings] = useState<NFTListing[]>([]);
   const [filteredListings, setFilteredListings] = useState<NFTListing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -644,6 +644,6 @@ const Marketplace = () => {
       </Dialog>
     </div>
   );
-};
+});
 
 export default Marketplace;
