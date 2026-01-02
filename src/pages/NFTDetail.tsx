@@ -245,11 +245,11 @@ const NFTDetail = () => {
     }
   };
 
-  const handleCancelOffer = async (offer: Offer) => {
-    if (!account || !nft || !offer.offer_id) {
+  const handleCancelOffer = async () => {
+    if (!account || !nft) {
       toast({
         title: 'Error',
-        description: 'Invalid offer. Please refresh and try again.',
+        description: 'Please connect wallet and try again.',
         variant: 'destructive',
       });
       return;
@@ -257,7 +257,8 @@ const NFTDetail = () => {
 
     setIsProcessing(true);
     try {
-      const result = await cancelOffer(offer.offer_id);
+      // cancelOffer expects tokenId, not offer_id
+      const result = await cancelOffer(nft.token_id);
       
       if (result.success) {
         toast({
@@ -405,13 +406,16 @@ const NFTDetail = () => {
 
                   {userOffer && (
                     <Button 
-                      onClick={() => handleCancelOffer(userOffer)}
+                      onClick={handleCancelOffer}
                       disabled={isProcessing}
-                      variant="outline"
+                      variant="destructive"
                       className="w-full"
                     >
-                      <X className="mr-2 h-4 w-4" />
-                      Cancel My Offer ({userOffer.offer_price} NEX)
+                      {isProcessing ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                      ) : (
+                        <><X className="mr-2 h-4 w-4" />Cancel My Offer ({userOffer.offer_price} NEX)</>
+                      )}
                     </Button>
                   )}
                 </div>
@@ -427,27 +431,44 @@ const NFTDetail = () => {
                     Active Offers ({offers.length})
                   </h3>
                   <div className="space-y-3">
-                    {offers.map((offer) => (
-                      <div key={offer.id} className="flex items-center justify-between p-3 rounded-lg bg-gradient-sakura-soft">
-                        <div>
-                          <div className="font-medium">{offer.offer_price} NEX</div>
-                          <div className="text-sm text-muted-foreground">
-                            by {formatAddress(offer.offerer_address)}
+                    {offers.map((offer) => {
+                      const isMyOffer = account && offer.offerer_address.toLowerCase() === account.toLowerCase();
+                      return (
+                        <div key={offer.id} className="flex items-center justify-between p-3 rounded-lg bg-gradient-sakura-soft">
+                          <div>
+                            <div className="font-medium">{offer.offer_price} NEX</div>
+                            <div className="text-sm text-muted-foreground">
+                              by {formatAddress(offer.offerer_address)}
+                              {isMyOffer && <span className="ml-2 text-primary font-medium">(You)</span>}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {isOwner && (
+                              <Button 
+                                onClick={() => handleAcceptOffer(offer)}
+                                disabled={isProcessing}
+                                size="sm"
+                                className="btn-hero"
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                Accept
+                              </Button>
+                            )}
+                            {isMyOffer && (
+                              <Button 
+                                onClick={handleCancelOffer}
+                                disabled={isProcessing}
+                                size="sm"
+                                variant="destructive"
+                              >
+                                <X className="w-4 h-4 mr-2" />
+                                Cancel
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        {isOwner && (
-                          <Button 
-                            onClick={() => handleAcceptOffer(offer)}
-                            disabled={isProcessing}
-                            size="sm"
-                            className="btn-hero"
-                          >
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Accept
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
