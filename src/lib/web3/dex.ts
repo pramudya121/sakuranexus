@@ -754,20 +754,21 @@ export const getAllPairs = async (): Promise<string[]> => {
     if (!provider) return [];
 
     const factory = new ethers.Contract(DEX_CONTRACTS.UniswapV2Factory, UNISWAP_V2_FACTORY_ABI, provider);
-    const pairsLength = await factory.allPairsLength();
-    
+    const pairsLength = await queueRequest(() => factory.allPairsLength());
+
     const pairs: string[] = [];
     for (let i = 0; i < pairsLength; i++) {
-      const pairAddress = await factory.allPairs(i);
+      const pairAddress = await queueRequest(() => factory.allPairs(i));
       pairs.push(pairAddress);
     }
-    
+
     return pairs;
   } catch (error) {
     console.error('Error getting all pairs:', error);
     return [];
   }
 };
+
 
 // Get pool info
 export interface PoolInfo {

@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins, Check, Infinity, Zap } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins, Check, Infinity } from 'lucide-react';
 import { Token, DEFAULT_TOKENS, DEX_CONTRACTS } from '@/lib/web3/dex-config';
-import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves, checkAllowance, approveToken, isNativeToken, calculateRemoveLiquidityAmounts } from '@/lib/web3/dex';
+import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves, checkAllowance, approveToken, isNativeToken, getAllPairs, getPoolInfo } from '@/lib/web3/dex';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
@@ -15,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { saveTransaction } from './TransactionHistory';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ethers } from 'ethers';
+
 
 const MAX_UINT256 = ethers.MaxUint256;
 
@@ -77,9 +79,15 @@ const LiquidityForm = () => {
   const [estimatedRemoveB, setEstimatedRemoveB] = useState('0');
   const [isLoadingLPBalance, setIsLoadingLPBalance] = useState(false);
 
+  // Remove helper: allow selecting an existing LP position so balance isn't "0" by default
+  const [removePositions, setRemovePositions] = useState<Array<{ pairAddress: string; token0: Token; token1: Token; lpBalance: string }>>([]);
+  const [selectedRemovePair, setSelectedRemovePair] = useState<string>('');
+  const [isLoadingRemovePositions, setIsLoadingRemovePositions] = useState(false);
+
   // Refs for tracking mount state + last edited input (prevents input ping-pong)
   const mountedRef = useRef(true);
   const lastEditedRef = useRef<'A' | 'B' | null>(null);
+
 
 
   useEffect(() => {
