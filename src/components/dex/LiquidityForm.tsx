@@ -76,9 +76,11 @@ const LiquidityForm = () => {
   const [estimatedRemoveA, setEstimatedRemoveA] = useState('0');
   const [estimatedRemoveB, setEstimatedRemoveB] = useState('0');
   const [isLoadingLPBalance, setIsLoadingLPBalance] = useState(false);
-  
-  // Ref for tracking mount state
+
+  // Refs for tracking mount state + last edited input (prevents input ping-pong)
   const mountedRef = useRef(true);
+  const lastEditedRef = useRef<'A' | 'B' | null>(null);
+
 
   useEffect(() => {
     mountedRef.current = true;
@@ -184,15 +186,17 @@ const LiquidityForm = () => {
 
   // INSTANT calculation - Token B when Token A changes
   useEffect(() => {
+    if (lastEditedRef.current !== 'A') return;
     if (!reserves || isNewPool) {
       if (!amountA) setAmountB('');
       return;
     }
-    
+
     // Instant calculation using memoized reserves
     const calculatedB = calculateQuote(amountA, reserveA, reserveB, tokenA.decimals, tokenB.decimals);
     setAmountB(calculatedB);
   }, [amountA, reserveA, reserveB, tokenA.decimals, tokenB.decimals, isNewPool, reserves]);
+
 
   // Calculate estimated LP tokens
   useEffect(() => {
@@ -319,18 +323,26 @@ const LiquidityForm = () => {
     }
   }, [account, tokenA, tokenB]);
 
-  // INSTANT reverse calculation - calculates Token A when B is manually changed
+  // When switching to Remove tab, force-refresh pair + LP balance once
+  useEffect(() => {
+    if (account && tab === 'remove') {
+      loadPairInfo(true);
+    }
+  }, [account, tab, loadPairInfo]);
+
   const handleAmountBChange = (value: string) => {
+    lastEditedRef.current = 'B';
     setAmountB(value);
-    
+
     if (!reserves || isNewPool || !value || parseFloat(value) === 0) return;
-    
+
     // Instant reverse calculation
     const calculatedA = calculateQuote(value, reserveB, reserveA, tokenB.decimals, tokenA.decimals);
     if (calculatedA) {
       setAmountA(calculatedA);
     }
   };
+
 
   const calculateEstimatedLP = () => {
     if (!amountA || !amountB || parseFloat(amountA) === 0 || parseFloat(amountB) === 0) {
@@ -376,6 +388,7 @@ const LiquidityForm = () => {
   };
 
   const handleAmountAChange = (value: string) => {
+    lastEditedRef.current = 'A';
     setAmountA(value);
   };
 
