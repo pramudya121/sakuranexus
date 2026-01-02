@@ -12,6 +12,7 @@ interface TokenBalance {
   value: number;
   price: number;
   logoURI?: string;
+  change24h?: number;
 }
 
 interface RecentActivity {
@@ -66,25 +67,20 @@ export const useDashboardData = (walletAddress?: string) => {
     stakingAPR: 24.5,
   });
 
-  // Fetch token balances from blockchain
+  // Fetch token balances from blockchain - ALL tokens
   const fetchBalances = useCallback(async () => {
     if (!walletAddress) return;
 
     const priceMap = pricesRef.current;
 
-    const tokens = [
-      { ...DEFAULT_TOKENS[0], symbol: 'NEX', name: 'Nexus' }, // Native
-      { ...DEFAULT_TOKENS[1], symbol: 'WNEX', name: 'Wrapped Nexus' },
-      { ...DEFAULT_TOKENS[2], symbol: 'NXSA', name: 'NEXUSAKURA' },
-      { ...DEFAULT_TOKENS[3], symbol: 'WETH', name: 'Wrapped ETH' },
-    ];
-
-    const balancePromises = tokens.map(async (token) => {
+    // Use ALL DEFAULT_TOKENS instead of just 4
+    const balancePromises = DEFAULT_TOKENS.map(async (token) => {
       try {
         const balance = await getTokenBalance(token.address, walletAddress);
         const priceData = priceMap.get(token.symbol);
         const price = priceData?.price || getMockPrice(token.symbol);
         const value = parseFloat(balance) * price;
+        const change24h = priceData?.change24h || getStableChange(token.symbol);
 
         return {
           symbol: token.symbol,
@@ -94,6 +90,7 @@ export const useDashboardData = (walletAddress?: string) => {
           value,
           price,
           logoURI: token.logoURI,
+          change24h,
         };
       } catch {
         return {
@@ -104,6 +101,7 @@ export const useDashboardData = (walletAddress?: string) => {
           value: 0,
           price: 0,
           logoURI: token.logoURI,
+          change24h: 0,
         };
       }
     });
