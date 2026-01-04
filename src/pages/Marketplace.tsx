@@ -6,6 +6,7 @@ import MarketplaceStats from '@/components/marketplace/MarketplaceStats';
 import TrendingNFTs from '@/components/marketplace/TrendingNFTs';
 import RecentActivity from '@/components/marketplace/RecentActivity';
 import NFTGridSkeleton from '@/components/marketplace/NFTGridSkeleton';
+import MarketplaceAdminPanel from '@/components/marketplace/MarketplaceAdminPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import { buyNFT, makeOffer } from '@/lib/web3/nft';
@@ -359,8 +360,11 @@ const Marketplace = memo(function Marketplace() {
           </p>
         </div>
 
-        {/* Market Stats */}
+        {/* Market Stats & Admin Panel */}
         <div className="mb-10 animate-fade-in-up stagger-3">
+          <div className="flex justify-end mb-4">
+            <MarketplaceAdminPanel />
+          </div>
           <MarketplaceStats />
         </div>
 

@@ -5,6 +5,7 @@ import DEXNavigation from '@/components/dex/DEXNavigation';
 import LPStaking from '@/components/dex/LPStaking';
 import StakingAdminPanel from '@/components/dex/StakingAdminPanel';
 import StakingStats from '@/components/dex/StakingStats';
+import RewardsClaimPanel from '@/components/dex/RewardsClaimPanel';
 import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent } from 'lucide-react';
 
 const Staking = () => {
@@ -74,6 +75,11 @@ const Staking = () => {
         {/* Admin Button */}
         <div className="flex justify-center mb-8">
           <StakingAdminPanel />
+        </div>
+
+        {/* Rewards Claim Panel - Prominent Display */}
+        <div className="max-w-xl mx-auto mb-8">
+          <RewardsClaimPanel refreshTrigger={refreshTrigger} onClaimed={handleRefresh} />
         </div>
 
         {/* Main Content - Staking Pools */}
