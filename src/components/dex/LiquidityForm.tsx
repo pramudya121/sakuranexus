@@ -87,6 +87,7 @@ const LiquidityForm = () => {
   // Refs for tracking mount state + last edited input (prevents input ping-pong)
   const mountedRef = useRef(true);
   const lastEditedRef = useRef<'A' | 'B' | null>(null);
+  const isCalculatingRef = useRef(false);
 
 
 
@@ -192,17 +193,20 @@ const LiquidityForm = () => {
     };
   }, [reserves, tokenA.address]);
 
-  // INSTANT calculation - Token B when Token A changes
+  // INSTANT calculation - Token B when Token A changes (with ping-pong prevention)
   useEffect(() => {
-    if (lastEditedRef.current !== 'A') return;
+    if (lastEditedRef.current !== 'A' || isCalculatingRef.current) return;
     if (!reserves || isNewPool) {
       if (!amountA) setAmountB('');
       return;
     }
 
-    // Instant calculation using memoized reserves
+    // Prevent recursive updates
+    isCalculatingRef.current = true;
     const calculatedB = calculateQuote(amountA, reserveA, reserveB, tokenA.decimals, tokenB.decimals);
     setAmountB(calculatedB);
+    // Reset calculation flag after a tick
+    requestAnimationFrame(() => { isCalculatingRef.current = false; });
   }, [amountA, reserveA, reserveB, tokenA.decimals, tokenB.decimals, isNewPool, reserves]);
 
 
@@ -331,24 +335,81 @@ const LiquidityForm = () => {
     }
   }, [account, tokenA, tokenB]);
 
-  // When switching to Remove tab, force-refresh pair + LP balance once
+  // When switching to Remove tab, load user's LP positions
   useEffect(() => {
     if (account && tab === 'remove') {
-      loadPairInfo(true);
+      loadUserLPPositions();
     }
-  }, [account, tab, loadPairInfo]);
+  }, [account, tab]);
+
+  // Load all LP positions for the current user
+  const loadUserLPPositions = async () => {
+    if (!account) return;
+    setIsLoadingRemovePositions(true);
+    try {
+      const pairs = await getAllPairs();
+      const positions: Array<{ pairAddress: string; token0: Token; token1: Token; lpBalance: string }> = [];
+      
+      for (const pairAddress of pairs.slice(0, 10)) { // Limit to first 10 pairs
+        try {
+          const poolInfo = await getPoolInfo(pairAddress);
+          if (!poolInfo) continue;
+          
+          const balance = await getLPBalance(pairAddress, account, true);
+          if (balance && parseFloat(balance) > 0.000001) {
+            positions.push({
+              pairAddress,
+              token0: poolInfo.token0,
+              token1: poolInfo.token1,
+              lpBalance: balance,
+            });
+          }
+        } catch (e) {
+          // Skip pairs that fail
+        }
+      }
+      
+      if (mountedRef.current) {
+        setRemovePositions(positions);
+        // Auto-select first position if available
+        if (positions.length > 0 && !selectedRemovePair) {
+          handleSelectRemovePosition(positions[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading LP positions:', error);
+    }
+    if (mountedRef.current) {
+      setIsLoadingRemovePositions(false);
+    }
+  };
+
+  // Handle position selection in Remove tab
+  const handleSelectRemovePosition = (position: { pairAddress: string; token0: Token; token1: Token; lpBalance: string }) => {
+    setSelectedRemovePair(position.pairAddress);
+    setTokenA(position.token0);
+    setTokenB(position.token1);
+    setLpBalance(position.lpBalance);
+    setPairAddress(position.pairAddress);
+    setLpAmount('');
+    // Load reserves for the selected pair
+    loadPairInfo(true);
+  };
 
   const handleAmountBChange = (value: string) => {
+    if (isCalculatingRef.current) return;
     lastEditedRef.current = 'B';
     setAmountB(value);
 
     if (!reserves || isNewPool || !value || parseFloat(value) === 0) return;
 
-    // Instant reverse calculation
+    // Prevent ping-pong
+    isCalculatingRef.current = true;
     const calculatedA = calculateQuote(value, reserveB, reserveA, tokenB.decimals, tokenA.decimals);
     if (calculatedA) {
       setAmountA(calculatedA);
     }
+    requestAnimationFrame(() => { isCalculatingRef.current = false; });
   };
 
 
@@ -978,6 +1039,74 @@ const LiquidityForm = () => {
           </TabsContent>
 
           <TabsContent value="remove" className="p-4 space-y-3 animate-fade-in-up">
+            {/* Position Selector */}
+            <div className="bg-secondary/30 rounded-xl p-4 transition-all duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium">Select Position</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={loadUserLPPositions}
+                  disabled={isLoadingRemovePositions}
+                  className="h-7 px-2"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isLoadingRemovePositions ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+              
+              {isLoadingRemovePositions ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <span className="ml-2 text-sm text-muted-foreground">Loading positions...</span>
+                </div>
+              ) : removePositions.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground text-sm">
+                  <Coins className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>No LP positions found</p>
+                  <p className="text-xs mt-1">Add liquidity to create a position</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {removePositions.map((pos) => (
+                    <div
+                      key={pos.pairAddress}
+                      onClick={() => handleSelectRemovePosition(pos)}
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                        selectedRemovePair === pos.pairAddress
+                          ? 'bg-primary/20 border border-primary/50'
+                          : 'bg-background/50 hover:bg-background/80 border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex -space-x-2">
+                          {pos.token0.logoURI ? (
+                            <img src={pos.token0.logoURI} alt={pos.token0.symbol} className="w-6 h-6 rounded-full border-2 border-background" />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold border-2 border-background">
+                              {pos.token0.symbol.charAt(0)}
+                            </div>
+                          )}
+                          {pos.token1.logoURI ? (
+                            <img src={pos.token1.logoURI} alt={pos.token1.symbol} className="w-6 h-6 rounded-full border-2 border-background" />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold border-2 border-background">
+                              {pos.token1.symbol.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+                        <span className="font-medium">{pos.token0.symbol}/{pos.token1.symbol}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-semibold text-primary">{parseFloat(pos.lpBalance).toFixed(4)}</span>
+                        <span className="text-xs text-muted-foreground ml-1">LP</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* LP Amount Input */}
             <div className="token-box bg-secondary/30 rounded-xl p-4 transition-all duration-300">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">LP Tokens to Remove</span>
@@ -989,6 +1118,7 @@ const LiquidityForm = () => {
                     variant="link"
                     className="text-xs text-primary p-0 h-auto transition-all duration-200 hover:scale-110"
                     onClick={() => setLpAmount(lpBalance)}
+                    disabled={parseFloat(lpBalance) <= 0}
                   >
                     MAX
                   </Button>
@@ -1000,6 +1130,7 @@ const LiquidityForm = () => {
                 value={lpAmount}
                 onChange={(e) => setLpAmount(e.target.value)}
                 className="dex-input border-0 bg-transparent text-xl font-semibold focus-visible:ring-0 p-0"
+                disabled={parseFloat(lpBalance) <= 0}
               />
               <div className="flex gap-2 mt-3">
                 {[25, 50, 75, 100].map((percent, index) => (
@@ -1010,6 +1141,7 @@ const LiquidityForm = () => {
                     onClick={() => setLpAmount((parseFloat(lpBalance) * percent / 100).toString())}
                     className="transition-all duration-300 hover:scale-105 hover:bg-primary/20"
                     style={{ animationDelay: `${index * 50}ms` }}
+                    disabled={parseFloat(lpBalance) <= 0}
                   >
                     {percent}%
                   </Button>
