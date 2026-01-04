@@ -5,7 +5,7 @@ import SakuraFalling from '@/components/SakuraFalling';
 import NFTCard from '@/components/NFTCard';
 import UserBadges from '@/components/UserBadges';
 import PortfolioTab from '@/components/PortfolioTab';
-import PortfolioPerformance from '@/components/portfolio/PortfolioPerformance';
+import PortfolioAnalytics from '@/components/portfolio/PortfolioAnalytics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -861,7 +861,7 @@ const Profile = () => {
           {/* Portfolio */}
           <TabsContent value="portfolio">
             <div className="space-y-6">
-              <PortfolioPerformance />
+              <PortfolioAnalytics walletAddress={account} />
               <PortfolioTab walletAddress={account} />
             </div>
           </TabsContent>
