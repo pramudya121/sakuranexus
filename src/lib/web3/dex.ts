@@ -680,7 +680,7 @@ export const calculateRemoveLiquidityAmounts = async (
   }
 };
 
-// Remove liquidity
+// Remove liquidity with improved error handling
 export const removeLiquidity = async (
   tokenA: Token,
   tokenB: Token,
@@ -692,21 +692,34 @@ export const removeLiquidity = async (
 ): Promise<{ success: boolean; hash?: string; error?: string }> => {
   try {
     const router = await getRouterContract();
-    if (!router) return { success: false, error: 'Router not found' };
+    if (!router) return { success: false, error: 'Wallet not connected' };
 
     const pairAddress = await getPairAddress(tokenA.address, tokenB.address);
-    if (!pairAddress) return { success: false, error: 'Pair not found' };
+    if (!pairAddress || pairAddress === '0x0000000000000000000000000000000000000000') {
+      return { success: false, error: 'Pair not found' };
+    }
 
-    const deadline = await getDeadline(30); // Get deadline from blockchain
+    // Verify LP token allowance first
+    const provider = getProvider();
+    if (provider) {
+      const currentAllowance = await checkAllowance(pairAddress, account, DEX_CONTRACTS.UniswapV2Router02);
+      const liquidityWei = ethers.parseUnits(liquidity, 18);
+      if (currentAllowance < liquidityWei) {
+        return { success: false, error: 'LP tokens not approved. Please approve first.' };
+      }
+    }
+
+    const deadline = await getDeadline(30);
     const liquidityWei = ethers.parseUnits(liquidity, 18);
 
-    // Calculate minimum amounts with slippage protection
+    // Calculate minimum amounts with slippage protection - use higher slippage for safety
     let amountAMin = BigInt(0);
     let amountBMin = BigInt(0);
     
     if (expectedAmountA && expectedAmountB) {
       const expectedA = ethers.parseUnits(expectedAmountA, tokenA.decimals);
       const expectedB = ethers.parseUnits(expectedAmountB, tokenB.decimals);
+      // Apply slippage (e.g., 0.5% slippage = 99.5% of expected)
       const slippageMultiplier = BigInt(Math.floor((100 - slippage) * 100));
       amountAMin = (expectedA * slippageMultiplier) / BigInt(10000);
       amountBMin = (expectedB * slippageMultiplier) / BigInt(10000);
@@ -725,7 +738,8 @@ export const removeLiquidity = async (
         amountTokenMin,
         amountETHMin,
         account,
-        deadline
+        deadline,
+        { gasLimit: 300000 } // Explicit gas limit for reliability
       );
     } else {
       tx = await router.removeLiquidity(
@@ -735,15 +749,34 @@ export const removeLiquidity = async (
         amountAMin,
         amountBMin,
         account,
-        deadline
+        deadline,
+        { gasLimit: 300000 } // Explicit gas limit for reliability
       );
     }
 
     const receipt = await tx.wait();
+    
+    // Invalidate caches after successful transaction
+    pairAddressCache.clear();
+    reservesCache.clear();
+    
     return { success: true, hash: receipt.hash };
   } catch (error: any) {
-    console.error('Remove liquidity error:', error);
-    return { success: false, error: error.message || 'Remove liquidity failed' };
+    // Parse error for user-friendly message
+    const message = error?.message || error?.reason || 'Remove liquidity failed';
+    if (message.includes('user rejected') || message.includes('denied')) {
+      return { success: false, error: 'Transaction rejected by user' };
+    }
+    if (message.includes('insufficient') || message.includes('INSUFFICIENT')) {
+      return { success: false, error: 'Insufficient LP balance or output amounts too low. Try increasing slippage.' };
+    }
+    if (message.includes('EXPIRED') || message.includes('deadline')) {
+      return { success: false, error: 'Transaction expired. Please try again.' };
+    }
+    if (message.includes('TRANSFER_FAILED') || message.includes('transfer')) {
+      return { success: false, error: 'Transfer failed. Ensure LP tokens are approved.' };
+    }
+    return { success: false, error: 'Remove liquidity failed. Try increasing slippage or refreshing the page.' };
   }
 };
 
@@ -788,14 +821,29 @@ export const getPoolInfo = async (pairAddress: string): Promise<PoolInfo | null>
     const provider = getProvider();
     if (!provider) return null;
 
+    // Check if pair contract exists first to avoid "missing revert data" errors
+    const pairExists = await checkContractExists(pairAddress);
+    if (!pairExists) {
+      return null;
+    }
+
     const pair = new ethers.Contract(pairAddress, UNISWAP_V2_PAIR_ABI, provider);
     
-    const [token0Address, token1Address, reserves, totalSupply] = await Promise.all([
-      pair.token0(),
-      pair.token1(),
-      pair.getReserves(),
-      pair.totalSupply(),
-    ]);
+    // Use individual calls with error handling instead of Promise.all
+    let token0Address: string;
+    let token1Address: string;
+    let reserves: any;
+    let totalSupply: bigint;
+    
+    try {
+      token0Address = await queueRequest(() => pair.token0());
+      token1Address = await queueRequest(() => pair.token1());
+      reserves = await queueRequest(() => pair.getReserves());
+      totalSupply = await queueRequest(() => pair.totalSupply());
+    } catch {
+      // Pair exists but may not be properly initialized
+      return null;
+    }
 
     // Find tokens in default list, also check WETH9 address for native token wrapper
     const findToken = (address: string): Token => {
@@ -839,8 +887,8 @@ export const getPoolInfo = async (pairAddress: string): Promise<PoolInfo | null>
       volume24h,
       apr,
     };
-  } catch (error) {
-    console.error('Error getting pool info:', error);
+  } catch {
+    // Silent fail - don't log errors for invalid pairs
     return null;
   }
 };

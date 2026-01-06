@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Minus, Loader2, ChevronDown, Settings, RefreshCw, Coins, Check, Infinity } from 'lucide-react';
 import { Token, DEFAULT_TOKENS, DEX_CONTRACTS } from '@/lib/web3/dex-config';
-import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves, checkAllowance, approveToken, isNativeToken, getAllPairs, getPoolInfo } from '@/lib/web3/dex';
+import { addLiquidity, removeLiquidity, getTokenBalance, getPairAddress, getLPBalance, getReserves, checkAllowance, approveToken, isNativeToken } from '@/lib/web3/dex';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import TokenSelector from './TokenSelector';
 import SlippageSettings from './SlippageSettings';
@@ -78,11 +78,6 @@ const LiquidityForm = () => {
   const [estimatedRemoveA, setEstimatedRemoveA] = useState('0');
   const [estimatedRemoveB, setEstimatedRemoveB] = useState('0');
   const [isLoadingLPBalance, setIsLoadingLPBalance] = useState(false);
-
-  // Remove helper: allow selecting an existing LP position so balance isn't "0" by default
-  const [removePositions, setRemovePositions] = useState<Array<{ pairAddress: string; token0: Token; token1: Token; lpBalance: string }>>([]);
-  const [selectedRemovePair, setSelectedRemovePair] = useState<string>('');
-  const [isLoadingRemovePositions, setIsLoadingRemovePositions] = useState(false);
 
   // Refs for tracking mount state + last edited input (prevents input ping-pong)
   const mountedRef = useRef(true);
@@ -335,66 +330,12 @@ const LiquidityForm = () => {
     }
   }, [account, tokenA, tokenB]);
 
-  // When switching to Remove tab, load user's LP positions
+  // When switching to Remove tab, reload pair info for current tokens
   useEffect(() => {
     if (account && tab === 'remove') {
-      loadUserLPPositions();
+      loadPairInfo(true);
     }
-  }, [account, tab]);
-
-  // Load all LP positions for the current user
-  const loadUserLPPositions = async () => {
-    if (!account) return;
-    setIsLoadingRemovePositions(true);
-    try {
-      const pairs = await getAllPairs();
-      const positions: Array<{ pairAddress: string; token0: Token; token1: Token; lpBalance: string }> = [];
-      
-      for (const pairAddress of pairs.slice(0, 10)) { // Limit to first 10 pairs
-        try {
-          const poolInfo = await getPoolInfo(pairAddress);
-          if (!poolInfo) continue;
-          
-          const balance = await getLPBalance(pairAddress, account, true);
-          if (balance && parseFloat(balance) > 0.000001) {
-            positions.push({
-              pairAddress,
-              token0: poolInfo.token0,
-              token1: poolInfo.token1,
-              lpBalance: balance,
-            });
-          }
-        } catch (e) {
-          // Skip pairs that fail
-        }
-      }
-      
-      if (mountedRef.current) {
-        setRemovePositions(positions);
-        // Auto-select first position if available
-        if (positions.length > 0 && !selectedRemovePair) {
-          handleSelectRemovePosition(positions[0]);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading LP positions:', error);
-    }
-    if (mountedRef.current) {
-      setIsLoadingRemovePositions(false);
-    }
-  };
-
-  // Handle position selection in Remove tab
-  const handleSelectRemovePosition = (position: { pairAddress: string; token0: Token; token1: Token; lpBalance: string }) => {
-    setSelectedRemovePair(position.pairAddress);
-    setTokenA(position.token0);
-    setTokenB(position.token1);
-    setLpBalance(position.lpBalance);
-    setPairAddress(position.pairAddress);
-    setLpAmount('');
-    // Load reserves for the selected pair
-    loadPairInfo(true);
-  };
+  }, [account, tab, loadPairInfo]);
 
   const handleAmountBChange = (value: string) => {
     if (isCalculatingRef.current) return;
@@ -1039,70 +980,50 @@ const LiquidityForm = () => {
           </TabsContent>
 
           <TabsContent value="remove" className="p-4 space-y-3 animate-fade-in-up">
-            {/* Position Selector */}
+            {/* Selected Pair Display */}
             <div className="bg-secondary/30 rounded-xl p-4 transition-all duration-300">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium">Select Position</span>
+                <span className="text-sm font-medium">Selected Pair</span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={loadUserLPPositions}
-                  disabled={isLoadingRemovePositions}
+                  onClick={() => loadPairInfo(true)}
+                  disabled={isLoadingLPBalance}
                   className="h-7 px-2"
                 >
-                  <RefreshCw className={`w-3 h-3 ${isLoadingRemovePositions ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-3 h-3 ${isLoadingLPBalance ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
               
-              {isLoadingRemovePositions ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  <span className="ml-2 text-sm text-muted-foreground">Loading positions...</span>
-                </div>
-              ) : removePositions.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground text-sm">
-                  <Coins className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No LP positions found</p>
-                  <p className="text-xs mt-1">Add liquidity to create a position</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {removePositions.map((pos) => (
-                    <div
-                      key={pos.pairAddress}
-                      onClick={() => handleSelectRemovePosition(pos)}
-                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                        selectedRemovePair === pos.pairAddress
-                          ? 'bg-primary/20 border border-primary/50'
-                          : 'bg-background/50 hover:bg-background/80 border border-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="flex -space-x-2">
-                          {pos.token0.logoURI ? (
-                            <img src={pos.token0.logoURI} alt={pos.token0.symbol} className="w-6 h-6 rounded-full border-2 border-background" />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold border-2 border-background">
-                              {pos.token0.symbol.charAt(0)}
-                            </div>
-                          )}
-                          {pos.token1.logoURI ? (
-                            <img src={pos.token1.logoURI} alt={pos.token1.symbol} className="w-6 h-6 rounded-full border-2 border-background" />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold border-2 border-background">
-                              {pos.token1.symbol.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <span className="font-medium">{pos.token0.symbol}/{pos.token1.symbol}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-sm font-semibold text-primary">{parseFloat(pos.lpBalance).toFixed(4)}</span>
-                        <span className="text-xs text-muted-foreground ml-1">LP</span>
-                      </div>
+              <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+                <div className="flex -space-x-2">
+                  {tokenA.logoURI ? (
+                    <img src={tokenA.logoURI} alt={tokenA.symbol} className="w-8 h-8 rounded-full border-2 border-background" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold border-2 border-background">
+                      {tokenA.symbol.charAt(0)}
                     </div>
-                  ))}
+                  )}
+                  {tokenB.logoURI ? (
+                    <img src={tokenB.logoURI} alt={tokenB.symbol} className="w-8 h-8 rounded-full border-2 border-background" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-sakura flex items-center justify-center text-white text-xs font-bold border-2 border-background">
+                      {tokenB.symbol.charAt(0)}
+                    </div>
+                  )}
                 </div>
+                <div className="flex-1">
+                  <span className="font-semibold">{tokenA.symbol}/{tokenB.symbol}</span>
+                  <p className="text-xs text-muted-foreground">
+                    {pairAddress ? `LP Balance: ${parseFloat(lpBalance).toFixed(6)}` : 'No pool found'}
+                  </p>
+                </div>
+              </div>
+              
+              {parseFloat(lpBalance) === 0 && pairAddress && (
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  You don't have LP tokens for this pair. Select different tokens or add liquidity first.
+                </p>
               )}
             </div>
 
