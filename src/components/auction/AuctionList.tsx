@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Gavel, Search, Clock, TrendingUp, Filter, SlidersHorizontal } from 'lucide-react';
+import { Gavel, Search, Clock, TrendingUp, Filter, SlidersHorizontal, Flame, Trophy } from 'lucide-react';
 import AuctionCard from './AuctionCard';
 import {
   Select,
@@ -14,25 +13,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { useDebounce } from '@/hooks/usePerformanceOptimization';
 
-// Mock auction data
-const generateMockAuctions = () => {
-  const auctions = [];
-  for (let i = 1; i <= 12; i++) {
+interface AuctionNFT {
+  id: string;
+  name: string;
+  image_url: string;
+  token_id: number;
+}
+
+interface Auction {
+  nft: AuctionNFT;
+  auction: {
+    id: string;
+    startPrice: number;
+    currentBid: number;
+    endTime: number;
+    highestBidder: string;
+    totalBids: number;
+    minIncrement: number;
+  };
+}
+
+// Generate auctions from real NFTs
+const generateAuctionsFromNFTs = (nfts: any[]): Auction[] => {
+  return nfts.slice(0, 12).map((nft, index) => {
     const hoursRemaining = Math.floor(Math.random() * 72) + 1;
     const startPrice = parseFloat((Math.random() * 1 + 0.1).toFixed(4));
     const bidCount = Math.floor(Math.random() * 20);
     const currentBid = startPrice + (bidCount * 0.05);
     
-    auctions.push({
+    return {
       nft: {
-        id: `nft-${i}`,
-        name: `Sakura Spirit #${1000 + i}`,
-        image_url: `https://picsum.photos/seed/auction${i}/400/400`,
-        token_id: 1000 + i,
+        id: nft.id,
+        name: nft.name,
+        image_url: nft.image_url,
+        token_id: nft.token_id,
       },
       auction: {
-        id: `auction-${i}`,
+        id: `auction-${nft.id}`,
         startPrice,
         currentBid: parseFloat(currentBid.toFixed(4)),
         endTime: Date.now() + (hoursRemaining * 60 * 60 * 1000),
@@ -40,17 +60,19 @@ const generateMockAuctions = () => {
         totalBids: bidCount,
         minIncrement: 0.01,
       },
-    });
-  }
-  return auctions.sort((a, b) => a.auction.endTime - b.auction.endTime);
+    };
+  });
 };
 
-const AuctionList = () => {
-  const [auctions, setAuctions] = useState<any[]>([]);
+const AuctionList = memo(() => {
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('ending-soon');
   const [filter, setFilter] = useState('all');
+
+  // Debounce search for performance
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   useEffect(() => {
     loadAuctions();
@@ -58,18 +80,44 @@ const AuctionList = () => {
 
   const loadAuctions = async () => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setAuctions(generateMockAuctions());
+    try {
+      // Fetch real NFTs from database
+      const { data: nfts, error } = await supabase
+        .from('nfts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      if (nfts && nfts.length > 0) {
+        setAuctions(generateAuctionsFromNFTs(nfts));
+      } else {
+        // Generate placeholder auctions
+        const placeholderNFTs = Array.from({ length: 8 }, (_, i) => ({
+          id: `placeholder-${i}`,
+          name: `Sakura Spirit #${1000 + i}`,
+          image_url: `https://picsum.photos/seed/auction${i}/400/400`,
+          token_id: 1000 + i,
+        }));
+        setAuctions(generateAuctionsFromNFTs(placeholderNFTs));
+      }
+    } catch (error) {
+      console.error('Error loading auctions:', error);
+      // Use placeholders on error
+      const placeholderNFTs = Array.from({ length: 8 }, (_, i) => ({
+        id: `placeholder-${i}`,
+        name: `Sakura Spirit #${1000 + i}`,
+        image_url: `https://picsum.photos/seed/auction${i}/400/400`,
+        token_id: 1000 + i,
+      }));
+      setAuctions(generateAuctionsFromNFTs(placeholderNFTs));
+    }
     setIsLoading(false);
   };
 
-  const handleBid = async (auctionId: string, amount: number) => {
-    // Mock bid - in real app, this would call the smart contract
-    console.log(`Placing bid of ${amount} on auction ${auctionId}`);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // Update local state
+  const handleBid = useCallback(async (auctionId: string, amount: number) => {
+    // Optimistic update
     setAuctions((prev) =>
       prev.map((a) =>
         a.auction.id === auctionId
@@ -84,43 +132,50 @@ const AuctionList = () => {
           : a
       )
     );
-  };
+  }, []);
 
-  const filteredAuctions = auctions
-    .filter((a) => {
-      if (filter === 'ending-soon') {
-        return a.auction.endTime - Date.now() < 6 * 60 * 60 * 1000; // Less than 6 hours
-      }
-      if (filter === 'new') {
-        return a.auction.totalBids < 3;
-      }
-      return true;
-    })
-    .filter((a) =>
-      a.nft.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'ending-soon':
-          return a.auction.endTime - b.auction.endTime;
-        case 'highest-bid':
-          return b.auction.currentBid - a.auction.currentBid;
-        case 'most-bids':
-          return b.auction.totalBids - a.auction.totalBids;
-        case 'lowest-bid':
-          return a.auction.currentBid - b.auction.currentBid;
-        default:
-          return 0;
-      }
-    });
+  // Memoized filtered auctions
+  const filteredAuctions = useMemo(() => {
+    return auctions
+      .filter((a) => {
+        if (filter === 'ending-soon') {
+          return a.auction.endTime - Date.now() < 6 * 60 * 60 * 1000;
+        }
+        if (filter === 'hot') {
+          return a.auction.totalBids >= 5;
+        }
+        if (filter === 'new') {
+          return a.auction.totalBids < 3;
+        }
+        return true;
+      })
+      .filter((a) =>
+        a.nft.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+      )
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'ending-soon':
+            return a.auction.endTime - b.auction.endTime;
+          case 'highest-bid':
+            return b.auction.currentBid - a.auction.currentBid;
+          case 'most-bids':
+            return b.auction.totalBids - a.auction.totalBids;
+          case 'lowest-bid':
+            return a.auction.currentBid - b.auction.currentBid;
+          default:
+            return 0;
+        }
+      });
+  }, [auctions, debouncedSearch, sortBy, filter]);
 
-  const stats = {
+  // Memoized stats
+  const stats = useMemo(() => ({
     active: auctions.length,
     endingSoon: auctions.filter(
       (a) => a.auction.endTime - Date.now() < 6 * 60 * 60 * 1000
     ).length,
     totalVolume: auctions.reduce((sum, a) => sum + a.auction.currentBid, 0),
-  };
+  }), [auctions]);
 
   return (
     <div className="space-y-6">
@@ -180,8 +235,21 @@ const AuctionList = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Auctions</SelectItem>
-              <SelectItem value="ending-soon">Ending Soon</SelectItem>
-              <SelectItem value="new">Low Bids</SelectItem>
+              <SelectItem value="ending-soon">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> Ending Soon
+                </span>
+              </SelectItem>
+              <SelectItem value="hot">
+                <span className="flex items-center gap-1">
+                  <Flame className="w-3 h-3" /> Hot
+                </span>
+              </SelectItem>
+              <SelectItem value="new">
+                <span className="flex items-center gap-1">
+                  <Trophy className="w-3 h-3" /> Low Bids
+                </span>
+              </SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
@@ -203,7 +271,7 @@ const AuctionList = () => {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Card key={i} className="glass border-border/50">
+            <Card key={i} className="glass border-border/50 overflow-hidden">
               <Skeleton className="aspect-square" />
               <CardContent className="p-4 space-y-3">
                 <Skeleton className="h-6 w-3/4" />
@@ -239,6 +307,8 @@ const AuctionList = () => {
       )}
     </div>
   );
-};
+});
+
+AuctionList.displayName = 'AuctionList';
 
 export default AuctionList;

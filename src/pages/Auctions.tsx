@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import AuctionCard from '@/components/auction/AuctionCard';
+import CreateAuctionModal from '@/components/auction/CreateAuctionModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,97 +12,58 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount } from '@/lib/web3/wallet';
-import { Gavel, Search, Plus, Timer, TrendingUp, Users, Flame, Clock, Trophy } from 'lucide-react';
+import { loadAuctions, AuctionData, placeBid, createAuction } from '@/lib/web3/auction';
+import { useDebounce } from '@/hooks/usePerformanceOptimization';
+import { Gavel, Search, Plus, Timer, TrendingUp, Users, Flame, Clock, Trophy, RefreshCw } from 'lucide-react';
 
-interface AuctionNFT {
-  id: string;
-  name: string;
-  image_url: string;
-  token_id: number;
-  owner_address: string;
-}
-
-interface Auction {
-  id: string;
-  nft: AuctionNFT;
-  startPrice: number;
-  currentBid: number;
-  endTime: number;
-  highestBidder: string;
-  totalBids: number;
-  minIncrement: number;
-  seller: string;
-  status: 'active' | 'ended' | 'cancelled';
-}
-
-// Generate mock auctions from real NFTs
-const generateAuctionsFromNFTs = (nfts: any[]): Auction[] => {
-  return nfts.slice(0, 12).map((nft, index) => {
-    const startPrice = 0.5 + Math.random() * 2;
-    const bidCount = Math.floor(Math.random() * 15);
-    const currentBid = startPrice + bidCount * 0.1 + Math.random() * 0.5;
-    const hoursLeft = Math.floor(Math.random() * 72) + 1;
-    
-    return {
-      id: `auction-${nft.id}`,
-      nft: {
-        id: nft.id,
-        name: nft.name,
-        image_url: nft.image_url,
-        token_id: nft.token_id,
-        owner_address: nft.owner_address,
-      },
-      startPrice,
-      currentBid,
-      endTime: Date.now() + hoursLeft * 60 * 60 * 1000,
-      highestBidder: `0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`,
-      totalBids: bidCount,
-      minIncrement: 0.05,
-      seller: nft.owner_address,
-      status: 'active' as const,
-    };
-  });
-};
-
-const Auctions = () => {
+const Auctions = memo(() => {
   const { toast } = useToast();
-  const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [auctions, setAuctions] = useState<AuctionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('ending-soon');
   const [filter, setFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedNFT, setSelectedNFT] = useState<any>(null);
   const [account, setAccount] = useState<string | null>(null);
+  const [userNFTs, setUserNFTs] = useState<any[]>([]);
+
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   useEffect(() => {
     loadAccount();
-    loadAuctions();
+    loadAuctionData();
   }, []);
 
   const loadAccount = async () => {
     const acc = await getCurrentAccount();
     setAccount(acc);
+    if (acc) {
+      loadUserNFTs(acc);
+    }
   };
 
-  const loadAuctions = async () => {
-    setIsLoading(true);
+  const loadUserNFTs = async (address: string) => {
     try {
-      // Fetch real NFTs from database
-      const { data: nfts, error } = await supabase
+      const { data } = await supabase
         .from('nfts')
         .select('*')
-        .order('created_at', { ascending: false })
+        .eq('owner_address', address.toLowerCase())
         .limit(20);
+      setUserNFTs(data || []);
+    } catch (error) {
+      console.error('Error loading user NFTs:', error);
+    }
+  };
 
-      if (error) throw error;
-
-      if (nfts && nfts.length > 0) {
-        const generatedAuctions = generateAuctionsFromNFTs(nfts);
-        setAuctions(generatedAuctions);
-      } else {
-        // Use placeholder auctions if no NFTs
-        setAuctions([]);
-      }
+  const loadAuctionData = async (isRefresh = false) => {
+    if (isRefresh) setIsRefreshing(true);
+    else setIsLoading(true);
+    
+    try {
+      const data = await loadAuctions();
+      setAuctions(data);
     } catch (error) {
       console.error('Error loading auctions:', error);
       toast({
@@ -110,10 +72,12 @@ const Auctions = () => {
         variant: 'destructive',
       });
     }
+    
     setIsLoading(false);
+    setIsRefreshing(false);
   };
 
-  const handleBid = async (auctionId: string, amount: number) => {
+  const handleBid = useCallback(async (auctionId: string, amount: number) => {
     if (!account) {
       toast({
         title: 'Connect Wallet',
@@ -123,7 +87,7 @@ const Auctions = () => {
       return;
     }
 
-    // Simulate placing a bid
+    // Optimistic update
     setAuctions(prev => prev.map(auction => {
       if (auction.id === auctionId) {
         return {
@@ -136,18 +100,59 @@ const Auctions = () => {
       return auction;
     }));
 
-    toast({
-      title: 'Bid Placed!',
-      description: `Your bid of ${amount.toFixed(4)} NEX has been placed`,
-    });
-  };
+    const result = await placeBid(auctionId, amount, account);
+    
+    if (result.success) {
+      toast({
+        title: 'Bid Placed!',
+        description: `Your bid of ${amount.toFixed(4)} NEX has been placed`,
+      });
+    } else {
+      // Revert optimistic update on failure
+      loadAuctionData(true);
+      toast({
+        title: 'Bid Failed',
+        description: result.error || 'Failed to place bid',
+        variant: 'destructive',
+      });
+    }
+  }, [account, toast]);
+
+  const handleCreateAuction = useCallback(async (data: {
+    nftId: string;
+    startPrice: number;
+    reservePrice: number;
+    duration: number;
+    minIncrement: number;
+  }) => {
+    if (!account || !selectedNFT) return;
+    
+    const result = await createAuction(
+      selectedNFT.token_id,
+      data.startPrice,
+      data.duration,
+      account
+    );
+    
+    if (result.success) {
+      toast({
+        title: 'Auction Created!',
+        description: `${selectedNFT.name} is now up for auction`,
+      });
+      setShowCreateModal(false);
+      setSelectedNFT(null);
+      loadAuctionData(true);
+    } else {
+      throw new Error(result.error);
+    }
+  }, [account, selectedNFT, toast]);
 
   const filteredAuctions = useMemo(() => {
     let result = [...auctions];
 
     // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
       result = result.filter(a => a.nft.name.toLowerCase().includes(query));
     }
 
@@ -155,11 +160,11 @@ const Auctions = () => {
     if (filter !== 'all') {
       const now = Date.now();
       if (filter === 'ending-soon') {
-        result = result.filter(a => a.endTime - now < 3600000); // Less than 1 hour
+        result = result.filter(a => a.endTime - now < 3600000);
       } else if (filter === 'hot') {
         result = result.filter(a => a.totalBids >= 5);
       } else if (filter === 'new') {
-        result = result.filter(a => a.endTime - now > 48 * 3600000); // More than 48 hours
+        result = result.filter(a => a.endTime - now > 48 * 3600000);
       }
     }
 
@@ -180,7 +185,7 @@ const Auctions = () => {
     }
 
     return result;
-  }, [auctions, searchQuery, sortBy, filter]);
+  }, [auctions, debouncedSearch, sortBy, filter]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -393,6 +398,8 @@ const Auctions = () => {
 
     </div>
   );
-};
+});
+
+Auctions.displayName = 'Auctions';
 
 export default Auctions;

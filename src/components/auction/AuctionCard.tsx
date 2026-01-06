@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Timer, Gavel, TrendingUp, Users, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { calculateTimeRemaining } from '@/lib/web3/auction';
 
 interface Bid {
   bidder: string;
@@ -31,35 +32,22 @@ interface AuctionCardProps {
   onBid?: (auctionId: string, amount: number) => Promise<void>;
 }
 
-const AuctionCard = ({ nft, auction, onBid }: AuctionCardProps) => {
+const AuctionCard = memo(({ nft, auction, onBid }: AuctionCardProps) => {
   const { toast } = useToast();
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [timeLeft, setTimeLeft] = useState(() => calculateTimeRemaining(auction.endTime));
   const [isEnded, setIsEnded] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
   const [isBidding, setIsBidding] = useState(false);
   const [showBidInput, setShowBidInput] = useState(false);
 
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = Date.now();
-      const difference = auction.endTime - now;
-
-      if (difference <= 0) {
-        setIsEnded(true);
-        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-      }
-
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / (1000 * 60)) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
-      };
-    };
-
-    setTimeLeft(calculateTimeLeft());
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
+      const result = calculateTimeRemaining(auction.endTime);
+      setTimeLeft(result);
+      if (result.isEnded) {
+        setIsEnded(true);
+        clearInterval(timer);
+      }
     }, 1000);
 
     return () => clearInterval(timer);
@@ -67,7 +55,7 @@ const AuctionCard = ({ nft, auction, onBid }: AuctionCardProps) => {
 
   const minBid = auction.currentBid + auction.minIncrement;
 
-  const handleBid = async () => {
+  const handleBid = useCallback(async () => {
     const amount = parseFloat(bidAmount);
     if (isNaN(amount) || amount < minBid) {
       toast({
@@ -97,7 +85,7 @@ const AuctionCard = ({ nft, auction, onBid }: AuctionCardProps) => {
       });
     }
     setIsBidding(false);
-  };
+  }, [bidAmount, minBid, auction.id, nft.name, onBid, toast]);
 
   const TimeUnit = ({ value, label }: { value: number; label: string }) => (
     <div className="flex flex-col items-center">
@@ -235,6 +223,8 @@ const AuctionCard = ({ nft, auction, onBid }: AuctionCardProps) => {
       </CardFooter>
     </Card>
   );
-};
+});
+
+AuctionCard.displayName = 'AuctionCard';
 
 export default AuctionCard;
