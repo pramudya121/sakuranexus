@@ -6,7 +6,9 @@ import LPStaking from '@/components/dex/LPStaking';
 import StakingAdminPanel from '@/components/dex/StakingAdminPanel';
 import StakingStats from '@/components/dex/StakingStats';
 import RewardsClaimPanel from '@/components/dex/RewardsClaimPanel';
-import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent } from 'lucide-react';
+import StakingCalculator from '@/components/dex/StakingCalculator';
+import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent, Calculator } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Staking = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -77,14 +79,40 @@ const Staking = () => {
           <StakingAdminPanel />
         </div>
 
-        {/* Rewards Claim Panel - Prominent Display */}
-        <div className="max-w-xl mx-auto mb-8">
-          <RewardsClaimPanel refreshTrigger={refreshTrigger} onClaimed={handleRefresh} />
-        </div>
+        {/* Main Content with Tabs */}
+        <div className="max-w-6xl mx-auto mb-16">
+          <Tabs defaultValue="pools" className="w-full">
+            <TabsList className="w-full max-w-md mx-auto grid grid-cols-3 mb-8">
+              <TabsTrigger value="pools" className="gap-2">
+                <Coins className="w-4 h-4" />
+                Pools
+              </TabsTrigger>
+              <TabsTrigger value="rewards" className="gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Rewards
+              </TabsTrigger>
+              <TabsTrigger value="calculator" className="gap-2">
+                <Calculator className="w-4 h-4" />
+                Calculator
+              </TabsTrigger>
+            </TabsList>
 
-        {/* Main Content - Staking Pools */}
-        <div className="mb-16">
-          <LPStaking onRefresh={handleRefresh} />
+            <TabsContent value="pools">
+              <LPStaking onRefresh={handleRefresh} />
+            </TabsContent>
+
+            <TabsContent value="rewards">
+              <div className="max-w-xl mx-auto">
+                <RewardsClaimPanel refreshTrigger={refreshTrigger} onClaimed={handleRefresh} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="calculator">
+              <div className="max-w-md mx-auto">
+                <StakingCalculator />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* How It Works */}
@@ -98,7 +126,7 @@ const Staking = () => {
             {howItWorks.map((item, index) => {
               const Icon = item.icon;
               return (
-                <div key={index} className="relative text-center p-6 rounded-xl bg-card border border-border/50">
+                <div key={index} className="relative text-center p-6 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-elegant">
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
                     {item.step}
                   </div>
