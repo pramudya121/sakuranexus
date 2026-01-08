@@ -15,7 +15,7 @@ import * as UniswapV2Library from './uniswap-library';
 // ============= Request Queue & Rate Limiting =============
 const requestQueue: Array<() => Promise<any>> = [];
 let isProcessingQueue = false;
-const MIN_REQUEST_INTERVAL = 200; // 200ms between requests
+const MIN_REQUEST_INTERVAL = 150; // 150ms between requests - faster but still safe
 let lastRequestTime = 0;
 
 const processQueue = async () => {
@@ -44,16 +44,25 @@ const processQueue = async () => {
   isProcessingQueue = false;
 };
 
-const queueRequest = <T>(fn: () => Promise<T>): Promise<T> => {
+// Enhanced queue request with retry logic
+const queueRequest = <T>(fn: () => Promise<T>, retries = 2): Promise<T> => {
   return new Promise((resolve, reject) => {
-    requestQueue.push(async () => {
+    const attemptRequest = async (attemptsLeft: number) => {
       try {
         const result = await fn();
         resolve(result);
-      } catch (error) {
-        reject(error);
+      } catch (error: any) {
+        if (attemptsLeft > 0 && !error?.message?.includes('user rejected')) {
+          // Wait before retry with exponential backoff
+          await new Promise(r => setTimeout(r, (3 - attemptsLeft) * 500));
+          attemptRequest(attemptsLeft - 1);
+        } else {
+          reject(error);
+        }
       }
-    });
+    };
+    
+    requestQueue.push(() => attemptRequest(retries));
     processQueue();
   });
 };
@@ -547,7 +556,33 @@ export const swapTokens = async (
   }
 };
 
-// Add liquidity with improved error handling
+// Estimate gas with fallback
+const estimateGasWithFallback = async (
+  contract: ethers.Contract,
+  method: string,
+  args: any[],
+  overrides: any = {}
+): Promise<bigint> => {
+  try {
+    const gasEstimate = await contract[method].estimateGas(...args, overrides);
+    // Add 30% buffer for safety
+    return (gasEstimate * BigInt(130)) / BigInt(100);
+  } catch {
+    // Return default gas limits based on method
+    const gasDefaults: Record<string, bigint> = {
+      addLiquidity: BigInt(300000),
+      addLiquidityETH: BigInt(300000),
+      removeLiquidity: BigInt(300000),
+      removeLiquidityETH: BigInt(350000),
+      swapExactTokensForTokens: BigInt(250000),
+      swapExactETHForTokens: BigInt(250000),
+      swapExactTokensForETH: BigInt(250000),
+    };
+    return gasDefaults[method] || BigInt(300000);
+  }
+};
+
+// Add liquidity with improved error handling and gas estimation
 export const addLiquidity = async (
   tokenA: Token,
   tokenB: Token,
@@ -573,12 +608,27 @@ export const addLiquidity = async (
     const deadline = await getDeadline(30);
     const amountAWei = ethers.parseUnits(amountA, tokenA.decimals);
     const amountBWei = ethers.parseUnits(amountB, tokenB.decimals);
-    const amountAMin = ethers.parseUnits((parseFloat(amountA) * (1 - slippage / 100)).toFixed(tokenA.decimals), tokenA.decimals);
-    const amountBMin = ethers.parseUnits((parseFloat(amountB) * (1 - slippage / 100)).toFixed(tokenB.decimals), tokenB.decimals);
+    
+    // Use more generous slippage for minimum amounts to prevent failures
+    const effectiveSlippage = Math.max(slippage, 1); // At least 1% slippage
+    const amountAMin = ethers.parseUnits(
+      (parseFloat(amountA) * (1 - effectiveSlippage / 100)).toFixed(Math.min(6, tokenA.decimals)), 
+      tokenA.decimals
+    );
+    const amountBMin = ethers.parseUnits(
+      (parseFloat(amountB) * (1 - effectiveSlippage / 100)).toFixed(Math.min(6, tokenB.decimals)), 
+      tokenB.decimals
+    );
 
     let tx;
 
     if (isNativeToken(tokenA.address)) {
+      const gasLimit = await estimateGasWithFallback(
+        router, 'addLiquidityETH',
+        [tokenB.address, amountBWei, amountBMin, amountAMin, account, deadline],
+        { value: amountAWei }
+      );
+      
       tx = await router.addLiquidityETH(
         tokenB.address,
         amountBWei,
@@ -586,9 +636,15 @@ export const addLiquidity = async (
         amountAMin,
         account,
         deadline,
-        { value: amountAWei }
+        { value: amountAWei, gasLimit }
       );
     } else if (isNativeToken(tokenB.address)) {
+      const gasLimit = await estimateGasWithFallback(
+        router, 'addLiquidityETH',
+        [tokenA.address, amountAWei, amountAMin, amountBMin, account, deadline],
+        { value: amountBWei }
+      );
+      
       tx = await router.addLiquidityETH(
         tokenA.address,
         amountAWei,
@@ -596,9 +652,14 @@ export const addLiquidity = async (
         amountBMin,
         account,
         deadline,
-        { value: amountBWei }
+        { value: amountBWei, gasLimit }
       );
     } else {
+      const gasLimit = await estimateGasWithFallback(
+        router, 'addLiquidity',
+        [tokenA.address, tokenB.address, amountAWei, amountBWei, amountAMin, amountBMin, account, deadline]
+      );
+      
       tx = await router.addLiquidity(
         tokenA.address,
         tokenB.address,
@@ -607,7 +668,8 @@ export const addLiquidity = async (
         amountAMin,
         amountBMin,
         account,
-        deadline
+        deadline,
+        { gasLimit }
       );
     }
 
@@ -616,21 +678,31 @@ export const addLiquidity = async (
     // Invalidate related caches after successful transaction
     pairAddressCache.clear();
     reservesCache.clear();
+    balanceCache.clear();
+    lpBalanceCache.clear();
     
     return { success: true, hash: receipt.hash };
   } catch (error: any) {
     // Parse error for user-friendly message
-    const message = error?.message || 'Add liquidity failed';
-    if (message.includes('user rejected') || message.includes('denied')) {
+    const message = error?.message || error?.reason || 'Add liquidity failed';
+    const shortMessage = error?.shortMessage || '';
+    
+    if (message.includes('user rejected') || message.includes('denied') || shortMessage.includes('rejected')) {
       return { success: false, error: 'Transaction rejected by user' };
     }
     if (message.includes('insufficient') || message.includes('INSUFFICIENT')) {
-      return { success: false, error: 'Insufficient balance or allowance' };
+      return { success: false, error: 'Insufficient balance or allowance. Please check your token balances.' };
     }
     if (message.includes('EXPIRED') || message.includes('deadline')) {
       return { success: false, error: 'Transaction expired. Please try again.' };
     }
-    return { success: false, error: 'Add liquidity failed. Please check your balances and try again.' };
+    if (message.includes('TRANSFER_FAILED') || message.includes('transfer')) {
+      return { success: false, error: 'Token transfer failed. Please ensure you have approved the tokens.' };
+    }
+    if (message.includes('gas') || message.includes('intrinsic')) {
+      return { success: false, error: 'Not enough gas. Please ensure you have enough native tokens for gas.' };
+    }
+    return { success: false, error: 'Add liquidity failed. Try increasing slippage or refreshing prices.' };
   }
 };
 
@@ -680,7 +752,7 @@ export const calculateRemoveLiquidityAmounts = async (
   }
 };
 
-// Remove liquidity with improved error handling
+// Remove liquidity with improved error handling and gas estimation
 export const removeLiquidity = async (
   tokenA: Token,
   tokenB: Token,
@@ -696,31 +768,40 @@ export const removeLiquidity = async (
 
     const pairAddress = await getPairAddress(tokenA.address, tokenB.address);
     if (!pairAddress || pairAddress === '0x0000000000000000000000000000000000000000') {
-      return { success: false, error: 'Pair not found' };
+      return { success: false, error: 'Liquidity pool not found for this pair' };
     }
 
+    const liquidityWei = ethers.parseUnits(liquidity, 18);
+
     // Verify LP token allowance first
-    const provider = getProvider();
-    if (provider) {
-      const currentAllowance = await checkAllowance(pairAddress, account, DEX_CONTRACTS.UniswapV2Router02);
-      const liquidityWei = ethers.parseUnits(liquidity, 18);
-      if (currentAllowance < liquidityWei) {
-        return { success: false, error: 'LP tokens not approved. Please approve first.' };
-      }
+    const currentAllowance = await checkAllowance(pairAddress, account, DEX_CONTRACTS.UniswapV2Router02);
+    if (currentAllowance < liquidityWei) {
+      return { success: false, error: 'LP tokens not approved. Please approve first.' };
+    }
+
+    // Verify LP balance
+    const lpBalance = await getLPBalance(pairAddress, account, true);
+    if (parseFloat(lpBalance) < parseFloat(liquidity)) {
+      return { success: false, error: 'Insufficient LP token balance' };
     }
 
     const deadline = await getDeadline(30);
-    const liquidityWei = ethers.parseUnits(liquidity, 18);
 
-    // Calculate minimum amounts with slippage protection - use higher slippage for safety
+    // Calculate minimum amounts with slippage protection - use more generous slippage
+    const effectiveSlippage = Math.max(slippage, 1); // At least 1% slippage
     let amountAMin = BigInt(0);
     let amountBMin = BigInt(0);
     
-    if (expectedAmountA && expectedAmountB) {
-      const expectedA = ethers.parseUnits(expectedAmountA, tokenA.decimals);
-      const expectedB = ethers.parseUnits(expectedAmountB, tokenB.decimals);
-      // Apply slippage (e.g., 0.5% slippage = 99.5% of expected)
-      const slippageMultiplier = BigInt(Math.floor((100 - slippage) * 100));
+    if (expectedAmountA && expectedAmountB && parseFloat(expectedAmountA) > 0 && parseFloat(expectedAmountB) > 0) {
+      // Use fewer decimals to avoid precision issues
+      const expectedAFormatted = parseFloat(expectedAmountA).toFixed(Math.min(6, tokenA.decimals));
+      const expectedBFormatted = parseFloat(expectedAmountB).toFixed(Math.min(6, tokenB.decimals));
+      
+      const expectedA = ethers.parseUnits(expectedAFormatted, tokenA.decimals);
+      const expectedB = ethers.parseUnits(expectedBFormatted, tokenB.decimals);
+      
+      // Apply slippage (e.g., 1% slippage = 99% of expected)
+      const slippageMultiplier = BigInt(Math.floor((100 - effectiveSlippage) * 100));
       amountAMin = (expectedA * slippageMultiplier) / BigInt(10000);
       amountBMin = (expectedB * slippageMultiplier) / BigInt(10000);
     }
@@ -732,6 +813,11 @@ export const removeLiquidity = async (
       const amountTokenMin = isNativeToken(tokenA.address) ? amountBMin : amountAMin;
       const amountETHMin = isNativeToken(tokenA.address) ? amountAMin : amountBMin;
       
+      const gasLimit = await estimateGasWithFallback(
+        router, 'removeLiquidityETH',
+        [token.address, liquidityWei, amountTokenMin, amountETHMin, account, deadline]
+      );
+      
       tx = await router.removeLiquidityETH(
         token.address,
         liquidityWei,
@@ -739,9 +825,14 @@ export const removeLiquidity = async (
         amountETHMin,
         account,
         deadline,
-        { gasLimit: 300000 } // Explicit gas limit for reliability
+        { gasLimit }
       );
     } else {
+      const gasLimit = await estimateGasWithFallback(
+        router, 'removeLiquidity',
+        [tokenA.address, tokenB.address, liquidityWei, amountAMin, amountBMin, account, deadline]
+      );
+      
       tx = await router.removeLiquidity(
         tokenA.address,
         tokenB.address,
@@ -750,31 +841,42 @@ export const removeLiquidity = async (
         amountBMin,
         account,
         deadline,
-        { gasLimit: 300000 } // Explicit gas limit for reliability
+        { gasLimit }
       );
     }
 
     const receipt = await tx.wait();
     
-    // Invalidate caches after successful transaction
+    // Invalidate all related caches after successful transaction
     pairAddressCache.clear();
     reservesCache.clear();
+    balanceCache.clear();
+    lpBalanceCache.clear();
     
     return { success: true, hash: receipt.hash };
   } catch (error: any) {
     // Parse error for user-friendly message
-    const message = error?.message || error?.reason || 'Remove liquidity failed';
-    if (message.includes('user rejected') || message.includes('denied')) {
+    const message = error?.message || error?.reason || '';
+    const shortMessage = error?.shortMessage || '';
+    const combinedMessage = `${message} ${shortMessage}`.toLowerCase();
+    
+    if (combinedMessage.includes('user rejected') || combinedMessage.includes('denied')) {
       return { success: false, error: 'Transaction rejected by user' };
     }
-    if (message.includes('insufficient') || message.includes('INSUFFICIENT')) {
+    if (combinedMessage.includes('insufficient')) {
       return { success: false, error: 'Insufficient LP balance or output amounts too low. Try increasing slippage.' };
     }
-    if (message.includes('EXPIRED') || message.includes('deadline')) {
+    if (combinedMessage.includes('expired') || combinedMessage.includes('deadline')) {
       return { success: false, error: 'Transaction expired. Please try again.' };
     }
-    if (message.includes('TRANSFER_FAILED') || message.includes('transfer')) {
-      return { success: false, error: 'Transfer failed. Ensure LP tokens are approved.' };
+    if (combinedMessage.includes('transfer_failed') || combinedMessage.includes('transfer failed')) {
+      return { success: false, error: 'Transfer failed. Ensure LP tokens are properly approved.' };
+    }
+    if (combinedMessage.includes('gas') || combinedMessage.includes('intrinsic')) {
+      return { success: false, error: 'Not enough gas. Please ensure you have enough native tokens.' };
+    }
+    if (combinedMessage.includes('execution reverted')) {
+      return { success: false, error: 'Transaction reverted. Try increasing slippage tolerance.' };
     }
     return { success: false, error: 'Remove liquidity failed. Try increasing slippage or refreshing the page.' };
   }
