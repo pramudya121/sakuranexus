@@ -1,9 +1,10 @@
 import { useState, useEffect, memo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Timer, Gavel, TrendingUp, Users, AlertCircle } from 'lucide-react';
+import { Timer, Gavel, TrendingUp, Users, AlertCircle, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { calculateTimeRemaining } from '@/lib/web3/auction';
 
@@ -34,11 +35,16 @@ interface AuctionCardProps {
 
 const AuctionCard = memo(({ nft, auction, onBid }: AuctionCardProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(() => calculateTimeRemaining(auction.endTime));
   const [isEnded, setIsEnded] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
   const [isBidding, setIsBidding] = useState(false);
   const [showBidInput, setShowBidInput] = useState(false);
+
+  const handleViewDetails = useCallback(() => {
+    navigate(`/auction/${auction.id}`);
+  }, [navigate, auction.id]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -177,10 +183,11 @@ const AuctionCard = memo(({ nft, auction, onBid }: AuctionCardProps) => {
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-4 pt-0 flex flex-col gap-2">
         {isEnded ? (
-          <Button className="w-full" disabled>
-            Auction Ended
+          <Button className="w-full" variant="outline" onClick={handleViewDetails}>
+            <Eye className="w-4 h-4 mr-2" />
+            View Results
           </Button>
         ) : showBidInput ? (
           <div className="w-full space-y-2">
@@ -212,13 +219,18 @@ const AuctionCard = memo(({ nft, auction, onBid }: AuctionCardProps) => {
             </Button>
           </div>
         ) : (
-          <Button
-            className="w-full bg-gradient-sakura hover:shadow-sakura"
-            onClick={() => setShowBidInput(true)}
-          >
-            <Gavel className="w-4 h-4 mr-2" />
-            Place Bid
-          </Button>
+          <div className="w-full flex gap-2">
+            <Button
+              className="flex-1 bg-gradient-sakura hover:shadow-sakura"
+              onClick={() => setShowBidInput(true)}
+            >
+              <Gavel className="w-4 h-4 mr-2" />
+              Place Bid
+            </Button>
+            <Button variant="outline" onClick={handleViewDetails}>
+              <Eye className="w-4 h-4" />
+            </Button>
+          </div>
         )}
       </CardFooter>
     </Card>

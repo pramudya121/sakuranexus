@@ -109,12 +109,12 @@ const NFTDetail = () => {
   };
 
   const fetchOffers = async (token_id: number) => {
+    // Fetch all pending offers for this token, regardless of offer_id
     const { data } = await supabase
       .from('offers')
       .select('*')
       .eq('token_id', token_id)
       .eq('status', 'pending')
-      .not('offer_id', 'is', null)
       .order('offer_price', { ascending: false });
 
     setOffers(data || []);
@@ -422,27 +422,54 @@ const NFTDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Offers Section */}
-            {offers.length > 0 && (
-              <Card className="card-hover">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    Active Offers ({offers.length})
-                  </h3>
-                  <div className="space-y-3">
-                    {offers.map((offer) => {
+            {/* Offers Section - Always show for owners or when offers exist */}
+            <Card className="card-hover">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Tag className="w-5 h-5" />
+                  Offers {offers.length > 0 && `(${offers.length})`}
+                </h3>
+                
+                {offers.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Clock className="w-12 h-12 mx-auto text-muted-foreground/50 mb-2" />
+                    <p className="text-muted-foreground">No active offers yet</p>
+                    {!isOwner && (
+                      <p className="text-sm text-muted-foreground mt-1">Be the first to make an offer!</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                    {offers.map((offer, index) => {
                       const isMyOffer = account && offer.offerer_address.toLowerCase() === account.toLowerCase();
+                      const isHighest = index === 0;
                       return (
-                        <div key={offer.id} className="flex items-center justify-between p-3 rounded-lg bg-gradient-sakura-soft">
-                          <div>
-                            <div className="font-medium">{offer.offer_price} NEX</div>
-                            <div className="text-sm text-muted-foreground">
+                        <div 
+                          key={offer.id} 
+                          className={`flex items-center justify-between p-4 rounded-lg transition-all ${
+                            isHighest 
+                              ? 'bg-primary/10 border border-primary/30' 
+                              : 'bg-gradient-sakura-soft hover:bg-gradient-sakura-soft/80'
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-lg">{offer.offer_price} NEX</span>
+                              {isHighest && (
+                                <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                                  Highest
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-sm text-muted-foreground mt-1">
                               by {formatAddress(offer.offerer_address)}
-                              {isMyOffer && <span className="ml-2 text-primary font-medium">(You)</span>}
+                              {isMyOffer && <span className="ml-2 text-primary font-semibold">(Your Offer)</span>}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {new Date(offer.created_at).toLocaleString()}
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 ml-4">
                             {isOwner && (
                               <Button 
                                 onClick={() => handleAcceptOffer(offer)}
@@ -450,8 +477,14 @@ const NFTDetail = () => {
                                 size="sm"
                                 className="btn-hero"
                               >
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                Accept
+                                {isProcessing ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                                    Accept
+                                  </>
+                                )}
                               </Button>
                             )}
                             {isMyOffer && (
@@ -461,8 +494,14 @@ const NFTDetail = () => {
                                 size="sm"
                                 variant="destructive"
                               >
-                                <X className="w-4 h-4 mr-2" />
-                                Cancel
+                                {isProcessing ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <X className="w-4 h-4 mr-1" />
+                                    Cancel
+                                  </>
+                                )}
                               </Button>
                             )}
                           </div>
@@ -470,9 +509,9 @@ const NFTDetail = () => {
                       );
                     })}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
