@@ -128,10 +128,12 @@ const Auctions = memo(() => {
     if (!account || !selectedNFT) return;
     
     const result = await createAuction(
+      selectedNFT.id,
       selectedNFT.token_id,
       data.startPrice,
       data.duration,
-      account
+      account,
+      { name: selectedNFT.name, image_url: selectedNFT.image_url }
     );
     
     if (result.success) {
