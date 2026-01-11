@@ -1,11 +1,12 @@
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { ShoppingCart, Tag, Eye, Gift, Heart, Sparkles, ExternalLink } from 'lucide-react';
-import { useState, memo } from 'react';
+import { ShoppingCart, Tag, Eye, Gift, Heart, Sparkles, ExternalLink, TrendingUp, TrendingDown } from 'lucide-react';
+import { useState, memo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatAddress } from '@/lib/web3/wallet';
 import WatchlistButton from './WatchlistButton';
+import { useSingleNFTPrice } from '@/hooks/useNFTPriceWebSocket';
 
 interface NFTCardProps {
   tokenId: number;
@@ -79,8 +80,26 @@ const NFTCard = memo(({
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  const [priceFlash, setPriceFlash] = useState<'up' | 'down' | null>(null);
   const navigate = useNavigate();
   const config = rarityConfig[rarity];
+
+  // Real-time price tracking
+  const { price: livePrice, priceChangePercent, isUp, isDown, isConnected } = useSingleNFTPrice(
+    nftId || `nft-${tokenId}`,
+    price ? parseFloat(price) : undefined
+  );
+
+  // Flash effect on price change
+  const [prevLivePrice, setPrevLivePrice] = useState(livePrice);
+  useEffect(() => {
+    if (livePrice !== prevLivePrice && prevLivePrice > 0) {
+      setPriceFlash(livePrice > prevLivePrice ? 'up' : 'down');
+      const timer = setTimeout(() => setPriceFlash(null), 500);
+      return () => clearTimeout(timer);
+    }
+    setPrevLivePrice(livePrice);
+  }, [livePrice, prevLivePrice]);
 
   // Generate consistent mock stats based on tokenId
   const mockViews = views || (tokenId * 17) % 500 + 50;
@@ -203,14 +222,37 @@ const NFTCard = memo(({
           </span>
         </div>
         
-        {/* Price Display */}
-        {price && (
-          <div className={`mt-3 p-3 rounded-xl ${config.bg} border border-border/30 transition-all duration-300 group-hover:border-primary/30`}>
+        {/* Price Display with Live Updates */}
+        {(price || livePrice > 0) && (
+          <div className={`mt-3 p-3 rounded-xl ${config.bg} border border-border/30 transition-all duration-300 group-hover:border-primary/30 ${priceFlash === 'up' ? 'ring-2 ring-green-500/50' : priceFlash === 'down' ? 'ring-2 ring-red-500/50' : ''}`}>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">Price</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-bold gradient-text">{price}</span>
-                <span className="text-xs font-medium text-muted-foreground">NEX</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Price</span>
+                {isConnected && (
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500" />
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-xl font-bold transition-colors duration-300 ${priceFlash === 'up' ? 'text-green-500' : priceFlash === 'down' ? 'text-red-500' : 'gradient-text'}`}>
+                    {livePrice > 0 ? livePrice.toFixed(2) : price}
+                  </span>
+                  <span className="text-xs font-medium text-muted-foreground">NEX</span>
+                </div>
+                {/* Price Change Badge */}
+                {isConnected && Math.abs(priceChangePercent) > 0.01 && (
+                  <Badge 
+                    variant="secondary" 
+                    className={`text-xs px-1.5 py-0.5 ${isUp ? 'bg-green-500/10 text-green-500' : isDown ? 'bg-red-500/10 text-red-500' : ''}`}
+                  >
+                    {isUp && <TrendingUp className="w-2.5 h-2.5 mr-0.5" />}
+                    {isDown && <TrendingDown className="w-2.5 h-2.5 mr-0.5" />}
+                    {Math.abs(priceChangePercent).toFixed(1)}%
+                  </Badge>
+                )}
               </div>
             </div>
           </div>

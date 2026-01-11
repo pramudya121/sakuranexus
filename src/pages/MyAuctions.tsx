@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
 import { 
@@ -18,6 +19,7 @@ import {
   endAuction,
   cancelAuction
 } from '@/lib/web3/auction';
+import BulkActionsPanel from '@/components/auction/BulkActionsPanel';
 import { 
   Gavel, 
   Clock, 
@@ -32,7 +34,8 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Layers
 } from 'lucide-react';
 
 const AUCTIONS_STORAGE_KEY = 'nex_auctions_data';
@@ -243,6 +246,8 @@ const MyAuctions = memo(() => {
   const [activeTab, setActiveTab] = useState('created');
   const [allAuctions, setAllAuctions] = useState<AuctionData[]>([]);
   const [myBids, setMyBids] = useState<MyBid[]>([]);
+  const [selectedAuctionIds, setSelectedAuctionIds] = useState<Set<string>>(new Set());
+  const [bulkMode, setBulkMode] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -398,10 +403,20 @@ const MyAuctions = memo(() => {
               Manage your auctions and track your bids
             </p>
           </div>
-          <Button onClick={loadData} variant="outline" disabled={isLoading} className="w-full sm:w-auto">
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button 
+              onClick={() => setBulkMode(!bulkMode)} 
+              variant={bulkMode ? "secondary" : "outline"} 
+              className="flex-1 sm:flex-none"
+            >
+              <Layers className={`w-4 h-4 mr-2`} />
+              {bulkMode ? 'Exit Bulk' : 'Bulk Actions'}
+            </Button>
+            <Button onClick={loadData} variant="outline" disabled={isLoading} className="flex-1 sm:flex-none">
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards - Mobile Grid */}
@@ -497,6 +512,17 @@ const MyAuctions = memo(() => {
               </Card>
             ) : (
               <div className="space-y-4">
+                {/* Bulk Actions Panel */}
+                {bulkMode && myCreatedAuctions.length > 0 && (
+                  <BulkActionsPanel
+                    auctions={myCreatedAuctions}
+                    account={account}
+                    selectedIds={selectedAuctionIds}
+                    onSelectionChange={setSelectedAuctionIds}
+                    onActionComplete={loadData}
+                  />
+                )}
+
                 {myActiveCreated.length > 0 && (
                   <div>
                     <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -505,13 +531,31 @@ const MyAuctions = memo(() => {
                     </h3>
                     <div className="space-y-3">
                       {myActiveCreated.map(auction => (
-                        <AuctionRow 
-                          key={auction.id} 
-                          auction={auction} 
-                          type="created"
-                          onAction={handleAction}
-                          isProcessing={isProcessing}
-                        />
+                        <div key={auction.id} className="flex items-start gap-2">
+                          {bulkMode && (
+                            <Checkbox
+                              checked={selectedAuctionIds.has(auction.id)}
+                              onCheckedChange={(checked) => {
+                                const newSet = new Set(selectedAuctionIds);
+                                if (checked) {
+                                  newSet.add(auction.id);
+                                } else {
+                                  newSet.delete(auction.id);
+                                }
+                                setSelectedAuctionIds(newSet);
+                              }}
+                              className="mt-6"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <AuctionRow 
+                              auction={auction} 
+                              type="created"
+                              onAction={handleAction}
+                              isProcessing={isProcessing}
+                            />
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -524,13 +568,31 @@ const MyAuctions = memo(() => {
                     </h3>
                     <div className="space-y-3 opacity-75">
                       {myEndedCreated.map(auction => (
-                        <AuctionRow 
-                          key={auction.id} 
-                          auction={auction} 
-                          type="created"
-                          onAction={handleAction}
-                          isProcessing={isProcessing}
-                        />
+                        <div key={auction.id} className="flex items-start gap-2">
+                          {bulkMode && (
+                            <Checkbox
+                              checked={selectedAuctionIds.has(auction.id)}
+                              onCheckedChange={(checked) => {
+                                const newSet = new Set(selectedAuctionIds);
+                                if (checked) {
+                                  newSet.add(auction.id);
+                                } else {
+                                  newSet.delete(auction.id);
+                                }
+                                setSelectedAuctionIds(newSet);
+                              }}
+                              className="mt-6"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <AuctionRow 
+                              auction={auction} 
+                              type="created"
+                              onAction={handleAction}
+                              isProcessing={isProcessing}
+                            />
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
