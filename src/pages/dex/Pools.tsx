@@ -1,20 +1,24 @@
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
-import PoolCard from '@/components/dex/PoolCard';
+import PoolCardEnhanced from '@/components/dex/PoolCardEnhanced';
 import DEXNavigation from '@/components/dex/DEXNavigation';
-import MyPositions from '@/components/dex/MyPositions';
-import PoolFavorites from '@/components/dex/PoolFavorites';
+import PoolMiniChart from '@/components/dex/PoolMiniChart';
+import PoolPriceAlerts from '@/components/dex/PoolPriceAlerts';
+import WrapUnwrapPanel from '@/components/dex/WrapUnwrapPanel';
 import { PoolCardSkeleton } from '@/components/ui/loading-skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Waves, TrendingUp, BarChart3, RefreshCw, Droplets, Zap, DollarSign } from 'lucide-react';
+import { 
+  Search, Plus, Waves, TrendingUp, TrendingDown, BarChart3, RefreshCw, 
+  Droplets, Zap, DollarSign, Star, LayoutGrid, List, Filter
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getAllPairs, getPoolInfo, PoolInfo } from '@/lib/web3/dex';
 import { DEFAULT_TOKENS } from '@/lib/web3/dex-config';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const Pools = () => {
   const navigate = useNavigate();
@@ -24,6 +28,8 @@ const Pools = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('tvl');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showFavorites, setShowFavorites] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -32,7 +38,7 @@ const Pools = () => {
 
   useEffect(() => {
     filterAndSortPools();
-  }, [pools, search, sortBy]);
+  }, [pools, search, sortBy, showFavorites]);
 
   const loadPools = async (forceRefresh = false) => {
     if (forceRefresh) setIsRefreshing(true);
@@ -51,46 +57,73 @@ const Pools = () => {
       }
 
       if (poolInfos.length === 0) {
-        const demoPool1Token0 = DEFAULT_TOKENS.find(t => t.symbol === 'WNEX') || DEFAULT_TOKENS[1];
-        const demoPool1Token1 = DEFAULT_TOKENS.find(t => t.symbol === 'NXSA') || DEFAULT_TOKENS[2];
-        const demoPool2Token0 = DEFAULT_TOKENS.find(t => t.symbol === 'WNEX') || DEFAULT_TOKENS[1];
-        const demoPool2Token1 = DEFAULT_TOKENS.find(t => t.symbol === 'WETH') || DEFAULT_TOKENS[3];
-        const demoPool3Token0 = DEFAULT_TOKENS.find(t => t.symbol === 'NEX') || DEFAULT_TOKENS[0];
-        const demoPool3Token1 = DEFAULT_TOKENS.find(t => t.symbol === 'USDC') || DEFAULT_TOKENS[5];
-        
+        // Demo pools with realistic data
         const dummyPools: PoolInfo[] = [
           {
             pairAddress: '0x0000000000000000000000000000000000000001',
-            token0: demoPool1Token0,
-            token1: demoPool1Token1,
-            reserve0: '1000.0000',
-            reserve1: '50000.0000',
+            token0: DEFAULT_TOKENS.find(t => t.symbol === 'NEX') || DEFAULT_TOKENS[0],
+            token1: DEFAULT_TOKENS.find(t => t.symbol === 'WETH') || DEFAULT_TOKENS[3],
+            reserve0: '5150300.0000',
+            reserve1: '136600544.0000',
             totalSupply: '7071.0678',
-            tvl: 102500,
-            volume24h: 25600,
-            apr: 45.2,
+            tvl: 345025367.26,
+            volume24h: 20488467.68,
+            apr: 7.17,
           },
           {
             pairAddress: '0x0000000000000000000000000000000000000002',
-            token0: demoPool2Token0,
-            token1: demoPool2Token1,
-            reserve0: '500.0000',
-            reserve1: '0.2000',
+            token0: DEFAULT_TOKENS.find(t => t.symbol === 'NXSA') || DEFAULT_TOKENS[2],
+            token1: DEFAULT_TOKENS.find(t => t.symbol === 'WETH') || DEFAULT_TOKENS[3],
+            reserve0: '93805.4366',
+            reserve1: '115453.6661',
             totalSupply: '10.0000',
-            tvl: 500625,
-            volume24h: 125000,
-            apr: 32.5,
+            tvl: 288878555.25,
+            volume24h: 10648076.78,
+            apr: 20.53,
           },
           {
             pairAddress: '0x0000000000000000000000000000000000000003',
-            token0: demoPool3Token0,
-            token1: demoPool3Token1,
-            reserve0: '10000.0000',
-            reserve1: '12500.0000',
+            token0: DEFAULT_TOKENS.find(t => t.symbol === 'NXSA') || DEFAULT_TOKENS[2],
+            token1: DEFAULT_TOKENS.find(t => t.symbol === 'NEX') || DEFAULT_TOKENS[0],
+            reserve0: '114891.5551',
+            reserve1: '113057.2188',
             totalSupply: '11180.0000',
-            tvl: 25000,
-            volume24h: 5200,
-            apr: 18.7,
+            tvl: 85090793.45,
+            volume24h: 8969772.00,
+            apr: 14.89,
+          },
+          {
+            pairAddress: '0x0000000000000000000000000000000000000004',
+            token0: DEFAULT_TOKENS.find(t => t.symbol === 'WNEX') || DEFAULT_TOKENS[1],
+            token1: DEFAULT_TOKENS.find(t => t.symbol === 'WETH') || DEFAULT_TOKENS[3],
+            reserve0: '294.8148',
+            reserve1: '7670.8886',
+            totalSupply: '500.0000',
+            tvl: 17853093.77,
+            volume24h: 3276.97,
+            apr: 18.40,
+          },
+          {
+            pairAddress: '0x0000000000000000000000000000000000000005',
+            token0: DEFAULT_TOKENS.find(t => t.symbol === 'WNEX') || DEFAULT_TOKENS[1],
+            token1: DEFAULT_TOKENS.find(t => t.symbol === 'NEX') || DEFAULT_TOKENS[0],
+            reserve0: '82.4520',
+            reserve1: '1314.5736',
+            totalSupply: '300.0000',
+            tvl: 708294.6,
+            volume24h: 100.15,
+            apr: 0.84,
+          },
+          {
+            pairAddress: '0x0000000000000000000000000000000000000006',
+            token0: DEFAULT_TOKENS.find(t => t.symbol === 'NXSA') || DEFAULT_TOKENS[2],
+            token1: DEFAULT_TOKENS.find(t => t.symbol === 'WNEX') || DEFAULT_TOKENS[1],
+            reserve0: '3681.2157',
+            reserve1: '368.561',
+            totalSupply: '1000.0000',
+            tvl: 3424.45,
+            volume24h: 35.86,
+            apr: 17.22,
           },
         ];
         setPools(dummyPools);
@@ -118,9 +151,7 @@ const Pools = () => {
       filtered = filtered.filter(
         (pool) =>
           pool.token0.symbol.toLowerCase().includes(search.toLowerCase()) ||
-          pool.token1.symbol.toLowerCase().includes(search.toLowerCase()) ||
-          pool.token0.name.toLowerCase().includes(search.toLowerCase()) ||
-          pool.token1.name.toLowerCase().includes(search.toLowerCase())
+          pool.token1.symbol.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -134,31 +165,26 @@ const Pools = () => {
     });
 
     setFilteredPools(filtered);
-  }, [pools, search, sortBy]);
+  }, [pools, search, sortBy, showFavorites]);
 
   const totalTVL = useMemo(() => pools.reduce((sum, p) => sum + p.tvl, 0), [pools]);
   const totalVolume = useMemo(() => pools.reduce((sum, p) => sum + p.volume24h, 0), [pools]);
   const avgAPR = useMemo(() => pools.length > 0 ? pools.reduce((sum, p) => sum + p.apr, 0) / pools.length : 0, [pools]);
+  const pcPrice = -2.53; // Mock price change
 
-  const formatNumber = (num: number) => {
+  const formatLargeNumber = (num: number) => {
+    if (num >= 1000000000) return `$${(num / 1000000000).toFixed(2)}B`;
     if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
-    if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
-    return `$${num.toFixed(0)}`;
+    if (num >= 1000) return `$${(num / 1000).toFixed(2)}K`;
+    return `$${num.toFixed(2)}`;
   };
-
-  const stats = [
-    { icon: Waves, label: 'Total Pools', value: pools.length.toString(), color: 'text-primary' },
-    { icon: DollarSign, label: 'Total TVL', value: formatNumber(totalTVL), color: 'text-blue-500' },
-    { icon: BarChart3, label: '24h Volume', value: formatNumber(totalVolume), color: 'text-purple-500' },
-    { icon: Zap, label: 'Avg APR', value: `${avgAPR.toFixed(1)}%`, color: 'text-green-500' },
-  ];
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[150px] animate-pulse-soft" />
-        <div className="absolute bottom-20 right-10 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[120px] animate-pulse-soft" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-20 right-10 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[120px] animate-pulse-soft" style={{ animationDelay: '2s' }} />
       </div>
 
       <SakuraFalling />
@@ -168,110 +194,195 @@ const Pools = () => {
         <DEXNavigation />
         
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-6 animate-fade-in-up">
-            <Waves className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Liquidity Pools</span>
-          </div>
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up stagger-1">
-            <span className="gradient-text">All Pools</span>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">
+            <span className="gradient-text">Liquidity Pools</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto animate-fade-in-up stagger-2">
-            Explore liquidity pools and earn trading fees by providing liquidity
+          <p className="text-muted-foreground">
+            Explore and provide liquidity to earn trading fees
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-10 animate-fade-in-up stagger-3">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={index} className="glass border-border/50 p-5 text-center hover:shadow-elegant transition-all duration-300 hover:-translate-y-1">
-                <Icon className={`w-7 h-7 mx-auto mb-3 ${stat.color}`} />
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold">{stat.value}</p>
-              </Card>
-            );
-          })}
+        {/* Top Stats Bar */}
+        <div className="flex flex-wrap items-center justify-center gap-6 mb-6 text-sm">
+          <div className="flex items-center gap-2">
+            <Waves className="w-4 h-4 text-primary" />
+            <span className="text-muted-foreground">Total Pools</span>
+            <Badge variant="secondary" className="font-bold">{pools.length}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-green-500" />
+            <span className="text-muted-foreground">Total TVL</span>
+            <Badge variant="secondary" className="font-bold text-green-400">{formatLargeNumber(totalTVL)}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-blue-500" />
+            <span className="text-muted-foreground">24h Volume</span>
+            <Badge variant="secondary" className="font-bold">{formatLargeNumber(totalVolume)}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">PC Price</span>
+            <Badge variant="secondary" className={`font-bold ${pcPrice >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {pcPrice >= 0 ? '+' : ''}{pcPrice}%
+            </Badge>
+          </div>
         </div>
 
-        {/* My Positions & Favorites */}
-        <div className="grid lg:grid-cols-2 gap-6 max-w-6xl mx-auto mb-10">
-          <MyPositions />
-          <PoolFavorites />
+        {/* Large Stats Cards */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+            <CardContent className="p-5">
+              <div className="text-sm text-muted-foreground mb-1">Total Value Locked</div>
+              <div className="text-3xl md:text-4xl font-bold text-green-400">{formatLargeNumber(totalTVL)}</div>
+              <div className="text-xs text-muted-foreground mt-1">From all active reserves</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+            <CardContent className="p-5">
+              <div className="text-sm text-muted-foreground mb-1">24h Volume</div>
+              <div className="text-3xl md:text-4xl font-bold text-blue-400">{formatLargeNumber(totalVolume)}</div>
+              <div className="text-xs text-muted-foreground mt-1">Estimated from TVL</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+            <CardContent className="p-5">
+              <div className="text-sm text-muted-foreground mb-1">Average APY</div>
+              <div className="text-3xl md:text-4xl font-bold text-purple-400">{avgAPR.toFixed(2)}%</div>
+              <div className="text-xs text-muted-foreground mt-1">Based on trading fees</div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8 max-w-5xl mx-auto animate-fade-in-up stagger-4">
+        {/* Filters Bar */}
+        <div className="flex flex-col lg:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search pools by token..."
+              placeholder="Search pools..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-12 h-12 rounded-xl border-2 border-border/50 focus:border-primary/50 bg-card/50 backdrop-blur-sm"
+              className="pl-10 h-10 rounded-lg border-border/50 bg-card/50 backdrop-blur-sm"
             />
           </div>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full md:w-[200px] h-12 rounded-xl border-2 border-border/50 bg-card/50 backdrop-blur-sm">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="tvl">TVL (High to Low)</SelectItem>
-              <SelectItem value="volume">Volume (High to Low)</SelectItem>
-              <SelectItem value="apr">APR (High to Low)</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            title={`Last refresh: ${lastRefresh.toLocaleTimeString()}`}
-            className="h-12 w-12 rounded-xl border-2 border-border/50 hover:border-primary/50"
-          >
-            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button
-            onClick={() => navigate('/dex/liquidity')}
-            className="btn-hero h-12 px-6 rounded-xl"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Add Liquidity
-          </Button>
-        </div>
+          
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant={showFavorites ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setShowFavorites(!showFavorites)}
+              className="h-10 gap-2"
+            >
+              <Star className={`w-4 h-4 ${showFavorites ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+              Favorites
+            </Button>
+            
+            <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as 'grid' | 'list')}>
+              <ToggleGroupItem value="grid" size="sm" className="h-10">
+                <LayoutGrid className="w-4 h-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" size="sm" className="h-10">
+                <List className="w-4 h-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
 
-        {/* Pools Grid */}
-        {isLoading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {[1, 2, 3].map((i) => (
-              <PoolCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : filteredPools.length === 0 ? (
-          <div className="text-center py-20 max-w-md mx-auto">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted/50 flex items-center justify-center">
-              <Waves className="w-10 h-10 text-muted-foreground" />
-            </div>
-            <h3 className="text-2xl font-bold mb-3">No Pools Found</h3>
-            <p className="text-muted-foreground mb-6">
-              {search ? 'Try a different search term' : 'Be the first to create a liquidity pool!'}
-            </p>
+            <Button
+              variant={sortBy === 'tvl' ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setSortBy('tvl')}
+              className="h-10"
+            >
+              <DollarSign className="w-4 h-4 mr-1" />
+              TVL
+            </Button>
+            <Button
+              variant={sortBy === 'volume' ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setSortBy('volume')}
+              className="h-10"
+            >
+              <BarChart3 className="w-4 h-4 mr-1" />
+              Volume
+            </Button>
+            <Button
+              variant={sortBy === 'apr' ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setSortBy('apr')}
+              className="h-10"
+            >
+              <Zap className="w-4 h-4 mr-1" />
+              APY
+            </Button>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="h-10 w-10"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+            
             <Button
               onClick={() => navigate('/dex/liquidity')}
-              className="btn-hero px-8 py-6 h-auto rounded-xl"
+              className="h-10 bg-gradient-to-r from-primary to-pink-600 hover:from-primary/90 hover:to-pink-600/90"
             >
-              <Plus className="w-5 h-5 mr-2" />
+              <Plus className="w-4 h-4 mr-2" />
               Create Pool
             </Button>
           </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {filteredPools.map((pool) => (
-              <PoolCard key={pool.pairAddress} pool={pool} />
-            ))}
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-4 gap-6">
+          {/* Pools Grid - 3 columns */}
+          <div className="lg:col-span-3">
+            {isLoading ? (
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <PoolCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : filteredPools.length === 0 ? (
+              <div className="text-center py-20">
+                <Waves className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+                <h3 className="text-xl font-bold mb-2">No Pools Found</h3>
+                <p className="text-muted-foreground mb-6">
+                  {search ? 'Try a different search term' : 'Be the first to create a pool!'}
+                </p>
+                <Button
+                  onClick={() => navigate('/dex/liquidity')}
+                  className="bg-gradient-to-r from-primary to-pink-600"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Pool
+                </Button>
+              </div>
+            ) : (
+              <div className={`grid gap-4 ${viewMode === 'grid' ? 'md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
+                {filteredPools.map((pool) => (
+                  <PoolCardEnhanced key={pool.pairAddress} pool={pool} compact={viewMode === 'list'} />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right Sidebar */}
+          <div className="space-y-4">
+            {/* Mini Chart */}
+            <PoolMiniChart 
+              pairName="PSDK/BNB" 
+              currentPrice={0.975832} 
+              priceChange={3.76} 
+            />
+            
+            {/* Price Alerts */}
+            <PoolPriceAlerts />
+            
+            {/* Wrap/Unwrap */}
+            <WrapUnwrapPanel />
+          </div>
+        </div>
       </main>
     </div>
   );
