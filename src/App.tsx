@@ -32,6 +32,7 @@ const NFTAnalytics = lazy(() => import("./pages/NFTAnalytics"));
 const TokenDetail = lazy(() => import("./pages/TokenDetail"));
 const Auctions = lazy(() => import("./pages/Auctions"));
 const AuctionDetail = lazy(() => import("./pages/AuctionDetail"));
+const MyAuctions = lazy(() => import("./pages/MyAuctions"));
 
 // Optimized QueryClient with aggressive caching
 const queryClient = new QueryClient({
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/nft-analytics" element={<NFTAnalytics />} />
               <Route path="/auctions" element={<Auctions />} />
               <Route path="/auction/:auctionId" element={<AuctionDetail />} />
+              <Route path="/my-auctions" element={<MyAuctions />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/edit" element={<EditProfile />} />
               <Route path="/dex/swap" element={<Swap />} />
