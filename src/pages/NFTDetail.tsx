@@ -11,8 +11,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
 import { buyNFT, makeOffer, acceptOffer, cancelOffer } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Tag, ShoppingCart, Clock, CheckCircle2, X, Activity, TrendingUp } from 'lucide-react';
+import { Loader2, ArrowLeft, Tag, ShoppingCart, Clock, CheckCircle2, X, Activity, TrendingUp, Share2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import SocialShareMenu from '@/components/SocialShareMenu';
+import LivePriceIndicator from '@/components/nft/LivePriceIndicator';
 
 interface NFT {
   id: string;
@@ -344,6 +346,14 @@ const NFTDetail = () => {
                     <h1 className="text-3xl font-bold mb-2">{nft.name}</h1>
                     <p className="text-sm text-muted-foreground">Token ID: #{nft.token_id}</p>
                   </div>
+                  {/* Social Share Button */}
+                  <SocialShareMenu
+                    title={nft.name}
+                    description={nft.description || undefined}
+                    image={nft.image_url}
+                    type="nft"
+                    price={listing?.price}
+                  />
                 </div>
 
                 {nft.description && (
@@ -361,7 +371,12 @@ const NFTDetail = () => {
                       <Separator />
                       <div className="p-4 rounded-lg bg-gradient-sakura-soft">
                         <div className="text-sm text-muted-foreground mb-1">Current Price</div>
-                        <div className="text-3xl font-bold gradient-text">{listing.price} NEX</div>
+                        <LivePriceIndicator
+                          nftId={nft.id}
+                          initialPrice={parseFloat(listing.price)}
+                          showChange={true}
+                          size="lg"
+                        />
                       </div>
                     </>
                   )}

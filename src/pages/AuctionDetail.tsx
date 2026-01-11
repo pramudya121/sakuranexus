@@ -31,8 +31,10 @@ import {
   Trophy,
   Loader2,
   Timer,
-  Flame
+  Flame,
+  Share2
 } from 'lucide-react';
+import SocialShareMenu from '@/components/SocialShareMenu';
 
 const AUCTIONS_STORAGE_KEY = 'nex_auctions_data';
 
@@ -382,7 +384,15 @@ const AuctionDetail = () => {
             {/* Auction Header */}
             <Card>
               <CardContent className="p-6">
-                <h1 className="text-3xl font-bold mb-2">{auction.nft.name}</h1>
+                <div className="flex items-start justify-between mb-2">
+                  <h1 className="text-3xl font-bold">{auction.nft.name}</h1>
+                  <SocialShareMenu
+                    title={auction.nft.name}
+                    type="auction"
+                    price={formatBidAmount(auction.currentBid)}
+                    image={auction.nft.image_url}
+                  />
+                </div>
                 <div className="flex items-center gap-2 text-muted-foreground mb-6">
                   <Gavel className="w-4 h-4" />
                   <span>Auction ID: {auction.id}</span>

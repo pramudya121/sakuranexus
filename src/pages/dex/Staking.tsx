@@ -7,7 +7,8 @@ import StakingAdminPanel from '@/components/dex/StakingAdminPanel';
 import StakingStats from '@/components/dex/StakingStats';
 import RewardsClaimPanel from '@/components/dex/RewardsClaimPanel';
 import StakingCalculator from '@/components/dex/StakingCalculator';
-import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent, Calculator } from 'lucide-react';
+import RewardsTracker from '@/components/dex/RewardsTracker';
+import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent, Calculator, Gift } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Staking = () => {
@@ -82,18 +83,22 @@ const Staking = () => {
         {/* Main Content with Tabs */}
         <div className="max-w-6xl mx-auto mb-16">
           <Tabs defaultValue="pools" className="w-full">
-            <TabsList className="w-full max-w-md mx-auto grid grid-cols-3 mb-8">
+            <TabsList className="w-full max-w-lg mx-auto grid grid-cols-4 mb-8">
               <TabsTrigger value="pools" className="gap-2">
                 <Coins className="w-4 h-4" />
-                Pools
+                <span className="hidden sm:inline">Pools</span>
               </TabsTrigger>
               <TabsTrigger value="rewards" className="gap-2">
                 <TrendingUp className="w-4 h-4" />
-                Rewards
+                <span className="hidden sm:inline">Rewards</span>
+              </TabsTrigger>
+              <TabsTrigger value="tracker" className="gap-2">
+                <Gift className="w-4 h-4" />
+                <span className="hidden sm:inline">Tracker</span>
               </TabsTrigger>
               <TabsTrigger value="calculator" className="gap-2">
                 <Calculator className="w-4 h-4" />
-                Calculator
+                <span className="hidden sm:inline">Calc</span>
               </TabsTrigger>
             </TabsList>
 
@@ -104,6 +109,12 @@ const Staking = () => {
             <TabsContent value="rewards">
               <div className="max-w-xl mx-auto">
                 <RewardsClaimPanel refreshTrigger={refreshTrigger} onClaimed={handleRefresh} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="tracker">
+              <div className="max-w-2xl mx-auto">
+                <RewardsTracker refreshTrigger={refreshTrigger} />
               </div>
             </TabsContent>
 

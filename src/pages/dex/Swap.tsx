@@ -12,9 +12,11 @@ import PriceAlerts from '@/components/dex/PriceAlerts';
 import LimitOrderPanel from '@/components/dex/LimitOrderPanel';
 import RealTimePriceBar from '@/components/dex/RealTimePriceBar';
 import GasEstimator from '@/components/dex/GasEstimator';
+import PortfolioSummary from '@/components/dex/PortfolioSummary';
+import QuickSwap from '@/components/dex/QuickSwap';
 import { 
   ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, 
-  LayoutGrid, Maximize2, LineChart, Activity, Gauge, BarChart3
+  LayoutGrid, Maximize2, LineChart, Activity, Gauge, BarChart3, Wallet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -162,14 +164,21 @@ const Swap = () => {
 
         {/* Main Content */}
         {layout === 'standard' ? (
-          <div className="max-w-4xl mx-auto mb-16">
-            <div className="grid lg:grid-cols-5 gap-6">
-              {/* Swap Box - Takes more space */}
-              <div className="lg:col-span-3">
+          <div className="max-w-5xl mx-auto mb-16">
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Left Column - Quick Swap & Portfolio */}
+              <div className="space-y-6 order-2 lg:order-1">
+                <QuickSwap />
+                <PortfolioSummary />
+              </div>
+              
+              {/* Center - Main Swap Box */}
+              <div className="order-1 lg:order-2">
                 <SwapBox />
               </div>
-              {/* Transaction History */}
-              <div className="lg:col-span-2">
+              
+              {/* Right Column - Transaction History */}
+              <div className="order-3">
                 <TransactionHistory />
               </div>
             </div>
@@ -180,6 +189,7 @@ const Swap = () => {
               {/* Left Column - Order Book */}
               <div className="lg:col-span-3 space-y-4">
                 <OrderBook tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
+                <PortfolioSummary />
               </div>
               
               {/* Center Column - Swap & Limit Orders */}
@@ -209,9 +219,10 @@ const Swap = () => {
                 </div>
               </div>
               
-              {/* Right Column - Recent Trades */}
-              <div className="lg:col-span-4">
+              {/* Right Column - Recent Trades & Quick Swap */}
+              <div className="lg:col-span-4 space-y-4">
                 <RecentTrades tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
+                <QuickSwap />
               </div>
             </div>
           </div>
