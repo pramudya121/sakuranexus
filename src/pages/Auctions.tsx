@@ -9,12 +9,76 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount } from '@/lib/web3/wallet';
-import { loadAuctions, AuctionData, placeBid, createAuction } from '@/lib/web3/auction';
+import { loadAuctions, AuctionData, placeBid, createAuction, getAuctionStats } from '@/lib/web3/auction';
 import { useDebounce } from '@/hooks/usePerformanceOptimization';
-import { Gavel, Search, Plus, Timer, TrendingUp, Users, Flame, Clock, Trophy, RefreshCw } from 'lucide-react';
+import { Gavel, Search, Plus, Timer, TrendingUp, Users, Flame, Clock, Trophy, RefreshCw, Image as ImageIcon } from 'lucide-react';
+
+const NFTSelectionDialog = memo(({ 
+  open, 
+  onClose, 
+  nfts, 
+  onSelect 
+}: { 
+  open: boolean; 
+  onClose: () => void; 
+  nfts: any[]; 
+  onSelect: (nft: any) => void; 
+}) => {
+  return (
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 text-primary" />
+            Select NFT for Auction
+          </DialogTitle>
+          <DialogDescription>
+            Choose an NFT from your collection to put up for auction
+          </DialogDescription>
+        </DialogHeader>
+        
+        <ScrollArea className="max-h-[400px] pr-4">
+          {nfts.length === 0 ? (
+            <div className="text-center py-8">
+              <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
+              <p className="text-muted-foreground">No NFTs in your collection</p>
+              <p className="text-sm text-muted-foreground mt-1">Mint or buy NFTs to create auctions</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {nfts.map((nft) => (
+                <Card 
+                  key={nft.id} 
+                  className="cursor-pointer hover:border-primary/50 transition-all hover:shadow-md overflow-hidden"
+                  onClick={() => onSelect(nft)}
+                >
+                  <div className="aspect-square bg-muted">
+                    <img 
+                      src={nft.image_url} 
+                      alt={nft.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <CardContent className="p-3">
+                    <p className="font-medium truncate">{nft.name}</p>
+                    <p className="text-xs text-muted-foreground">#{nft.token_id}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+});
+
+NFTSelectionDialog.displayName = 'NFTSelectionDialog';
 
 const Auctions = memo(() => {
   const { toast } = useToast();
@@ -24,6 +88,7 @@ const Auctions = memo(() => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('ending-soon');
   const [filter, setFilter] = useState('all');
+  const [showNFTSelection, setShowNFTSelection] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedNFT, setSelectedNFT] = useState<any>(null);
   const [account, setAccount] = useState<string | null>(null);
@@ -50,7 +115,7 @@ const Auctions = memo(() => {
         .from('nfts')
         .select('*')
         .eq('owner_address', address.toLowerCase())
-        .limit(20);
+        .limit(50);
       setUserNFTs(data || []);
     } catch (error) {
       console.error('Error loading user NFTs:', error);
@@ -76,6 +141,10 @@ const Auctions = memo(() => {
     setIsLoading(false);
     setIsRefreshing(false);
   };
+
+  const handleRefresh = useCallback(() => {
+    loadAuctionData(true);
+  }, []);
 
   const handleBid = useCallback(async (auctionId: string, amount: number) => {
     if (!account) {
@@ -117,6 +186,12 @@ const Auctions = memo(() => {
       });
     }
   }, [account, toast]);
+
+  const handleSelectNFT = useCallback((nft: any) => {
+    setSelectedNFT(nft);
+    setShowNFTSelection(false);
+    setShowCreateModal(true);
+  }, []);
 
   const handleCreateAuction = useCallback(async (data: {
     nftId: string;
@@ -220,15 +295,25 @@ const Auctions = memo(() => {
             <p className="text-lg text-muted-foreground mb-8">
               Bid on exclusive NFTs and win rare digital collectibles. Place your bids before time runs out!
             </p>
-            {account && (
+            <div className="flex items-center justify-center gap-3">
+              {account && (
+                <Button 
+                  onClick={() => setShowNFTSelection(true)}
+                  className="bg-gradient-sakura hover:shadow-sakura"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Auction
+                </Button>
+              )}
               <Button 
-                onClick={() => setShowCreateModal(true)}
-                className="bg-gradient-sakura hover:shadow-sakura"
+                variant="outline" 
+                onClick={handleRefresh}
+                disabled={isRefreshing}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Auction
+                <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
               </Button>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -345,7 +430,7 @@ const Auctions = memo(() => {
               {searchQuery ? 'Try a different search term' : 'Be the first to create an auction!'}
             </p>
             {account && (
-              <Button onClick={() => setShowCreateModal(true)} className="bg-gradient-sakura">
+              <Button onClick={() => setShowNFTSelection(true)} className="bg-gradient-sakura">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Auction
               </Button>
@@ -398,6 +483,24 @@ const Auctions = memo(() => {
         </div>
       </div>
 
+      {/* NFT Selection Dialog */}
+      <NFTSelectionDialog
+        open={showNFTSelection}
+        onClose={() => setShowNFTSelection(false)}
+        nfts={userNFTs}
+        onSelect={handleSelectNFT}
+      />
+
+      {/* Create Auction Modal */}
+      <CreateAuctionModal
+        open={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setSelectedNFT(null);
+        }}
+        nft={selectedNFT}
+        onCreateAuction={handleCreateAuction}
+      />
     </div>
   );
 });
