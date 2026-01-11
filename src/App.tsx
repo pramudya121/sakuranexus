@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AIChat from "@/components/AIChat";
 import { AppWrapper } from "@/components/AppWrapper";
 import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton";
+import PriceAlertNotifier from "@/components/nft/PriceAlertNotifier";
 
 // Lazy load all pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -87,6 +88,7 @@ const App = () => (
             </Routes>
           </Suspense>
           <AIChat />
+          <PriceAlertNotifier />
         </AppWrapper>
       </BrowserRouter>
     </TooltipProvider>

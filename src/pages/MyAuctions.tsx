@@ -122,19 +122,29 @@ const AuctionRow = memo(({
 
   return (
     <Card className="card-hover cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-4">
+      <CardContent className="p-3 sm:p-4">
+        {/* Mobile Layout */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           {/* NFT Image */}
-          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-            <img 
-              src={auction.nft.image_url} 
-              alt={auction.nft.name}
-              className="w-full h-full object-cover"
-            />
+          <div className="flex items-center gap-3 sm:block">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0">
+              <img 
+                src={auction.nft.image_url} 
+                alt={auction.nft.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {/* Mobile Title */}
+            <div className="sm:hidden flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold truncate text-sm">{auction.nft.name}</h3>
+              </div>
+              <CountdownBadge endTime={auction.endTime} />
+            </div>
           </div>
 
-          {/* Info */}
-          <div className="flex-1 min-w-0">
+          {/* Info - Desktop */}
+          <div className="hidden sm:flex flex-1 min-w-0 flex-col">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold truncate">{auction.nft.name}</h3>
               <CountdownBadge endTime={auction.endTime} />
@@ -157,34 +167,53 @@ const AuctionRow = memo(({
             </div>
           </div>
 
+          {/* Mobile Info Row */}
+          <div className="sm:hidden flex items-center justify-between text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3" />
+              {formatBidAmount(auction.currentBid)} NEX
+            </span>
+            <span className="flex items-center gap-1">
+              <User className="w-3 h-3" />
+              {auction.totalBids} bids
+            </span>
+            {type === 'bidding' && myBid && (
+              <span className={`flex items-center gap-1 ${isWinning ? 'text-green-500' : 'text-orange-500'}`}>
+                {isWinning ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                {formatBidAmount(myBid)} NEX
+              </span>
+            )}
+          </div>
+
           {/* Actions */}
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
             {type === 'created' && isEnded && auction.totalBids > 0 && (
               <Button 
                 size="sm" 
-                className="btn-hero"
+                className="btn-hero flex-1 sm:flex-none"
                 onClick={() => onAction?.('finalize', auction.id)}
                 disabled={isProcessing}
               >
-                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4 mr-1" />}
-                Finalize
+                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4 sm:mr-1" />}
+                <span className="hidden sm:inline">Finalize</span>
               </Button>
             )}
             {type === 'created' && !isEnded && auction.totalBids === 0 && (
               <Button 
                 size="sm" 
                 variant="destructive"
+                className="flex-1 sm:flex-none"
                 onClick={() => onAction?.('cancel', auction.id)}
                 disabled={isProcessing}
               >
-                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4 mr-1" />}
-                Cancel
+                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4 sm:mr-1" />}
+                <span className="hidden sm:inline">Cancel</span>
               </Button>
             )}
             {type === 'bidding' && !isEnded && !isWinning && (
-              <Button size="sm" className="btn-hero">
-                <Gavel className="w-4 h-4 mr-1" />
-                Bid Higher
+              <Button size="sm" className="btn-hero flex-1 sm:flex-none">
+                <Gavel className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Bid Higher</span>
               </Button>
             )}
             {type === 'won' && (
@@ -193,7 +222,7 @@ const AuctionRow = memo(({
                 Won!
               </Badge>
             )}
-            <Button size="icon" variant="ghost">
+            <Button size="icon" variant="ghost" className="hidden sm:flex">
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
@@ -359,78 +388,80 @@ const MyAuctions = memo(() => {
       <Navigation />
 
       <div className="container mx-auto px-4 pt-24 pb-12">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Header - Mobile Responsive */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">
               My <span className="gradient-text">Auctions</span>
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage your auctions and track your bids
             </p>
           </div>
-          <Button onClick={loadData} variant="outline" disabled={isLoading}>
+          <Button onClick={loadData} variant="outline" disabled={isLoading} className="w-full sm:w-auto">
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/* Stats Cards - Mobile Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Card className="glass">
-            <CardContent className="p-4 text-center">
-              <Gavel className="w-6 h-6 mx-auto mb-2 text-primary" />
-              <p className="text-2xl font-bold">{myCreatedAuctions.length}</p>
-              <p className="text-sm text-muted-foreground">Created</p>
+            <CardContent className="p-3 sm:p-4 text-center">
+              <Gavel className="w-5 sm:w-6 h-5 sm:h-6 mx-auto mb-1 sm:mb-2 text-primary" />
+              <p className="text-xl sm:text-2xl font-bold">{myCreatedAuctions.length}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Created</p>
             </CardContent>
           </Card>
           <Card className="glass">
-            <CardContent className="p-4 text-center">
-              <History className="w-6 h-6 mx-auto mb-2 text-blue-500" />
-              <p className="text-2xl font-bold">{myBids.length}</p>
-              <p className="text-sm text-muted-foreground">My Bids</p>
+            <CardContent className="p-3 sm:p-4 text-center">
+              <History className="w-5 sm:w-6 h-5 sm:h-6 mx-auto mb-1 sm:mb-2 text-blue-500" />
+              <p className="text-xl sm:text-2xl font-bold">{myBids.length}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">My Bids</p>
             </CardContent>
           </Card>
           <Card className="glass">
-            <CardContent className="p-4 text-center">
-              <Trophy className="w-6 h-6 mx-auto mb-2 text-amber-500" />
-              <p className="text-2xl font-bold">{myWonAuctions.length}</p>
-              <p className="text-sm text-muted-foreground">Won</p>
+            <CardContent className="p-3 sm:p-4 text-center">
+              <Trophy className="w-5 sm:w-6 h-5 sm:h-6 mx-auto mb-1 sm:mb-2 text-amber-500" />
+              <p className="text-xl sm:text-2xl font-bold">{myWonAuctions.length}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Won</p>
             </CardContent>
           </Card>
           <Card className="glass">
-            <CardContent className="p-4 text-center">
-              <TrendingUp className="w-6 h-6 mx-auto mb-2 text-green-500" />
-              <p className="text-2xl font-bold">
+            <CardContent className="p-3 sm:p-4 text-center">
+              <TrendingUp className="w-5 sm:w-6 h-5 sm:h-6 mx-auto mb-1 sm:mb-2 text-green-500" />
+              <p className="text-xl sm:text-2xl font-bold">
                 {myActiveBids.filter(b => b.isWinning).length}
               </p>
-              <p className="text-sm text-muted-foreground">Winning</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Winning</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - Mobile Responsive */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="created" className="flex items-center gap-2">
-              <Gavel className="w-4 h-4" />
-              My Auctions
+          <TabsList className="mb-4 sm:mb-6 w-full sm:w-auto grid grid-cols-3 sm:flex">
+            <TabsTrigger value="created" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Gavel className="w-3 sm:w-4 h-3 sm:h-4" />
+              <span className="hidden sm:inline">My Auctions</span>
+              <span className="sm:hidden">Auctions</span>
               {myActiveCreated.length > 0 && (
-                <Badge variant="secondary">{myActiveCreated.length}</Badge>
+                <Badge variant="secondary" className="text-xs h-5">{myActiveCreated.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="bidding" className="flex items-center gap-2">
-              <History className="w-4 h-4" />
-              My Bids
+            <TabsTrigger value="bidding" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <History className="w-3 sm:w-4 h-3 sm:h-4" />
+              <span className="hidden sm:inline">My Bids</span>
+              <span className="sm:hidden">Bids</span>
               {myActiveBids.length > 0 && (
-                <Badge variant="secondary">{myActiveBids.length}</Badge>
+                <Badge variant="secondary" className="text-xs h-5">{myActiveBids.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="won" className="flex items-center gap-2">
-              <Trophy className="w-4 h-4" />
+            <TabsTrigger value="won" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Trophy className="w-3 sm:w-4 h-3 sm:h-4" />
               Won
               {myWonAuctions.length > 0 && (
-                <Badge className="bg-amber-500">{myWonAuctions.length}</Badge>
+                <Badge className="bg-amber-500 text-xs h-5">{myWonAuctions.length}</Badge>
               )}
             </TabsTrigger>
           </TabsList>
