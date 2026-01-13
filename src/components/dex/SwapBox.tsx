@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowDown, Settings, Loader2, ChevronDown, RefreshCw, Zap } from 'lucide-react';
+import { ArrowDown, Settings, Loader2, ChevronDown, RefreshCw, Zap, TrendingUp, TrendingDown, Radio } from 'lucide-react';
 import { Token, DEFAULT_TOKENS, DEX_CONTRACTS } from '@/lib/web3/dex-config';
 import { getAmountOut, swapTokens, getTokenBalance, calculatePriceImpact, getPairAddress, getReserves, isNativeToken } from '@/lib/web3/dex';
 import { findAllRoutes, executeMultiHopSwap, Route } from '@/lib/web3/swap-router';
@@ -15,6 +15,7 @@ import SwapRouteDisplay from './SwapRouteDisplay';
 import GasEstimator from './GasEstimator';
 import { saveTransaction } from './TransactionHistory';
 import { useToast } from '@/hooks/use-toast';
+import { useTokenPrice } from '@/hooks/usePriceWebSocket';
 import { ethers } from 'ethers';
 
 const REFRESH_INTERVAL = 30000;
@@ -64,10 +65,39 @@ const SwapBox = () => {
   const [bestRoute, setBestRoute] = useState<Route | null>(null);
   const [allRoutes, setAllRoutes] = useState<Route[]>([]);
   
+  // Real-time price updates via WebSocket
+  const tokenInPrice = useTokenPrice(tokenIn);
+  const tokenOutPrice = useTokenPrice(tokenOut);
+  const [priceFlash, setPriceFlash] = useState<{ in: 'up' | 'down' | null; out: 'up' | 'down' | null }>({ in: null, out: null });
+  const prevPricesRef = useRef<{ in: number; out: number }>({ in: 0, out: 0 });
+  
   // Cache reserves for instant calculation
   const [reserves, setReserves] = useState<{ reserve0: bigint; reserve1: bigint; token0: string; token1: string } | null>(null);
   const mountedRef = useRef(true);
   const calculationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Flash effect when prices change
+  useEffect(() => {
+    if (prevPricesRef.current.in !== 0 && tokenInPrice.price !== prevPricesRef.current.in) {
+      setPriceFlash(prev => ({ 
+        ...prev, 
+        in: tokenInPrice.price > prevPricesRef.current.in ? 'up' : 'down' 
+      }));
+      setTimeout(() => setPriceFlash(prev => ({ ...prev, in: null })), 500);
+    }
+    prevPricesRef.current.in = tokenInPrice.price;
+  }, [tokenInPrice.price]);
+  
+  useEffect(() => {
+    if (prevPricesRef.current.out !== 0 && tokenOutPrice.price !== prevPricesRef.current.out) {
+      setPriceFlash(prev => ({ 
+        ...prev, 
+        out: tokenOutPrice.price > prevPricesRef.current.out ? 'up' : 'down' 
+      }));
+      setTimeout(() => setPriceFlash(prev => ({ ...prev, out: null })), 500);
+    }
+    prevPricesRef.current.out = tokenOutPrice.price;
+  }, [tokenOutPrice.price]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -391,8 +421,14 @@ const SwapBox = () => {
         {/* Header */}
         <div className="p-4 border-b border-border/50 flex items-center justify-between bg-gradient-to-r from-primary/5 to-transparent">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <div className={`w-2 h-2 rounded-full ${tokenInPrice.isConnected ? 'bg-green-500' : 'bg-yellow-500'} animate-pulse`} />
             <h3 className="text-lg font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Swap</h3>
+            {tokenInPrice.isConnected && (
+              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <Radio className="w-3 h-3 text-green-500" />
+                Live
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-1">
             <Button 
@@ -413,9 +449,25 @@ const SwapBox = () => {
 
         <div className="p-4 space-y-2">
           {/* Token In */}
-          <div className="bg-secondary/40 rounded-xl p-4 border border-border/30 hover:border-primary/30 transition-colors">
+          <div className={`bg-secondary/40 rounded-xl p-4 border transition-all duration-300 ${
+            priceFlash.in === 'up' ? 'border-green-500/50 bg-green-500/5' : 
+            priceFlash.in === 'down' ? 'border-red-500/50 bg-red-500/5' : 
+            'border-border/30 hover:border-primary/30'
+          }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">You Pay</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">You Pay</span>
+                {tokenInPrice.price > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 transition-colors ${
+                    priceFlash.in === 'up' ? 'bg-green-500/20 text-green-500' :
+                    priceFlash.in === 'down' ? 'bg-red-500/20 text-red-500' :
+                    tokenInPrice.change24h >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                  }`}>
+                    {tokenInPrice.change24h >= 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                    ${tokenInPrice.price.toFixed(2)}
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">
                   Balance: <span className="text-foreground font-medium">{parseFloat(balanceIn).toFixed(4)}</span>
@@ -430,13 +482,20 @@ const SwapBox = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Input
-                type="number"
-                placeholder="0.0"
-                value={amountIn}
-                onChange={(e) => setAmountIn(e.target.value)}
-                className="border-0 bg-transparent text-2xl font-bold focus-visible:ring-0 p-0 h-auto"
-              />
+              <div className="flex-1">
+                <Input
+                  type="number"
+                  placeholder="0.0"
+                  value={amountIn}
+                  onChange={(e) => setAmountIn(e.target.value)}
+                  className="border-0 bg-transparent text-2xl font-bold focus-visible:ring-0 p-0 h-auto"
+                />
+                {amountIn && tokenInPrice.price > 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    ≈ ${(parseFloat(amountIn) * tokenInPrice.price).toFixed(2)} USD
+                  </div>
+                )}
+              </div>
               <Button
                 variant="outline"
                 onClick={() => setShowTokenSelectorIn(true)}
@@ -468,26 +527,49 @@ const SwapBox = () => {
           </div>
 
           {/* Token Out */}
-          <div className="bg-secondary/40 rounded-xl p-4 border border-border/30 hover:border-primary/30 transition-colors">
+          <div className={`bg-secondary/40 rounded-xl p-4 border transition-all duration-300 ${
+            priceFlash.out === 'up' ? 'border-green-500/50 bg-green-500/5' : 
+            priceFlash.out === 'down' ? 'border-red-500/50 bg-red-500/5' : 
+            'border-border/30 hover:border-primary/30'
+          }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">You Receive</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">You Receive</span>
+                {tokenOutPrice.price > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 transition-colors ${
+                    priceFlash.out === 'up' ? 'bg-green-500/20 text-green-500' :
+                    priceFlash.out === 'down' ? 'bg-red-500/20 text-red-500' :
+                    tokenOutPrice.change24h >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                  }`}>
+                    {tokenOutPrice.change24h >= 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                    ${tokenOutPrice.price.toFixed(2)}
+                  </span>
+                )}
+              </div>
               <span className="text-xs text-muted-foreground">
                 Balance: <span className="text-foreground font-medium">{parseFloat(balanceOut).toFixed(4)}</span>
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-1 text-2xl font-bold min-h-[32px] flex items-center">
-                {isCalculating ? (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span className="text-sm">Calculating...</span>
+              <div className="flex-1">
+                <div className="text-2xl font-bold min-h-[32px] flex items-center">
+                  {isCalculating ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="text-sm">Calculating...</span>
+                    </div>
+                  ) : amountOut ? (
+                    <span className={parseFloat(amountOut) > 0 ? 'text-green-500' : ''}>
+                      {parseFloat(amountOut).toFixed(6)}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">0.0</span>
+                  )}
+                </div>
+                {amountOut && parseFloat(amountOut) > 0 && tokenOutPrice.price > 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    ≈ ${(parseFloat(amountOut) * tokenOutPrice.price).toFixed(2)} USD
                   </div>
-                ) : amountOut ? (
-                  <span className={parseFloat(amountOut) > 0 ? 'text-green-500' : ''}>
-                    {parseFloat(amountOut).toFixed(6)}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">0.0</span>
                 )}
               </div>
               <Button
