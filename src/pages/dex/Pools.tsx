@@ -3,24 +3,21 @@ import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import PoolCardEnhanced from '@/components/dex/PoolCardEnhanced';
 import DEXNavigation from '@/components/dex/DEXNavigation';
-import PoolMiniChart from '@/components/dex/PoolMiniChart';
-import PoolPriceAlerts from '@/components/dex/PoolPriceAlerts';
-import WrapUnwrapPanel from '@/components/dex/WrapUnwrapPanel';
 import { PoolCardSkeleton } from '@/components/ui/loading-skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Search, Plus, Waves, TrendingUp, TrendingDown, BarChart3, RefreshCw, 
-  Droplets, Zap, DollarSign, Star, LayoutGrid, List, Filter
+  Search, Plus, Waves, BarChart3, RefreshCw, 
+  DollarSign, Star, LayoutGrid, List, Zap, TrendingUp
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getAllPairs, getPoolInfo, PoolInfo } from '@/lib/web3/dex';
 import { DEFAULT_TOKENS } from '@/lib/web3/dex-config';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
-const Pools = () => {
+const Pools = memo(() => {
   const navigate = useNavigate();
   const [pools, setPools] = useState<PoolInfo[]>([]);
   const [filteredPools, setFilteredPools] = useState<PoolInfo[]>([]);
@@ -30,7 +27,6 @@ const Pools = () => {
   const [sortBy, setSortBy] = useState('tvl');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFavorites, setShowFavorites] = useState(false);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
     loadPools();
@@ -40,7 +36,7 @@ const Pools = () => {
     filterAndSortPools();
   }, [pools, search, sortBy, showFavorites]);
 
-  const loadPools = async (forceRefresh = false) => {
+  const loadPools = useCallback(async (forceRefresh = false) => {
     if (forceRefresh) setIsRefreshing(true);
     else setIsLoading(true);
     
@@ -130,28 +126,27 @@ const Pools = () => {
       } else {
         setPools(poolInfos);
       }
-      
-      setLastRefresh(new Date());
     } catch (error) {
       console.error('Error loading pools:', error);
     }
     
     setIsLoading(false);
     setIsRefreshing(false);
-  };
+  }, []);
 
   const handleRefresh = useCallback(() => {
     loadPools(true);
-  }, []);
+  }, [loadPools]);
 
   const filterAndSortPools = useCallback(() => {
     let filtered = [...pools];
 
     if (search) {
+      const searchLower = search.toLowerCase();
       filtered = filtered.filter(
         (pool) =>
-          pool.token0.symbol.toLowerCase().includes(search.toLowerCase()) ||
-          pool.token1.symbol.toLowerCase().includes(search.toLowerCase())
+          pool.token0.symbol.toLowerCase().includes(searchLower) ||
+          pool.token1.symbol.toLowerCase().includes(searchLower)
       );
     }
 
@@ -170,14 +165,14 @@ const Pools = () => {
   const totalTVL = useMemo(() => pools.reduce((sum, p) => sum + p.tvl, 0), [pools]);
   const totalVolume = useMemo(() => pools.reduce((sum, p) => sum + p.volume24h, 0), [pools]);
   const avgAPR = useMemo(() => pools.length > 0 ? pools.reduce((sum, p) => sum + p.apr, 0) / pools.length : 0, [pools]);
-  const pcPrice = -2.53; // Mock price change
+  const nexPriceChange = 5.24; // NEX price change
 
-  const formatLargeNumber = (num: number) => {
+  const formatLargeNumber = useCallback((num: number) => {
     if (num >= 1000000000) return `$${(num / 1000000000).toFixed(2)}B`;
     if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
     if (num >= 1000) return `$${(num / 1000).toFixed(2)}K`;
     return `$${num.toFixed(2)}`;
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -221,9 +216,10 @@ const Pools = () => {
             <Badge variant="secondary" className="font-bold">{formatLargeNumber(totalVolume)}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">PC Price</span>
-            <Badge variant="secondary" className={`font-bold ${pcPrice >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {pcPrice >= 0 ? '+' : ''}{pcPrice}%
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <span className="text-muted-foreground">NEX Price</span>
+            <Badge variant="secondary" className={`font-bold ${nexPriceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {nexPriceChange >= 0 ? '+' : ''}{nexPriceChange}%
             </Badge>
           </div>
         </div>
@@ -333,59 +329,40 @@ const Pools = () => {
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Pools Grid - 3 columns */}
-          <div className="lg:col-span-3">
-            {isLoading ? (
-              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <PoolCardSkeleton key={i} />
-                ))}
-              </div>
-            ) : filteredPools.length === 0 ? (
-              <div className="text-center py-20">
-                <Waves className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-                <h3 className="text-xl font-bold mb-2">No Pools Found</h3>
-                <p className="text-muted-foreground mb-6">
-                  {search ? 'Try a different search term' : 'Be the first to create a pool!'}
-                </p>
-                <Button
-                  onClick={() => navigate('/dex/liquidity')}
-                  className="bg-gradient-to-r from-primary to-pink-600"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Pool
-                </Button>
-              </div>
-            ) : (
-              <div className={`grid gap-4 ${viewMode === 'grid' ? 'md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
-                {filteredPools.map((pool) => (
-                  <PoolCardEnhanced key={pool.pairAddress} pool={pool} compact={viewMode === 'list'} />
-                ))}
-              </div>
-            )}
+        {/* Pools Grid - Full Width */}
+        {isLoading ? (
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <PoolCardSkeleton key={i} />
+            ))}
           </div>
-
-          {/* Right Sidebar */}
-          <div className="space-y-4">
-            {/* Mini Chart */}
-            <PoolMiniChart 
-              pairName="PSDK/BNB" 
-              currentPrice={0.975832} 
-              priceChange={3.76} 
-            />
-            
-            {/* Price Alerts */}
-            <PoolPriceAlerts />
-            
-            {/* Wrap/Unwrap */}
-            <WrapUnwrapPanel />
+        ) : filteredPools.length === 0 ? (
+          <div className="text-center py-20">
+            <Waves className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+            <h3 className="text-xl font-bold mb-2">No Pools Found</h3>
+            <p className="text-muted-foreground mb-6">
+              {search ? 'Try a different search term' : 'Be the first to create a pool!'}
+            </p>
+            <Button
+              onClick={() => navigate('/dex/liquidity')}
+              className="bg-gradient-to-r from-primary to-pink-600"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Pool
+            </Button>
           </div>
-        </div>
+        ) : (
+          <div className={`grid gap-4 ${viewMode === 'grid' ? 'md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
+            {filteredPools.map((pool) => (
+              <PoolCardEnhanced key={pool.pairAddress} pool={pool} compact={viewMode === 'list'} />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
-};
+});
+
+Pools.displayName = 'Pools';
 
 export default Pools;
