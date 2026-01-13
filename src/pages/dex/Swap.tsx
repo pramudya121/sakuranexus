@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from 'react';
+import { useState, memo, useMemo } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import SwapBox from '@/components/dex/SwapBox';
@@ -18,13 +18,8 @@ import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
 
 const Swap = memo(() => {
   const [showChart, setShowChart] = useState(true);
-  const [chartTokenIn, setChartTokenIn] = useState<Token>(DEFAULT_TOKENS[0]);
-  const [chartTokenOut, setChartTokenOut] = useState<Token>(DEFAULT_TOKENS[2]);
-
-  const handleTokenChange = useCallback((tokenIn: Token, tokenOut: Token) => {
-    setChartTokenIn(tokenIn);
-    setChartTokenOut(tokenOut);
-  }, []);
+  const chartTokenIn = useMemo<Token>(() => DEFAULT_TOKENS[0], []);
+  const chartTokenOut = useMemo<Token>(() => DEFAULT_TOKENS[2], []);
 
   // Mock market stats
   const marketStats = {
