@@ -32,6 +32,8 @@ const calculatePathOutput = async (
   path: Token[]
 ): Promise<{ amountOut: string; priceImpact: number; pairs: string[] } | null> => {
   try {
+    if (!amountIn || parseFloat(amountIn) <= 0) return null;
+    
     let currentAmount = ethers.parseUnits(amountIn, path[0].decimals);
     let totalPriceImpact = 0;
     const pairs: string[] = [];
@@ -52,8 +54,8 @@ const calculatePathOutput = async (
 
       // Get reserves
       const reserves = await getReserves(pairAddress);
-      if (!reserves || reserves.reserve0 === BigInt(0) || reserves.reserve1 === BigInt(0)) {
-        return null; // No liquidity
+      if (!reserves || !reserves.token0 || reserves.reserve0 === BigInt(0) || reserves.reserve1 === BigInt(0)) {
+        return null; // No liquidity or invalid reserves
       }
 
       // Determine correct reserve order
@@ -87,8 +89,8 @@ const calculatePathOutput = async (
       priceImpact: totalPriceImpact,
       pairs,
     };
-  } catch (error) {
-    console.error('Error calculating path output:', error);
+  } catch {
+    // Silent fail - no console error needed
     return null;
   }
 };
@@ -187,7 +189,9 @@ export const executeMultiHopSwap = async (
   slippage: number
 ): Promise<{ success: boolean; hash?: string; error?: string }> => {
   try {
-    if (!window.ethereum) throw new Error('No wallet connected');
+    if (!window.ethereum) {
+      return { success: false, error: 'No wallet connected' };
+    }
 
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
@@ -270,7 +274,8 @@ export const executeMultiHopSwap = async (
     const receipt = await tx.wait();
     return { success: true, hash: receipt.hash };
   } catch (error: any) {
-    console.error('Multi-hop swap error:', error);
-    return { success: false, error: error.message };
+    // Silent handling - extract meaningful error message
+    const message = error?.reason || error?.shortMessage || error?.message || 'Swap failed';
+    return { success: false, error: message };
   }
 };

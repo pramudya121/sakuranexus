@@ -118,16 +118,21 @@ const TokenAnalytics = () => {
         
         for (const pairAddress of allPairs) {
           const poolInfo = await getPoolInfo(pairAddress);
+          // Only process valid pool info with token0 and token1
           if (
-            poolInfo.token0.address.toLowerCase() === tokenAddress?.toLowerCase() ||
-            poolInfo.token1.address.toLowerCase() === tokenAddress?.toLowerCase()
+            poolInfo && 
+            poolInfo.token0 && 
+            poolInfo.token1 &&
+            (poolInfo.token0.address.toLowerCase() === tokenAddress?.toLowerCase() ||
+             poolInfo.token1.address.toLowerCase() === tokenAddress?.toLowerCase())
           ) {
             tokenPools.push(poolInfo);
           }
         }
         setPools(tokenPools);
-      } catch (error) {
-        console.error('Error loading pools:', error);
+      } catch {
+        // Silent fail - pools will remain empty
+        setPools([]);
       }
     }
     
