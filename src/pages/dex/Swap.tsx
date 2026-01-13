@@ -1,33 +1,25 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, memo } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import SwapBox from '@/components/dex/SwapBox';
 import DEXNavigation from '@/components/dex/DEXNavigation';
 import TransactionHistory from '@/components/dex/TransactionHistory';
 import TradingChart from '@/components/dex/TradingChart';
-import RecentTrades from '@/components/dex/RecentTrades';
 import TokenStats from '@/components/dex/TokenStats';
-import OrderBook from '@/components/dex/OrderBook';
-import PriceAlerts from '@/components/dex/PriceAlerts';
-import LimitOrderPanel from '@/components/dex/LimitOrderPanel';
 import RealTimePriceBar from '@/components/dex/RealTimePriceBar';
 import GasEstimator from '@/components/dex/GasEstimator';
-import PortfolioSummary from '@/components/dex/PortfolioSummary';
-import QuickSwap from '@/components/dex/QuickSwap';
 import { 
   ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, 
-  LayoutGrid, Maximize2, LineChart, Activity, Gauge, BarChart3, Wallet
+  LineChart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { DEFAULT_TOKENS, Token } from '@/lib/web3/dex-config';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const Swap = () => {
+const Swap = memo(() => {
   const [showChart, setShowChart] = useState(true);
   const [chartTokenIn, setChartTokenIn] = useState<Token>(DEFAULT_TOKENS[0]);
   const [chartTokenOut, setChartTokenOut] = useState<Token>(DEFAULT_TOKENS[2]);
-  const [layout, setLayout] = useState<'standard' | 'pro'>('standard');
 
   const handleTokenChange = useCallback((tokenIn: Token, tokenOut: Token) => {
     setChartTokenIn(tokenIn);
@@ -128,26 +120,6 @@ const Swap = () => {
             {showChart ? 'Hide Chart' : 'Show Chart'}
             {showChart ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </Button>
-          <div className="flex items-center bg-muted rounded-lg p-1">
-            <Button
-              variant={layout === 'standard' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setLayout('standard')}
-              className="gap-2 rounded-md"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              Standard
-            </Button>
-            <Button
-              variant={layout === 'pro' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setLayout('pro')}
-              className="gap-2 rounded-md"
-            >
-              <Maximize2 className="w-4 h-4" />
-              Pro
-            </Button>
-          </div>
         </div>
 
         {/* Token Stats */}
@@ -162,71 +134,35 @@ const Swap = () => {
           </div>
         )}
 
-        {/* Main Content */}
-        {layout === 'standard' ? (
-          <div className="max-w-5xl mx-auto mb-16">
-            <div className="grid lg:grid-cols-3 gap-6">
-              {/* Left Column - Quick Swap & Portfolio */}
-              <div className="space-y-6 order-2 lg:order-1">
-                <QuickSwap />
-                <PortfolioSummary />
-              </div>
-              
-              {/* Center - Main Swap Box */}
-              <div className="order-1 lg:order-2">
-                <SwapBox />
-              </div>
-              
-              {/* Right Column - Transaction History */}
-              <div className="order-3">
-                <TransactionHistory />
-              </div>
+        {/* Main Content - Clean Layout */}
+        <div className="max-w-5xl mx-auto mb-16">
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left - Transaction History */}
+            <div className="order-2 lg:order-1">
+              <TransactionHistory />
+            </div>
+            
+            {/* Center - Main Swap Box */}
+            <div className="order-1 lg:order-2">
+              <SwapBox />
+            </div>
+            
+            {/* Right - Empty for clean look or additional info */}
+            <div className="order-3 hidden lg:block">
+              <Card className="border-border/50 bg-card/80 backdrop-blur-sm h-full">
+                <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[300px] text-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <Zap className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Fast & Secure</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Swap tokens instantly with minimal fees and maximum security.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
-        ) : (
-          <div className="max-w-[1600px] mx-auto mb-16">
-            <div className="grid lg:grid-cols-12 gap-4">
-              {/* Left Column - Order Book */}
-              <div className="lg:col-span-3 space-y-4">
-                <OrderBook tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
-                <PortfolioSummary />
-              </div>
-              
-              {/* Center Column - Swap & Limit Orders */}
-              <div className="lg:col-span-5 space-y-4">
-                <Tabs defaultValue="swap" className="w-full">
-                  <TabsList className="w-full grid grid-cols-2 mb-4">
-                    <TabsTrigger value="swap" className="gap-2">
-                      <Zap className="w-4 h-4" />
-                      Market
-                    </TabsTrigger>
-                    <TabsTrigger value="limit" className="gap-2">
-                      <BarChart3 className="w-4 h-4" />
-                      Limit
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="swap">
-                    <SwapBox />
-                  </TabsContent>
-                  <TabsContent value="limit">
-                    <LimitOrderPanel />
-                  </TabsContent>
-                </Tabs>
-                
-                <div className="grid md:grid-cols-2 gap-4">
-                  <TransactionHistory />
-                  <PriceAlerts />
-                </div>
-              </div>
-              
-              {/* Right Column - Recent Trades & Quick Swap */}
-              <div className="lg:col-span-4 space-y-4">
-                <RecentTrades tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
-                <QuickSwap />
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* Features */}
         <div className="max-w-4xl mx-auto">
@@ -260,6 +196,8 @@ const Swap = () => {
       </main>
     </div>
   );
-};
+});
+
+Swap.displayName = 'Swap';
 
 export default Swap;
