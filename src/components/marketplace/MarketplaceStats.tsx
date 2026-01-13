@@ -1,6 +1,6 @@
+import { memo, useEffect, useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Activity, DollarSign, Package, Users, BarChart3, Flame } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MarketStats {
@@ -14,7 +14,7 @@ interface MarketStats {
   salesChange24h: number;
 }
 
-const MarketplaceStats = () => {
+const MarketplaceStats = memo(() => {
   const [stats, setStats] = useState<MarketStats>({
     totalVolume: 0,
     totalListings: 0,
@@ -166,6 +166,8 @@ const MarketplaceStats = () => {
       })}
     </div>
   );
-};
+});
+
+MarketplaceStats.displayName = 'MarketplaceStats';
 
 export default MarketplaceStats;

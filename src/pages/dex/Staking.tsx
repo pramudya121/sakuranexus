@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, memo } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import DEXNavigation from '@/components/dex/DEXNavigation';
@@ -11,7 +11,7 @@ import RewardsTracker from '@/components/dex/RewardsTracker';
 import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent, Calculator, Gift } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const Staking = () => {
+const Staking = memo(() => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleRefresh = useCallback(() => {
@@ -181,6 +181,8 @@ const Staking = () => {
       </main>
     </div>
   );
-};
+});
+
+Staking.displayName = 'Staking';
 
 export default Staking;

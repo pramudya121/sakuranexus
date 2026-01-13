@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import LiquidityForm from '@/components/dex/LiquidityForm';
@@ -7,7 +8,7 @@ import PoolFavorites from '@/components/dex/PoolFavorites';
 import { Card } from '@/components/ui/card';
 import { Droplets, Percent, Gift, PiggyBank, ArrowRight, Shield, Zap, TrendingUp } from 'lucide-react';
 
-const Liquidity = () => {
+const Liquidity = memo(() => {
   const benefits = [
     {
       icon: Percent,
@@ -145,6 +146,8 @@ const Liquidity = () => {
       </main>
     </div>
   );
-};
+});
+
+Liquidity.displayName = 'Liquidity';
 
 export default Liquidity;

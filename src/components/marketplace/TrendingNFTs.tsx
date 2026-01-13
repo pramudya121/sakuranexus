@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ interface TrendingNFT {
   offers?: number;
 }
 
-const TrendingNFTs = () => {
+const TrendingNFTs = memo(() => {
   const [trending, setTrending] = useState<TrendingNFT[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -162,6 +162,8 @@ const TrendingNFTs = () => {
       </Button>
     </Card>
   );
-};
+});
+
+TrendingNFTs.displayName = 'TrendingNFTs';
 
 export default TrendingNFTs;
