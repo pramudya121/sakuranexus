@@ -8,9 +8,10 @@ import TradingChart from '@/components/dex/TradingChart';
 import TokenStats from '@/components/dex/TokenStats';
 import RealTimePriceBar from '@/components/dex/RealTimePriceBar';
 import GasEstimator from '@/components/dex/GasEstimator';
+import { useTokenPrice } from '@/hooks/usePriceWebSocket';
 import { 
-  ArrowLeftRight, TrendingUp, Shield, Zap, ChevronDown, ChevronUp, 
-  LineChart
+  ArrowLeftRight, TrendingUp, TrendingDown, Shield, Zap, ChevronDown, ChevronUp, 
+  LineChart, Radio
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,15 +21,15 @@ const Swap = memo(() => {
   const [showChart, setShowChart] = useState(true);
   const chartTokenIn = useMemo<Token>(() => DEFAULT_TOKENS[0], []);
   const chartTokenOut = useMemo<Token>(() => DEFAULT_TOKENS[2], []);
-
-  // Mock market stats
-  const marketStats = {
-    price: '1.523',
-    change24h: 5.67,
-    high24h: '1.589',
-    low24h: '1.421',
-    volume24h: '125,432',
-  };
+  
+  // Real-time price data via WebSocket
+  const tokenInPrice = useTokenPrice(chartTokenIn);
+  const tokenOutPrice = useTokenPrice(chartTokenOut);
+  
+  // Calculate exchange rate from live prices
+  const exchangeRate = tokenInPrice.price > 0 && tokenOutPrice.price > 0 
+    ? (tokenInPrice.price / tokenOutPrice.price).toFixed(4)
+    : '0.00';
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,7 +59,7 @@ const Swap = memo(() => {
           </p>
         </div>
 
-        {/* Market Overview Strip */}
+        {/* Market Overview Strip - Now with Live Data */}
         <div className="max-w-5xl mx-auto mb-6">
           <Card className="border-border/50 bg-gradient-to-r from-secondary/30 to-transparent">
             <CardContent className="p-4">
@@ -69,29 +70,48 @@ const Swap = memo(() => {
                       <img src={chartTokenIn.logoURI} alt={chartTokenIn.symbol} className="w-10 h-10 rounded-full ring-2 ring-background" />
                     )}
                     <div>
-                      <div className="text-lg font-bold">{chartTokenIn.symbol}/{chartTokenOut.symbol}</div>
+                      <div className="text-lg font-bold flex items-center gap-2">
+                        {chartTokenIn.symbol}/{chartTokenOut.symbol}
+                        {tokenInPrice.isConnected && (
+                          <span className="text-[10px] text-green-500 flex items-center gap-1 bg-green-500/10 px-1.5 py-0.5 rounded-full">
+                            <Radio className="w-2.5 h-2.5" />
+                            LIVE
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">Trading Pair</div>
                     </div>
                   </div>
                   <div className="h-10 w-px bg-border hidden md:block" />
                   <div className="hidden md:flex items-center gap-6">
                     <div>
-                      <div className="text-xl font-bold">${marketStats.price}</div>
-                      <div className={`text-xs flex items-center gap-1 ${marketStats.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {marketStats.change24h >= 0 ? '+' : ''}{marketStats.change24h}%
+                      <div className="text-xl font-bold flex items-center gap-1">
+                        ${tokenInPrice.price.toFixed(4)}
+                        {tokenInPrice.change24h >= 0 ? (
+                          <TrendingUp className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <TrendingDown className="w-4 h-4 text-red-500" />
+                        )}
+                      </div>
+                      <div className={`text-xs flex items-center gap-1 ${tokenInPrice.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {tokenInPrice.change24h >= 0 ? '+' : ''}{tokenInPrice.change24h.toFixed(2)}%
                       </div>
                     </div>
                     <div className="text-sm">
                       <div className="text-muted-foreground">24h High</div>
-                      <div className="font-medium">${marketStats.high24h}</div>
+                      <div className="font-medium text-green-500">${tokenInPrice.high24h.toFixed(4)}</div>
                     </div>
                     <div className="text-sm">
                       <div className="text-muted-foreground">24h Low</div>
-                      <div className="font-medium">${marketStats.low24h}</div>
+                      <div className="font-medium text-red-500">${tokenInPrice.low24h.toFixed(4)}</div>
                     </div>
                     <div className="text-sm">
                       <div className="text-muted-foreground">24h Volume</div>
-                      <div className="font-medium">${marketStats.volume24h}</div>
+                      <div className="font-medium">${(tokenInPrice.volume24h / 1000).toFixed(1)}K</div>
+                    </div>
+                    <div className="text-sm">
+                      <div className="text-muted-foreground">Rate</div>
+                      <div className="font-medium">1 {chartTokenIn.symbol} = {exchangeRate} {chartTokenOut.symbol}</div>
                     </div>
                   </div>
                 </div>
