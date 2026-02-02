@@ -13,6 +13,8 @@ import { StatsCardSkeleton } from '@/components/ui/loading-skeleton';
 import { TokenLogo, preloadTokenLogos } from '@/components/ui/token-logo';
 import { AnimatedNumber, AnimatedCurrency } from '@/components/ui/animated-number';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BorderBeam } from '@/components/ui/border-beam';
+import { NumberTicker } from '@/components/ui/number-ticker';
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -166,9 +168,10 @@ const Dashboard = memo(function Dashboard() {
           </Card>
         )}
 
-        {/* Quick Stats */}
+        {/* Quick Stats with BorderBeam */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="glass border-border/50 hover:shadow-lg transition-shadow">
+          <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
+            <BorderBeam size={80} duration={10} delay={0} />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-primary/10">
@@ -183,7 +186,7 @@ const Dashboard = memo(function Dashboard() {
               ) : (
                 <p className="text-2xl font-bold mt-3">
                   {stats.totalVolume7d > 0 
-                    ? `${stats.totalVolume7d.toFixed(2)} NEX`
+                    ? <><NumberTicker value={stats.totalVolume7d} /> NEX</>
                     : '$0.00'
                   }
                 </p>
@@ -192,7 +195,8 @@ const Dashboard = memo(function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="glass border-border/50 hover:shadow-lg transition-shadow">
+          <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
+            <BorderBeam size={80} duration={10} delay={2} />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-blue-500/10">
@@ -206,14 +210,15 @@ const Dashboard = memo(function Dashboard() {
                 <Skeleton className="h-8 w-16 mt-3" />
               ) : (
                 <p className="text-2xl font-bold mt-3">
-                  {stats.totalTrades.toLocaleString()}
+                  <NumberTicker value={stats.totalTrades} />
                 </p>
               )}
               <p className="text-sm text-muted-foreground">Total Activities</p>
             </CardContent>
           </Card>
 
-          <Card className="glass border-border/50 hover:shadow-lg transition-shadow">
+          <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
+            <BorderBeam size={80} duration={10} delay={4} />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-purple-500/10">
@@ -223,12 +228,13 @@ const Dashboard = memo(function Dashboard() {
                   APR
                 </Badge>
               </div>
-              <p className="text-2xl font-bold mt-3">{stats.stakingAPR}%</p>
+              <p className="text-2xl font-bold mt-3"><NumberTicker value={stats.stakingAPR} />%</p>
               <p className="text-sm text-muted-foreground">Avg Staking APR</p>
             </CardContent>
           </Card>
 
-          <Card className="glass border-border/50 hover:shadow-lg transition-shadow">
+          <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
+            <BorderBeam size={80} duration={10} delay={6} />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-orange-500/10">
@@ -241,7 +247,7 @@ const Dashboard = memo(function Dashboard() {
               {isLoading ? (
                 <Skeleton className="h-8 w-12 mt-3" />
               ) : (
-                <p className="text-2xl font-bold mt-3">{stats.nftsOwned}</p>
+                <p className="text-2xl font-bold mt-3"><NumberTicker value={stats.nftsOwned} /></p>
               )}
               <p className="text-sm text-muted-foreground">NFTs Owned</p>
             </CardContent>
