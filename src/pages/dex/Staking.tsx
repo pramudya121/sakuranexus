@@ -8,7 +8,9 @@ import StakingStats from '@/components/dex/StakingStats';
 import RewardsClaimPanel from '@/components/dex/RewardsClaimPanel';
 import StakingCalculator from '@/components/dex/StakingCalculator';
 import RewardsTracker from '@/components/dex/RewardsTracker';
-import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent, Calculator, Gift } from 'lucide-react';
+import { PremiumHeroSection } from '@/components/PremiumHeroSection';
+import { GlowingStarsBackgroundCard } from '@/components/ui/glowing-stars';
+import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent, Calculator, Gift, Sparkles } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Staking = memo(() => {
@@ -55,16 +57,16 @@ const Staking = memo(() => {
         {/* DEX Navigation */}
         <DEXNavigation />
         
-        {/* Hero Section */}
+        {/* Premium Hero Section */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <Coins className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4 animate-fade-in-up">
+            <Sparkles className="w-4 h-4" />
             TOKEN STAKING
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-3">
+          <h1 className="text-4xl md:text-5xl font-bold mb-3 animate-fade-in-up stagger-1">
             <span className="gradient-text">Stake & Earn</span>
           </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
+          <p className="text-muted-foreground max-w-lg mx-auto animate-fade-in-up stagger-2">
             Stake your tokens to earn additional rewards. 
             Lock your assets and earn high APR on your holdings.
           </p>
@@ -156,24 +158,23 @@ const Staking = memo(() => {
           </div>
         </div>
 
-        {/* Features */}
+        {/* Features with Glow Effect */}
         <div className="max-w-4xl mx-auto">
           <div className="grid md:grid-cols-3 gap-4">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div 
-                  key={index}
-                  className="group p-6 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-elegant transition-all duration-300"
-                >
-                  <div className={`w-12 h-12 mb-4 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
-                    <Icon className="w-6 h-6 text-white" />
+                <GlowingStarsBackgroundCard key={index} className="h-full">
+                  <div className="relative z-10 p-6">
+                    <div className={`w-12 h-12 mb-4 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold mb-2">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {feature.description}
+                    </p>
                   </div>
-                  <h3 className="font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
+                </GlowingStarsBackgroundCard>
               );
             })}
           </div>
