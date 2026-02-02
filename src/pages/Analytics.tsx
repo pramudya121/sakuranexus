@@ -15,6 +15,9 @@ import {
   ArrowUp, ArrowDown, RefreshCw, BarChart3, PieChartIcon, LineChartIcon,
   Layers, Wallet, Clock
 } from 'lucide-react';
+import { NumberTicker } from '@/components/ui/number-ticker';
+import { BorderBeam } from '@/components/ui/border-beam';
+import { GlowingStarsBackgroundCard, GlowingStarsTitle, GlowingStarsDescription } from '@/components/ui/glowing-stars';
 
 interface AnalyticsData {
   date: string;
@@ -169,20 +172,24 @@ const Analytics = () => {
     'hsl(40, 90%, 55%)'
   ];
 
+  // Enhanced StatCard with BorderBeam effect
   const StatCard = ({ 
     title, 
     value, 
     icon: Icon, 
     change, 
-    suffix = '' 
+    suffix = '',
+    showBeam = false
   }: { 
     title: string; 
     value: string | number; 
     icon: any; 
     change?: number;
     suffix?: string;
+    showBeam?: boolean;
   }) => (
     <Card className="relative overflow-hidden group hover:shadow-elegant transition-all duration-300 border-border/50">
+      {showBeam && <BorderBeam size={100} duration={12} delay={0} />}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
@@ -195,7 +202,14 @@ const Analytics = () => {
       <CardContent>
         <div className="flex items-end justify-between">
           <div>
-            <div className="text-2xl font-bold">{value}{suffix}</div>
+            <div className="text-2xl font-bold">
+              {typeof value === 'number' ? (
+                <NumberTicker value={value} duration={1500} />
+              ) : (
+                value
+              )}
+              {suffix}
+            </div>
             {change !== undefined && (
               <div className={`flex items-center gap-1 text-xs mt-1 ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                 {change >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
@@ -232,7 +246,7 @@ const Analytics = () => {
       <Navigation />
       
       <div className="container mx-auto px-4 pt-24 pb-12">
-        {/* Hero Section */}
+        {/* Hero Section with Glowing Stars */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
             <BarChart3 className="w-4 h-4" />
@@ -273,11 +287,11 @@ const Analytics = () => {
           </Button>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid with BorderBeam */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <StatCard icon={ShoppingCart} title="Sales" value={stats.totalSales} change={stats.salesChange} />
-          <StatCard icon={TrendingUp} title="Volume" value={stats.totalVolume} suffix=" NEX" change={stats.volumeChange} />
-          <StatCard icon={Package} title="Mints" value={stats.totalMints} />
+          <StatCard icon={ShoppingCart} title="Sales" value={stats.totalSales} change={stats.salesChange} showBeam />
+          <StatCard icon={TrendingUp} title="Volume" value={stats.totalVolume} suffix=" NEX" change={stats.volumeChange} showBeam />
+          <StatCard icon={Package} title="Mints" value={stats.totalMints} showBeam />
           <StatCard icon={DollarSign} title="Avg Price" value={stats.avgPrice} suffix=" NEX" />
           <StatCard icon={Users} title="Owners" value={stats.totalOwners} />
           <StatCard icon={Activity} title="Items" value={stats.totalItems} />
@@ -409,30 +423,54 @@ const Analytics = () => {
 
           {/* DEX Tab */}
           <TabsContent value="dex" className="space-y-6">
+            {/* DEX Stats with GlowingStars */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <StatCard 
-                icon={TrendingUp} 
-                title="Swap Volume" 
-                value={dexData.reduce((sum, d) => sum + d.swapVolume, 0).toLocaleString()} 
-                suffix=" NEX" 
-              />
-              <StatCard 
-                icon={Layers} 
-                title="Total Trades" 
-                value={dexData.reduce((sum, d) => sum + d.trades, 0)} 
-              />
-              <StatCard 
-                icon={Wallet} 
-                title="Liquidity Added" 
-                value={dexData.reduce((sum, d) => sum + d.liquidityAdded, 0).toLocaleString()} 
-                suffix=" NEX" 
-              />
-              <StatCard 
-                icon={Clock} 
-                title="Current TVL" 
-                value={(dexData[dexData.length - 1]?.tvl || 0).toLocaleString()} 
-                suffix=" NEX" 
-              />
+              <GlowingStarsBackgroundCard className="p-4">
+                <div className="relative z-20">
+                  <div className="text-xs text-muted-foreground uppercase mb-1 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" /> Swap Volume
+                  </div>
+                  <div className="text-2xl font-bold">
+                    <NumberTicker value={dexData.reduce((sum, d) => sum + d.swapVolume, 0)} duration={2000} />
+                    <span className="text-sm text-muted-foreground ml-1">NEX</span>
+                  </div>
+                </div>
+              </GlowingStarsBackgroundCard>
+              
+              <GlowingStarsBackgroundCard className="p-4">
+                <div className="relative z-20">
+                  <div className="text-xs text-muted-foreground uppercase mb-1 flex items-center gap-2">
+                    <Layers className="w-4 h-4" /> Total Trades
+                  </div>
+                  <div className="text-2xl font-bold">
+                    <NumberTicker value={dexData.reduce((sum, d) => sum + d.trades, 0)} duration={2000} />
+                  </div>
+                </div>
+              </GlowingStarsBackgroundCard>
+              
+              <GlowingStarsBackgroundCard className="p-4">
+                <div className="relative z-20">
+                  <div className="text-xs text-muted-foreground uppercase mb-1 flex items-center gap-2">
+                    <Wallet className="w-4 h-4" /> Liquidity Added
+                  </div>
+                  <div className="text-2xl font-bold">
+                    <NumberTicker value={dexData.reduce((sum, d) => sum + d.liquidityAdded, 0)} duration={2000} />
+                    <span className="text-sm text-muted-foreground ml-1">NEX</span>
+                  </div>
+                </div>
+              </GlowingStarsBackgroundCard>
+              
+              <GlowingStarsBackgroundCard className="p-4">
+                <div className="relative z-20">
+                  <div className="text-xs text-muted-foreground uppercase mb-1 flex items-center gap-2">
+                    <Clock className="w-4 h-4" /> Current TVL
+                  </div>
+                  <div className="text-2xl font-bold">
+                    <NumberTicker value={dexData[dexData.length - 1]?.tvl || 0} duration={2000} />
+                    <span className="text-sm text-muted-foreground ml-1">NEX</span>
+                  </div>
+                </div>
+              </GlowingStarsBackgroundCard>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -449,18 +487,18 @@ const Analytics = () => {
                     <AreaChart data={dexData}>
                       <defs>
                         <linearGradient id="tvlGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(200, 80%, 55%)" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(200, 80%, 55%)" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="hsl(160, 70%, 45%)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="hsl(160, 70%, 45%)" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Tooltip content={<CustomTooltip />} />
                       <Area 
                         type="monotone" 
                         dataKey="tvl" 
-                        stroke="hsl(200, 80%, 55%)" 
+                        stroke="hsl(160, 70%, 45%)" 
                         strokeWidth={2}
                         fill="url(#tvlGradient)" 
                         name="TVL (NEX)"
@@ -470,51 +508,30 @@ const Analytics = () => {
                 </CardContent>
               </Card>
 
-              {/* Swap Volume Chart */}
+              {/* Volume Chart */}
               <Card className="border-border/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="w-5 h-5 text-primary" />
-                    Daily Swap Volume
+                    Swap Volume & Trades
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={dexData}>
+                    <ComposedChart data={dexData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="swapVolume" fill="hsl(260, 70%, 60%)" name="Swap Volume" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                      <Legend />
+                      <Bar yAxisId="left" dataKey="swapVolume" fill="hsl(328, 85%, 55%)" name="Volume" radius={[4, 4, 0, 0]} />
+                      <Line yAxisId="right" type="monotone" dataKey="trades" stroke="hsl(200, 80%, 55%)" strokeWidth={2} name="Trades" dot={false} />
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
             </div>
-
-            {/* Trades & Liquidity */}
-            <Card className="border-border/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-primary" />
-                  Trades & Liquidity Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <ComposedChart data={dexData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="trades" fill="hsl(140, 60%, 50%)" name="Trades" radius={[4, 4, 0, 0]} />
-                    <Line yAxisId="right" type="monotone" dataKey="liquidityAdded" stroke="hsl(40, 90%, 55%)" strokeWidth={2} name="Liquidity Added" dot={false} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>

@@ -1,13 +1,14 @@
-import { useEffect, useState, memo, useCallback } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, Sparkles, TrendingUp, Shield, Wallet, BarChart3, Zap, ArrowLeftRight, Coins, Star, ChevronDown, Image, Users, Droplets } from 'lucide-react';
+import { ArrowRight, Sparkles, TrendingUp, Shield, Zap, ArrowLeftRight, Coins, Star, Image, Users, Droplets } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
+import HeroSection from '@/components/HeroSection';
+import { SpotlightCard } from '@/components/ui/spotlight';
+import { BackgroundGradient } from '@/components/ui/background-gradient';
 import { supabase } from '@/integrations/supabase/client';
-import sakuraHeroBg from '@/assets/sakura-hero-bg.jpg';
-import sakuraLogo from '@/assets/sakura-logo.png';
 
 const Index = memo(function Index() {
   const [stats, setStats] = useState({
@@ -76,10 +77,10 @@ const Index = memo(function Index() {
   ];
 
   const quickStats = [
-    { label: 'Total NFTs', value: stats.totalNFTs > 0 ? stats.totalNFTs.toLocaleString() : '10K+', icon: Image },
-    { label: 'Volume Traded', value: stats.totalVolume > 0 ? `${(stats.totalVolume / 1000).toFixed(0)}K` : '500K+', icon: TrendingUp },
-    { label: 'Active Users', value: stats.activeUsers > 0 ? stats.activeUsers.toLocaleString() : '5K+', icon: Users },
-    { label: 'Total Pools', value: '50+', icon: Droplets },
+    { label: 'Total NFTs', value: stats.totalNFTs > 0 ? stats.totalNFTs : 10000, suffix: '+' },
+    { label: 'Volume Traded', value: stats.totalVolume > 0 ? Math.floor(stats.totalVolume / 1000) : 500, suffix: 'K+' },
+    { label: 'Active Users', value: stats.activeUsers > 0 ? stats.activeUsers : 5000, suffix: '+' },
+    { label: 'Total Pools', value: 50, suffix: '+' },
   ];
 
   return (
@@ -87,109 +88,8 @@ const Index = memo(function Index() {
       <SakuraFalling />
       <Navigation />
       
-      {/* Hero Section with Sakura Background */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Sakura Background Image */}
-        <div 
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: `url(${sakuraHeroBg})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background" />
-        </div>
-        
-        {/* Decorative Elements */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-20 left-10 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse-soft" />
-          <div className="absolute bottom-20 right-10 w-[500px] h-[500px] bg-accent/15 rounded-full blur-[150px] animate-pulse-soft" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-pink-400/10 rounded-full blur-[100px] animate-pulse-soft" style={{ animationDelay: '2s' }} />
-        </div>
-        
-        <div className="relative container mx-auto px-4 text-center z-10 pt-20">
-          <div className={`max-w-5xl mx-auto space-y-8 transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            {/* Logo */}
-            <div className="flex justify-center mb-6 animate-fade-in-up">
-              <div className="relative">
-                <img 
-                  src={sakuraLogo} 
-                  alt="NEXUSAKURA" 
-                  className="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-2xl"
-                />
-                <div className="absolute inset-0 bg-primary/30 rounded-full blur-2xl -z-10" />
-              </div>
-            </div>
-
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-sm animate-fade-in-up stagger-1">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-              </span>
-              <span className="text-sm font-medium text-primary">
-                🌸 Live on Nexus Testnet
-              </span>
-            </div>
-            
-            {/* Headline */}
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-tight animate-fade-in-up stagger-2">
-              <span className="text-foreground">Trade & Collect</span>
-              <br />
-              <span className="gradient-text">Digital Art</span>
-            </h1>
-            
-            {/* Subheadline */}
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in-up stagger-3">
-              The premier NFT marketplace and decentralized exchange on Nexus blockchain. 
-              Experience the beauty of <span className="text-primary font-medium">Sakura</span> while trading.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4 animate-fade-in-up stagger-4">
-              <Link to="/marketplace">
-                <Button size="lg" className="btn-hero text-base px-10 py-7 h-auto rounded-2xl text-lg group">
-                  <Sparkles className="mr-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
-                  Explore NFTs
-                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link to="/dex/swap">
-                <Button size="lg" variant="outline" className="text-base px-10 py-7 h-auto rounded-2xl text-lg border-2 hover:bg-primary/10 hover:border-primary transition-all group backdrop-blur-sm">
-                  <ArrowLeftRight className="mr-2 w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
-                  Launch DEX
-                </Button>
-              </Link>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-16 max-w-4xl mx-auto animate-fade-in-up stagger-5">
-              {quickStats.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <div 
-                    key={index}
-                    className="glass rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300"
-                  >
-                    <Icon className="w-6 h-6 mx-auto mb-2 text-primary" />
-                    <div className="text-2xl md:text-3xl font-bold gradient-text">
-                      {stat.value}
-                    </div>
-                    <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-        
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-10">
-          <ChevronDown className="w-8 h-8 text-muted-foreground/50" />
-        </div>
-      </section>
+      {/* Hero Section with Premium Effects */}
+      <HeroSection stats={quickStats} isLoaded={isLoaded} />
 
       {/* Features Section */}
       <section className="py-24 relative overflow-hidden bg-gradient-sakura-soft">
@@ -212,13 +112,7 @@ const Index = memo(function Index() {
               const Icon = feature.icon;
               return (
                 <Link to={feature.link} key={index}>
-                  <Card 
-                    className="group relative p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/40 transition-all duration-500 hover:shadow-elegant h-full cursor-pointer overflow-hidden"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    {/* Gradient Overlay on Hover */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-                    
+                  <SpotlightCard className="h-full cursor-pointer group">
                     <div className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${feature.color} mb-4 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
                       <Icon className="w-6 h-6 text-white" />
                     </div>
@@ -228,7 +122,7 @@ const Index = memo(function Index() {
                     <div className="flex items-center gap-1 mt-4 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                       Get Started <ArrowRight className="w-4 h-4" />
                     </div>
-                  </Card>
+                  </SpotlightCard>
                 </Link>
               );
             })}
@@ -291,10 +185,9 @@ const Index = memo(function Index() {
                 </div>
               </div>
               
-              {/* DEX Preview Card */}
+              {/* DEX Preview Card with Background Gradient */}
               <div className="relative order-1 lg:order-2">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-accent/30 rounded-3xl blur-3xl -z-10" />
-                <div className="glass rounded-3xl p-8 border border-border/50 shadow-elegant">
+                <BackgroundGradient className="rounded-3xl p-8">
                   <div className="flex items-center justify-between mb-8">
                     <span className="text-xl font-bold">Swap</span>
                     <div className="flex gap-2">
@@ -337,7 +230,7 @@ const Index = memo(function Index() {
                   <Button className="w-full mt-6 btn-hero h-14 rounded-xl text-lg">
                     Connect Wallet
                   </Button>
-                </div>
+                </BackgroundGradient>
               </div>
             </div>
           </div>
@@ -362,14 +255,14 @@ const Index = memo(function Index() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/mint">
-                <Button size="lg" className="bg-white text-primary hover:bg-white/90 text-base px-10 py-7 h-auto rounded-2xl font-semibold shadow-xl hover:scale-105 transition-transform">
+                <Button size="lg" className="bg-white text-primary hover:bg-white/90 px-10 py-7 h-auto rounded-2xl text-lg font-semibold">
                   <Sparkles className="mr-2 w-5 h-5" />
                   Create NFT
                 </Button>
               </Link>
               <Link to="/dex/liquidity">
-                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 text-base px-10 py-7 h-auto rounded-2xl font-semibold">
-                  <Wallet className="mr-2 w-5 h-5" />
+                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 px-10 py-7 h-auto rounded-2xl text-lg">
+                  <Droplets className="mr-2 w-5 h-5" />
                   Add Liquidity
                 </Button>
               </Link>
@@ -379,25 +272,22 @@ const Index = memo(function Index() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-border/50 bg-card/30">
+      <footer className="py-12 border-t border-border/50">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <img src={sakuraLogo} alt="NEXUSAKURA" className="w-10 h-10 object-contain" />
-              <span className="text-xl font-bold gradient-text">NEXUSAKURA</span>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold gradient-text">NEXUSAKURA</span>
+              <span className="text-muted-foreground">© 2024</span>
             </div>
-            <p className="text-muted-foreground text-sm">
-              © 2025 NEXUSAKURA. Built with 🌸 on Nexus Testnet
-            </p>
-            <div className="flex items-center gap-8">
-              <Link to="/marketplace" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            <div className="flex items-center gap-6">
+              <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors">
                 Marketplace
               </Link>
-              <Link to="/dex/swap" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/dex/swap" className="text-muted-foreground hover:text-foreground transition-colors">
                 DEX
               </Link>
-              <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Dashboard
+              <Link to="/analytics" className="text-muted-foreground hover:text-foreground transition-colors">
+                Analytics
               </Link>
             </div>
           </div>
