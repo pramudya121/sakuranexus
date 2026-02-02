@@ -8,6 +8,7 @@ import AIChat from "@/components/AIChat";
 import { AppWrapper } from "@/components/AppWrapper";
 import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton";
 import PriceAlertNotifier from "@/components/nft/PriceAlertNotifier";
+import { MobileFloatingDock } from "@/components/MobileFloatingDock";
 
 // Lazy load all pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -89,6 +90,7 @@ const App = () => (
           </Suspense>
           <AIChat />
           <PriceAlertNotifier />
+          <MobileFloatingDock />
         </AppWrapper>
       </BrowserRouter>
     </TooltipProvider>
