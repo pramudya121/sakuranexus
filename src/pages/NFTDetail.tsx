@@ -11,10 +11,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
 import { buyNFT, makeOffer, acceptOffer, cancelOffer } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Tag, ShoppingCart, Clock, CheckCircle2, X, Activity, TrendingUp, Share2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Tag, ShoppingCart, Clock, CheckCircle2, X, Activity, TrendingUp, Share2, Brain, Sparkles } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import SocialShareMenu from '@/components/SocialShareMenu';
 import LivePriceIndicator from '@/components/nft/LivePriceIndicator';
+import { AIRarityScore, AIFakeDetection, AIPricePrediction, AISentimentAnalysis, AIDynamicPricing } from '@/components/ai';
 
 interface NFT {
   id: string;
@@ -530,10 +531,10 @@ const NFTDetail = () => {
           </div>
         </div>
 
-        {/* Tabs for History and Analytics */}
+        {/* Tabs for History, Analytics, and AI */}
         <div className="mt-8">
           <Tabs defaultValue="activity" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="activity">
                 <Activity className="w-4 h-4 mr-2" />
                 Activity
@@ -541,6 +542,14 @@ const NFTDetail = () => {
               <TabsTrigger value="analytics">
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Price History
+              </TabsTrigger>
+              <TabsTrigger value="ai-analysis">
+                <Brain className="w-4 h-4 mr-2" />
+                AI Analysis
+              </TabsTrigger>
+              <TabsTrigger value="ai-tools">
+                <Sparkles className="w-4 h-4 mr-2" />
+                AI Tools
               </TabsTrigger>
             </TabsList>
 
@@ -652,6 +661,54 @@ const NFTDetail = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* AI Analysis Tab */}
+            <TabsContent value="ai-analysis">
+              <div className="grid md:grid-cols-2 gap-6">
+                <AIRarityScore 
+                  nft={{ 
+                    name: nft.name, 
+                    description: nft.description || undefined, 
+                    image_url: nft.image_url, 
+                    token_id: nft.token_id 
+                  }} 
+                />
+                <AIFakeDetection 
+                  nft={{ 
+                    name: nft.name, 
+                    image_url: nft.image_url, 
+                    owner_address: nft.owner_address 
+                  }} 
+                />
+              </div>
+            </TabsContent>
+
+            {/* AI Tools Tab */}
+            <TabsContent value="ai-tools">
+              <div className="grid md:grid-cols-2 gap-6">
+                <AIPricePrediction 
+                  nft={{ 
+                    name: nft.name, 
+                    token_id: nft.token_id, 
+                    price: listing?.price 
+                  }}
+                  salesHistory={priceHistory}
+                />
+                <AISentimentAnalysis 
+                  nftOrCollection={{ name: nft.name }} 
+                />
+                {isOwner && (
+                  <AIDynamicPricing
+                    nft={{
+                      name: nft.name,
+                      token_id: nft.token_id,
+                      currentPrice: listing?.price,
+                    }}
+                    similarSales={priceHistory}
+                  />
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </div>
