@@ -8,9 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCurrentAccount } from '@/lib/web3/wallet';
 import { mintNFT } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, Sparkles, Wand2, Tag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
+import { AIArtGenerator } from '@/components/ai';
+import { useAIFeatures } from '@/hooks/useAIFeatures';
+import { Badge } from '@/components/ui/badge';
 const Mint = () => {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>('');
@@ -19,7 +21,12 @@ const Mint = () => {
   const [isMinting, setIsMinting] = useState(false);
   const [mintSuccess, setMintSuccess] = useState(false);
   const [tokenId, setTokenId] = useState<number | null>(null);
+  const [isAIGenerated, setIsAIGenerated] = useState(false);
+  const [aiGeneratedUrl, setAiGeneratedUrl] = useState<string | null>(null);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [isGeneratingMetadata, setIsGeneratingMetadata] = useState(false);
   const { toast } = useToast();
+  const { generateMetadata } = useAIFeatures();
   const navigate = useNavigate();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +40,50 @@ const Mint = () => {
         setPreview(reader.result as string);
       };
       reader.readAsDataURL(selectedFile);
+      setIsAIGenerated(false);
+      setAiGeneratedUrl(null);
     }
+  };
+
+  const handleAIImageGenerated = (imageUrl: string, metadata: any) => {
+    setAiGeneratedUrl(imageUrl);
+    setPreview(imageUrl);
+    setIsAIGenerated(true);
+    if (metadata.description) {
+      setDescription(metadata.description);
+    }
+    // Convert base64 to File for minting
+    fetch(imageUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], `ai-art-${Date.now()}.png`, { type: 'image/png' });
+        setFile(file);
+      });
+  };
+
+  const handleAutoGenerateMetadata = async () => {
+    if (!preview) {
+      toast({
+        title: 'No Image',
+        description: 'Please upload an image first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsGeneratingMetadata(true);
+    const result = await generateMetadata(preview, { suggestedName: name, notes: description });
+    
+    if (result) {
+      if (result.name && !name) setName(result.name);
+      if (result.description) setDescription(result.description);
+      if (result.tags) setSuggestedTags(result.tags);
+      toast({
+        title: 'Metadata Generated! ✨',
+        description: 'AI has suggested name, description, and tags',
+      });
+    }
+    setIsGeneratingMetadata(false);
   };
 
   const handleMint = async () => {
@@ -121,9 +171,12 @@ const Mint = () => {
             {/* Upload Section with enhanced styling */}
             <Card className="card-hover shadow-elegant">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-2xl">
-                  <Upload className="w-6 h-6" />
-                  Upload Your Artwork
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-2xl">
+                    <Upload className="w-6 h-6" />
+                    Upload Your Artwork
+                  </div>
+                  <AIArtGenerator onImageGenerated={handleAIImageGenerated} />
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -134,6 +187,7 @@ const Mint = () => {
                     </div>
                     <span className="text-xl font-medium mb-2 gradient-text">Click to upload</span>
                     <span className="text-sm text-muted-foreground">PNG, JPG, GIF (Max 10MB)</span>
+                    <span className="text-xs text-muted-foreground mt-2">or use AI Art Generator →</span>
                     <input
                       type="file"
                       className="hidden"
@@ -143,6 +197,12 @@ const Mint = () => {
                   </label>
                 ) : (
                   <div className="relative group">
+                    {isAIGenerated && (
+                      <Badge className="absolute top-2 left-2 z-10 bg-gradient-sakura text-white">
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        AI Generated
+                      </Badge>
+                    )}
                     <img
                       src={preview}
                       alt="Preview"
@@ -152,6 +212,8 @@ const Mint = () => {
                       onClick={() => {
                         setFile(null);
                         setPreview('');
+                        setIsAIGenerated(false);
+                        setAiGeneratedUrl(null);
                       }}
                       className="absolute top-4 right-4 px-6 py-3 bg-destructive text-destructive-foreground rounded-xl opacity-0 group-hover:opacity-100 transition-all font-medium shadow-elegant hover:scale-105"
                     >
@@ -165,9 +227,27 @@ const Mint = () => {
             {/* Details Section */}
             <Card className="card-hover">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  NFT Details
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    NFT Details
+                  </div>
+                  {preview && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAutoGenerateMetadata}
+                      disabled={isGeneratingMetadata}
+                      className="gap-2"
+                    >
+                      {isGeneratingMetadata ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="w-4 h-4" />
+                      )}
+                      Auto-Generate
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -193,6 +273,23 @@ const Mint = () => {
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
+
+                {/* AI Suggested Tags */}
+                {suggestedTags.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium mb-2 block flex items-center gap-2">
+                      <Tag className="w-4 h-4" />
+                      AI Suggested Tags
+                    </label>
+                    <div className="flex flex-wrap gap-1">
+                      {suggestedTags.map((tag, i) => (
+                        <Badge key={i} variant="secondary" className="text-xs">
+                          #{tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {mintSuccess && tokenId && (
                   <div className="p-4 rounded-lg bg-gradient-sakura text-white flex items-center gap-3">
