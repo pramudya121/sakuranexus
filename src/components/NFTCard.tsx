@@ -1,7 +1,7 @@
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { ShoppingCart, Tag, Eye, Gift, Heart, Sparkles, ExternalLink, TrendingUp, TrendingDown } from 'lucide-react';
+import { ShoppingCart, Tag, Eye, Gift, Heart, Sparkles, ExternalLink, TrendingUp, TrendingDown, X } from 'lucide-react';
 import { useState, memo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatAddress } from '@/lib/web3/wallet';
@@ -17,6 +17,7 @@ interface NFTCardProps {
   isListed?: boolean;
   showListButton?: boolean;
   showTransferButton?: boolean;
+  showCancelButton?: boolean;
   isOwner?: boolean;
   nftId?: string;
   walletAddress?: string | null;
@@ -28,6 +29,7 @@ interface NFTCardProps {
   onList?: () => void;
   onTransfer?: () => void;
   onMakeOffer?: () => void;
+  onCancelListing?: () => void;
 }
 
 const rarityConfig = {
@@ -67,6 +69,7 @@ const NFTCard = memo(({
   isListed = false,
   showListButton = false,
   showTransferButton = false,
+  showCancelButton = false,
   isOwner = false,
   nftId,
   walletAddress,
@@ -77,7 +80,8 @@ const NFTCard = memo(({
   onBuy,
   onList,
   onTransfer,
-  onMakeOffer 
+  onMakeOffer,
+  onCancelListing,
 }: NFTCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -279,13 +283,24 @@ const NFTCard = memo(({
         {isOwner ? (
           <>
             {isListed ? (
-              <Button 
-                onClick={() => navigate(`/nft/${tokenId}`)}
-                className="flex-1 btn-hero font-semibold h-11"
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                View Details
-              </Button>
+              <>
+                <Button 
+                  onClick={() => navigate(`/nft/${tokenId}`)}
+                  className="flex-1 btn-hero font-semibold h-11"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View
+                </Button>
+                {showCancelButton && onCancelListing && (
+                  <Button 
+                    onClick={onCancelListing}
+                    variant="outline"
+                    className="h-11 px-4 hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </>
             ) : (
               <>
                 {showListButton && onList && (

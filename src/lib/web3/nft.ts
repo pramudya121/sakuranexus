@@ -534,3 +534,51 @@ export const transferNFT = async (
     return { success: false, error: error.message || 'Failed to transfer NFT' };
   }
 };
+
+// Cancel NFT Listing
+export const cancelListing = async (
+  listingId: number,
+  tokenId: number,
+  sellerAddress: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const contract = await getSakuraMarketplaceContract();
+    if (!contract) {
+      return { success: false, error: 'Failed to connect to marketplace' };
+    }
+
+    // Cancel listing on smart contract
+    const tx = await contract.cancelListing(listingId);
+    const receipt = await tx.wait();
+
+    // Update listing to inactive in database
+    await supabase
+      .from('listings')
+      .update({ active: false })
+      .eq('listing_id', listingId);
+
+    // Record cancel activity
+    await supabase.from('activities').insert({
+      activity_type: 'cancel_listing',
+      from_address: sellerAddress.toLowerCase(),
+      contract_address: CONTRACTS.NFTCollection,
+      token_id: tokenId,
+      transaction_hash: receipt.hash,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error cancelling listing:', error);
+    return { success: false, error: error.message || 'Failed to cancel listing' };
+  }
+};
+
+// Relist NFT (for buyer to list again after purchase)
+export const relistNFT = async (
+  tokenId: number,
+  price: string,
+  sellerAddress: string
+): Promise<{ success: boolean; listingId?: number; error?: string }> => {
+  // Reuse the existing listNFT function
+  return listNFT(tokenId, price, sellerAddress);
+};

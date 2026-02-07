@@ -15,9 +15,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
-import { acceptOffer, cancelOffer, listNFT, transferNFT } from '@/lib/web3/nft';
+import { acceptOffer, cancelOffer, listNFT, transferNFT, cancelListing } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Copy, CheckCircle2, Package, Tag, Gift, TrendingUp, DollarSign, Activity as ActivityIcon, Eye, Edit, Twitter, Instagram, Globe, MessageCircle, Calendar, Wallet } from 'lucide-react';
+import { Loader2, Copy, CheckCircle2, Package, Tag, Gift, TrendingUp, DollarSign, Activity as ActivityIcon, Eye, Edit, Twitter, Instagram, Globe, MessageCircle, Calendar, Wallet, X } from 'lucide-react';
 
 interface NFT {
   id: string;
@@ -92,6 +92,7 @@ const Profile = () => {
   // Dialog states
   const [listDialogOpen, setListDialogOpen] = useState(false);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [cancelListingDialogOpen, setCancelListingDialogOpen] = useState(false);
   const [selectedNFT, setSelectedNFT] = useState<NFTWithListing | null>(null);
   const [listPrice, setListPrice] = useState('');
   const [transferAddress, setTransferAddress] = useState('');
@@ -362,6 +363,11 @@ const Profile = () => {
     setTransferDialogOpen(true);
   };
 
+  const handleCancelListing = (nft: NFTWithListing) => {
+    setSelectedNFT(nft);
+    setCancelListingDialogOpen(true);
+  };
+
   const confirmListNFT = async () => {
     if (!selectedNFT || !account || !listPrice) return;
 
@@ -403,6 +409,33 @@ const Profile = () => {
       });
       setTransferDialogOpen(false);
       setTransferAddress('');
+      checkAndFetchData();
+    } else {
+      toast({
+        title: 'Failed',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
+    setIsProcessing(false);
+  };
+
+  const confirmCancelListing = async () => {
+    if (!selectedNFT || !account || !selectedNFT.listing?.listing_id) return;
+
+    setIsProcessing(true);
+    const result = await cancelListing(
+      selectedNFT.listing.listing_id,
+      selectedNFT.token_id,
+      account
+    );
+    
+    if (result.success) {
+      toast({
+        title: 'Success!',
+        description: 'Listing cancelled successfully',
+      });
+      setCancelListingDialogOpen(false);
       checkAndFetchData();
     } else {
       toast({
@@ -675,11 +708,13 @@ const Profile = () => {
                     isListed={!!nft.listing?.active}
                     showListButton={!nft.listing?.active}
                     showTransferButton={!nft.listing?.active}
+                    showCancelButton={!!nft.listing?.active}
                     isOwner={true}
                     nftId={nft.id}
                     walletAddress={account}
                     onList={() => handleListNFT(nft)}
                     onTransfer={() => handleTransferNFT(nft)}
+                    onCancelListing={() => handleCancelListing(nft)}
                   />
                 ))}
               </div>
@@ -943,6 +978,53 @@ const Profile = () => {
             >
               {isProcessing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Transfer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Listing Dialog */}
+      <Dialog open={cancelListingDialogOpen} onOpenChange={setCancelListingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Listing</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-muted-foreground">
+              Are you sure you want to cancel this listing? Your NFT will be removed from the marketplace.
+            </p>
+            {selectedNFT && (
+              <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                <img 
+                  src={selectedNFT.image_url} 
+                  alt={selectedNFT.name}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
+                <div>
+                  <p className="font-semibold">{selectedNFT.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Listed for {selectedNFT.listing?.price} NEX
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCancelListingDialogOpen(false)}
+              disabled={isProcessing}
+            >
+              Keep Listed
+            </Button>
+            <Button
+              onClick={confirmCancelListing}
+              disabled={isProcessing}
+              variant="destructive"
+            >
+              {isProcessing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              <X className="w-4 h-4 mr-2" />
+              Cancel Listing
             </Button>
           </DialogFooter>
         </DialogContent>
