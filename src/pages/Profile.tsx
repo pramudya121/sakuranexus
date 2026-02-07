@@ -370,12 +370,16 @@ const Profile = () => {
     
     if (result.success) {
       toast({
-        title: 'Success!',
-        description: 'NFT listed successfully',
+        title: 'Success! 🎉',
+        description: 'NFT listed successfully! Redirecting to Marketplace...',
       });
       setListDialogOpen(false);
       setListPrice('');
-      checkAndFetchData();
+      
+      // Redirect to Marketplace after 2 seconds
+      setTimeout(() => {
+        navigate('/marketplace');
+      }, 2000);
     } else {
       toast({
         title: 'Failed',
