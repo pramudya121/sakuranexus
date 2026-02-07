@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import NFTCard from '@/components/NFTCard';
@@ -44,6 +45,7 @@ interface NFTListing {
 }
 
 const Marketplace = memo(function Marketplace() {
+  const navigate = useNavigate();
   const [listings, setListings] = useState<NFTListing[]>([]);
   const [filteredListings, setFilteredListings] = useState<NFTListing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -205,11 +207,15 @@ const Marketplace = memo(function Marketplace() {
       
       if (result.success) {
         toast({
-          title: 'Success!',
-          description: `You now own ${nft.name}!`,
+          title: 'Purchase Successful! 🎉',
+          description: `You now own ${nft.name}! Redirecting to your Profile...`,
         });
-        // Delay refresh to allow blockchain and database to update
-        setTimeout(() => fetchListings(), 2000);
+        // Refresh listings immediately to remove sold NFT
+        fetchListings();
+        // Redirect to profile after 2 seconds
+        setTimeout(() => {
+          navigate('/profile');
+        }, 2000);
       } else {
         const errorMessage = parseNFTError(result.error || 'Failed to buy NFT');
         toast({

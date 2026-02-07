@@ -212,31 +212,79 @@ export const buyNFT = async (
       return { success: false, error: 'Failed to connect to marketplace' };
     }
 
+    // Get seller address from listing before purchase
+    const { data: listingData } = await supabase
+      .from('listings')
+      .select('seller_address, nft_id')
+      .eq('listing_id', listingId)
+      .single();
+
+    const sellerAddress = listingData?.seller_address || '';
+    const nftId = listingData?.nft_id;
+
     const priceInWei = parsePrice(price);
     const tx = await contract.buyNFT(listingId, { value: priceInWei });
     const receipt = await tx.wait();
 
-    // Update database
+    // Update listing to inactive
     await supabase
       .from('listings')
       .update({ active: false })
       .eq('listing_id', listingId);
 
+    // Update NFT ownership - this is the critical ownership transfer
     await supabase
       .from('nfts')
-      .update({ owner_address: buyerAddress.toLowerCase() })
+      .update({ 
+        owner_address: buyerAddress.toLowerCase(),
+        updated_at: new Date().toISOString()
+      })
       .eq('token_id', tokenId)
       .eq('contract_address', CONTRACTS.NFTCollection);
 
-    // Record activity
+    // Record sale activity with both from and to addresses
     await supabase.from('activities').insert({
       activity_type: 'sale',
+      from_address: sellerAddress.toLowerCase(),
       to_address: buyerAddress.toLowerCase(),
       price: price,
       contract_address: CONTRACTS.NFTCollection,
       token_id: tokenId,
       transaction_hash: receipt.hash,
+      nft_id: nftId,
     });
+
+    // Get NFT name for notification
+    const { data: nft } = await supabase
+      .from('nfts')
+      .select('name')
+      .eq('token_id', tokenId)
+      .eq('contract_address', CONTRACTS.NFTCollection)
+      .single();
+
+    // Create notification for seller
+    if (sellerAddress && nftId) {
+      await supabase.rpc('create_notification', {
+        p_recipient_address: sellerAddress.toLowerCase(),
+        p_sender_address: buyerAddress.toLowerCase(),
+        p_notification_type: 'sale',
+        p_title: 'NFT Sold! 💰',
+        p_message: `Your ${nft?.name || 'NFT'} was sold for ${price} NEX`,
+        p_nft_id: nftId,
+      });
+    }
+
+    // Create notification for buyer
+    if (nftId) {
+      await supabase.rpc('create_notification', {
+        p_recipient_address: buyerAddress.toLowerCase(),
+        p_sender_address: sellerAddress.toLowerCase(),
+        p_notification_type: 'purchase',
+        p_title: 'NFT Purchased! 🎉',
+        p_message: `You now own ${nft?.name || 'NFT'}`,
+        p_nft_id: nftId,
+      });
+    }
 
     return { success: true };
   } catch (error: any) {

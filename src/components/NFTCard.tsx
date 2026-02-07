@@ -21,6 +21,7 @@ interface NFTCardProps {
   nftId?: string;
   walletAddress?: string | null;
   rarity?: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  status?: 'not_listed' | 'listed' | 'sold';
   views?: number;
   likes?: number;
   onBuy?: () => void;
@@ -70,6 +71,7 @@ const NFTCard = memo(({
   nftId,
   walletAddress,
   rarity = 'common',
+  status,
   views = 0,
   likes = 0,
   onBuy,
@@ -83,6 +85,9 @@ const NFTCard = memo(({
   const [priceFlash, setPriceFlash] = useState<'up' | 'down' | null>(null);
   const navigate = useNavigate();
   const config = rarityConfig[rarity];
+
+  // Determine display status
+  const displayStatus = status || (isListed ? 'listed' : 'not_listed');
 
   // Real-time price tracking
   const { price: livePrice, priceChangePercent, isUp, isDown, isConnected } = useSingleNFTPrice(
@@ -200,14 +205,24 @@ const NFTCard = memo(({
           </div>
         )}
 
-        {/* Listed Badge */}
-        {isListed && (
-          <div className="absolute bottom-3 right-3 z-10">
+        {/* Status Badge */}
+        <div className="absolute bottom-3 right-3 z-10">
+          {displayStatus === 'listed' && (
             <Badge className="bg-green-500 text-white border-0 shadow-lg animate-pulse">
               For Sale
             </Badge>
-          </div>
-        )}
+          )}
+          {displayStatus === 'sold' && (
+            <Badge className="bg-blue-500 text-white border-0 shadow-lg">
+              Sold
+            </Badge>
+          )}
+          {displayStatus === 'not_listed' && isOwner && (
+            <Badge className="bg-gray-500/80 text-white border-0 shadow-lg">
+              Not Listed
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Content */}
