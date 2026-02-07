@@ -527,6 +527,19 @@ export const MARKETPLACE_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'listingId',
+        type: 'uint256',
+      },
+    ],
+    name: 'cancelListing',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
 ];
 
 // Offer Contract ABI (New - uses nft+tokenId instead of offerId)
