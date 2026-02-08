@@ -14,7 +14,10 @@ import {
   X,
   ChevronDown,
   Gavel,
-  Heart
+  Heart,
+  Sparkles,
+  FolderOpen,
+  Brain
 } from 'lucide-react';
 import ConnectWallet from './ConnectWallet';
 import NotificationBell from './NotificationBell';
@@ -48,12 +51,14 @@ const Navigation = () => {
 
   const moreNavItems = [
     { path: '/mint', label: 'Mint NFT', icon: Palette },
+    { path: '/collections', label: 'Collections', icon: FolderOpen },
     { path: '/auctions', label: 'Auctions', icon: Gavel },
     { path: '/my-auctions', label: 'My Auctions', icon: Gavel },
     { path: '/watchlist', label: 'Watchlist', icon: Heart },
     { path: '/activity', label: 'Activity', icon: Activity },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { path: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { path: '/ai-features', label: 'AI Hub', icon: Brain },
     { path: '/profile', label: 'Profile', icon: User },
   ];
 
