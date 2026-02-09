@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Wallet } from 'lucide-react';
 import { connectWallet, getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
+import { setWalletAddress } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const ConnectWallet = () => {
@@ -15,7 +16,9 @@ const ConnectWallet = () => {
     // Listen for account changes
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
-        setAccount(accounts[0] || null);
+        const addr = accounts[0] || null;
+        setAccount(addr);
+        setWalletAddress(addr);
       });
 
       window.ethereum.on('chainChanged', () => {
@@ -34,6 +37,7 @@ const ConnectWallet = () => {
   const checkConnection = async () => {
     const currentAccount = await getCurrentAccount();
     setAccount(currentAccount);
+    setWalletAddress(currentAccount);
   };
 
   const handleConnect = async () => {
@@ -42,6 +46,7 @@ const ConnectWallet = () => {
       const connectedAccount = await connectWallet();
       if (connectedAccount) {
         setAccount(connectedAccount);
+        setWalletAddress(connectedAccount);
         toast({
           title: 'Wallet Connected!',
           description: `Connected to ${formatAddress(connectedAccount)}`,

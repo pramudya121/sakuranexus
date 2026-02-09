@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getCurrentAccount } from '@/lib/web3/wallet';
+import { setWalletAddress } from '@/integrations/supabase/client';
 import { OfferNotificationListener } from './OfferNotificationListener';
 
 interface AppWrapperProps {
@@ -7,11 +8,12 @@ interface AppWrapperProps {
 }
 
 export const AppWrapper = ({ children }: AppWrapperProps) => {
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletAddress, setWalletAddressState] = useState<string | null>(null);
 
   useEffect(() => {
     const loadWallet = async () => {
       const account = await getCurrentAccount();
+      setWalletAddressState(account);
       setWalletAddress(account);
     };
 
@@ -20,7 +22,9 @@ export const AppWrapper = ({ children }: AppWrapperProps) => {
     // Listen for account changes
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
-        setWalletAddress(accounts[0] || null);
+        const addr = accounts[0] || null;
+        setWalletAddressState(addr);
+        setWalletAddress(addr);
       });
     }
 

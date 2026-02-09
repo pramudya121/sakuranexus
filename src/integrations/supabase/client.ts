@@ -5,13 +5,34 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://nqnbkyqgxskwjigvvwmu.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xbmJreXFneHNrd2ppZ3Z2d211Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4Mzk0NzcsImV4cCI6MjA3ODQxNTQ3N30._kHIxgmxFIlNqDCdc7d52F17tYrR5-Rs1smCSucb7B4";
 
+// Store wallet address for RLS header injection
+let currentWalletAddress: string | null = null;
+
+// Set the wallet address for RLS policies
+export const setWalletAddress = (address: string | null) => {
+  currentWalletAddress = address ? address.toLowerCase() : null;
+};
+
+export const getWalletAddress = () => currentWalletAddress;
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
+
+const originalFetch = globalThis.fetch;
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+  },
+  global: {
+    fetch: (url: RequestInfo | URL, options?: RequestInit) => {
+      const headers = new Headers(options?.headers as HeadersInit);
+      if (currentWalletAddress) {
+        headers.set('x-wallet-address', currentWalletAddress);
+      }
+      return originalFetch(url, { ...options, headers });
+    },
+  },
 });
