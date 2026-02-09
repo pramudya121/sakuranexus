@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import NFTCard from '@/components/NFTCard';
@@ -78,6 +78,7 @@ interface ActivityItem {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [account, setAccount] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nfts, setNfts] = useState<NFTWithListing[]>([]);
@@ -108,9 +109,10 @@ const Profile = () => {
   
   const { toast } = useToast();
 
+  // Re-fetch data whenever this page becomes active (e.g. after minting)
   useEffect(() => {
     checkAndFetchData();
-  }, []);
+  }, [location.key]);
 
   const checkAndFetchData = async () => {
     const currentAccount = await getCurrentAccount();
