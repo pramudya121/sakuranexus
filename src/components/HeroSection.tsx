@@ -4,7 +4,6 @@ import { ArrowRight, Sparkles, ArrowLeftRight, ChevronDown } from "lucide-react"
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { Spotlight } from "@/components/ui/spotlight";
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
-import { RotatingLogo } from "@/components/ui/rotating-logo";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { PriceTicker } from "@/components/ui/price-ticker";
 import { Button } from "@/components/ui/button";
@@ -42,18 +41,18 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
           backgroundRepeat: "no-repeat",
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background" />
       </div>
 
-      {/* Decorative Elements */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-20 left-10 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse-soft" />
+      {/* Animated Mesh Gradient Orbs */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[150px] animate-pulse-soft" />
         <div
-          className="absolute bottom-20 right-10 w-[500px] h-[500px] bg-accent/15 rounded-full blur-[150px] animate-pulse-soft"
+          className="absolute bottom-20 right-10 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[180px] animate-pulse-soft"
           style={{ animationDelay: "1s" }}
         />
         <div
-          className="absolute top-1/3 right-1/4 w-72 h-72 bg-pink-400/10 rounded-full blur-[100px] animate-pulse-soft"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[200px] animate-pulse-soft"
           style={{ animationDelay: "2s" }}
         />
       </div>
@@ -64,17 +63,20 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
             isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          {/* 3D Rotating Logo */}
-          <div className="flex justify-center mb-6">
-            <RotatingLogo
-              src={sakuraLogo}
-              alt="NEXUSAKURA"
-              size="w-28 h-28 md:w-36 md:h-36"
-            />
+          {/* Logo - Static, no rotation */}
+          <div className="flex justify-center mb-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/30 rounded-full blur-2xl scale-150 animate-pulse-soft" />
+              <img
+                src={sakuraLogo}
+                alt="NEXUSAKURA"
+                className="relative w-24 h-24 md:w-32 md:h-32 rounded-full ring-4 ring-primary/20 shadow-2xl"
+              />
+            </div>
           </div>
 
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-sm animate-fade-in-up stagger-1">
+          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-md animate-fade-in-up stagger-1">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
@@ -84,7 +86,7 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
             </span>
           </div>
 
-          {/* Headline with Text Generate Effect */}
+          {/* Headline */}
           <div className="animate-fade-in-up stagger-2">
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-tight">
               <span className="text-foreground">Trade & Collect</span>
@@ -104,7 +106,7 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
             <span className="text-primary font-medium">Sakura</span> while trading.
           </p>
 
-          {/* CTA Buttons with Shimmer Effect */}
+          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4 animate-fade-in-up stagger-4">
             <Link to="/marketplace">
               <ShimmerButton
@@ -129,12 +131,12 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
             </Link>
           </div>
 
-          {/* Quick Stats with NumberTicker */}
+          {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-16 max-w-4xl mx-auto animate-fade-in-up stagger-5">
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className="glass rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300"
+                className="glass rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300 border border-primary/10 hover:border-primary/30"
               >
                 <div className="text-2xl md:text-3xl font-bold gradient-text">
                   {stat.prefix}

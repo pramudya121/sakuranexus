@@ -1,13 +1,13 @@
 import { useEffect, useState, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ArrowRight, Sparkles, TrendingUp, Shield, Zap, ArrowLeftRight, Coins, Star, Image, Users, Droplets } from 'lucide-react';
+import { ArrowRight, Sparkles, TrendingUp, Shield, Zap, ArrowLeftRight, Coins, Star, Image, Users, Droplets, Brain, BarChart3, Wallet } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import HeroSection from '@/components/HeroSection';
 import { SpotlightCard } from '@/components/ui/spotlight';
 import { BackgroundGradient } from '@/components/ui/background-gradient';
+import { Marquee } from '@/components/ui/marquee';
 import { supabase } from '@/integrations/supabase/client';
 
 const Index = memo(function Index() {
@@ -74,6 +74,20 @@ const Index = memo(function Index() {
       link: '/dex/staking',
       color: 'from-amber-500 to-orange-500',
     },
+    {
+      icon: Brain,
+      title: 'AI Features Hub',
+      description: 'AI-powered art generation, price prediction, and analytics',
+      link: '/ai-features',
+      color: 'from-emerald-500 to-teal-500',
+    },
+    {
+      icon: BarChart3,
+      title: 'Portfolio Analytics',
+      description: 'Track your holdings, performance, and tax reports in real-time',
+      link: '/dashboard',
+      color: 'from-indigo-500 to-blue-500',
+    },
   ];
 
   const quickStats = [
@@ -83,16 +97,26 @@ const Index = memo(function Index() {
     { label: 'Total Pools', value: 50, suffix: '+' },
   ];
 
+  const testimonials = [
+    { name: 'CryptoSakura', role: 'NFT Collector', text: 'The best NFT platform on Nexus. Smooth experience and beautiful design!' },
+    { name: 'DeFiMaster', role: 'Liquidity Provider', text: 'Earning great yields on my LP positions. The staking rewards are amazing.' },
+    { name: 'ArtCreator', role: 'Digital Artist', text: 'AI Art Generator is a game-changer. Minting NFTs has never been easier.' },
+    { name: 'TraderX', role: 'DEX Trader', text: 'Fast swaps, low fees, and the trading charts are incredibly useful.' },
+    { name: 'BlockchainDev', role: 'Developer', text: 'Clean smart contracts and great UX. This is how Web3 should be built.' },
+    { name: 'WhaleWatcher', role: 'Investor', text: 'Portfolio analytics help me track everything in one place. Love it!' },
+  ];
+
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       <SakuraFalling />
       <Navigation />
       
-      {/* Hero Section with Premium Effects */}
+      {/* Hero Section */}
       <HeroSection stats={quickStats} isLoaded={isLoaded} />
 
       {/* Features Section */}
-      <section className="py-24 relative overflow-hidden bg-gradient-sakura-soft">
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.02] to-transparent" />
         <div className="container mx-auto px-4 relative">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
@@ -103,11 +127,11 @@ const Index = memo(function Index() {
               Everything in <span className="gradient-text">One Place</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A complete ecosystem for digital assets - from NFTs to DeFi
+              A complete ecosystem for digital assets — from NFTs to DeFi to AI
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -124,6 +148,51 @@ const Index = memo(function Index() {
                     </div>
                   </SpotlightCard>
                 </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-24 relative overflow-hidden bg-gradient-sakura-soft">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+              <Wallet className="w-4 h-4" />
+              Getting Started
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              How It <span className="gradient-text">Works</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Get started in three simple steps
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              { step: '01', title: 'Connect Wallet', desc: 'Connect your MetaMask or any Web3 wallet to the Nexus Testnet', icon: Wallet },
+              { step: '02', title: 'Explore & Trade', desc: 'Browse NFTs, swap tokens, provide liquidity, or stake for rewards', icon: ArrowLeftRight },
+              { step: '03', title: 'Earn & Grow', desc: 'Collect rare NFTs, earn trading fees, and grow your portfolio', icon: TrendingUp },
+            ].map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <div key={index} className="relative group">
+                  <div className="glass rounded-2xl p-8 text-center hover:border-primary/30 border border-transparent transition-all duration-300 hover:shadow-elegant">
+                    <div className="text-6xl font-bold gradient-text opacity-20 mb-4">{item.step}</div>
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
+                      <Icon className="w-8 h-8 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
+                  </div>
+                  {index < 2 && (
+                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
+                      <ArrowRight className="w-8 h-8 text-primary/30" />
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -185,7 +254,7 @@ const Index = memo(function Index() {
                 </div>
               </div>
               
-              {/* DEX Preview Card with Background Gradient */}
+              {/* DEX Preview Card */}
               <div className="relative order-1 lg:order-2">
                 <BackgroundGradient className="rounded-3xl p-8">
                   <div className="flex items-center justify-between mb-8">
@@ -237,10 +306,48 @@ const Index = memo(function Index() {
         </div>
       </section>
 
+      {/* Testimonials / Community Section */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.02] to-transparent" />
+        <div className="container mx-auto px-4 relative">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+              <Users className="w-4 h-4" />
+              Community
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Loved by <span className="gradient-text">Traders</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Join thousands of users who trust NEXUSAKURA for their digital assets
+            </p>
+          </div>
+
+          <Marquee className="[--duration:40s]" pauseOnHover>
+            {testimonials.map((t, i) => (
+              <div key={i} className="mx-4 w-80">
+                <div className="glass rounded-2xl p-6 border border-primary/10 hover:border-primary/30 transition-colors h-full">
+                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed italic">"{t.text}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center text-white font-bold text-sm">
+                      {t.name[0]}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm">{t.name}</div>
+                      <div className="text-xs text-muted-foreground">{t.role}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </Marquee>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero" />
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl" />
         </div>
@@ -277,7 +384,7 @@ const Index = memo(function Index() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold gradient-text">NEXUSAKURA</span>
-              <span className="text-muted-foreground">© 2024</span>
+              <span className="text-muted-foreground">© 2025</span>
             </div>
             <div className="flex items-center gap-6">
               <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -285,6 +392,9 @@ const Index = memo(function Index() {
               </Link>
               <Link to="/dex/swap" className="text-muted-foreground hover:text-foreground transition-colors">
                 DEX
+              </Link>
+              <Link to="/ai-features" className="text-muted-foreground hover:text-foreground transition-colors">
+                AI Hub
               </Link>
               <Link to="/analytics" className="text-muted-foreground hover:text-foreground transition-colors">
                 Analytics

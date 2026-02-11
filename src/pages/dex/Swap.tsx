@@ -3,14 +3,13 @@ import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import SwapBox from '@/components/dex/SwapBox';
 import DEXNavigation from '@/components/dex/DEXNavigation';
-import TransactionHistory from '@/components/dex/TransactionHistory';
 import TradingChart from '@/components/dex/TradingChart';
 import TokenStats from '@/components/dex/TokenStats';
 import RealTimePriceBar from '@/components/dex/RealTimePriceBar';
 import GasEstimator from '@/components/dex/GasEstimator';
 import { useTokenPrice } from '@/hooks/usePriceWebSocket';
 import { 
-  ArrowLeftRight, TrendingUp, TrendingDown, Shield, Zap, ChevronDown, ChevronUp, 
+  ArrowLeftRight, TrendingUp, TrendingDown, ChevronDown, ChevronUp, 
   LineChart, Radio
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -149,64 +148,9 @@ const Swap = memo(() => {
           </div>
         )}
 
-        {/* Main Content - Clean Layout */}
-        <div className="max-w-5xl mx-auto mb-16">
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Left - Transaction History */}
-            <div className="order-2 lg:order-1">
-              <TransactionHistory />
-            </div>
-            
-            {/* Center - Main Swap Box */}
-            <div className="order-1 lg:order-2">
-              <SwapBox />
-            </div>
-            
-            {/* Right - Empty for clean look or additional info */}
-            <div className="order-3 hidden lg:block">
-              <Card className="border-border/50 bg-card/80 backdrop-blur-sm h-full">
-                <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[300px] text-center">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <Zap className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="font-semibold mb-2">Fast & Secure</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Swap tokens instantly with minimal fees and maximum security.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-
-        {/* Features */}
-        <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-4">
-            {[
-              { icon: Zap, title: 'Instant Swaps', desc: 'Trade tokens instantly with no order book required', color: 'from-yellow-500/20 to-orange-500/20' },
-              { icon: TrendingUp, title: 'Best Rates', desc: 'Get optimal exchange rates with minimal price impact', color: 'from-green-500/20 to-emerald-500/20' },
-              { icon: Shield, title: 'Secure', desc: 'Non-custodial trading directly from your wallet', color: 'from-blue-500/20 to-cyan-500/20' },
-            ].map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div 
-                  key={index}
-                  className="group relative p-6 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-elegant transition-all duration-300 overflow-hidden"
-                >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                  <div className="relative">
-                    <div className="w-12 h-12 mb-4 rounded-xl bg-gradient-sakura flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {feature.desc}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        {/* Main Content - Centered Swap Box */}
+        <div className="max-w-lg mx-auto mb-16">
+          <SwapBox />
         </div>
       </main>
     </div>
