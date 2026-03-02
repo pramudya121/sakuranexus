@@ -95,7 +95,7 @@ const NFTDetail = () => {
       .from('nfts')
       .select('*')
       .eq('token_id', token_id)
-      .single();
+      .maybeSingle();
 
     setNft(data);
   };
@@ -106,7 +106,7 @@ const NFTDetail = () => {
       .select('*')
       .eq('token_id', token_id)
       .eq('active', true)
-      .single();
+      .maybeSingle();
 
     setListing(data);
   };

@@ -138,7 +138,7 @@ const Profile = () => {
       .from('user_profiles')
       .select('*')
       .eq('wallet_address', address.toLowerCase())
-      .single();
+      .maybeSingle();
 
     if (data) {
       setUserProfile(data);
