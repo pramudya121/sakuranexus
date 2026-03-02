@@ -399,6 +399,14 @@ export type Database = {
         }
         Returns: string
       }
+      transfer_nft_ownership: {
+        Args: {
+          p_contract_address: string
+          p_new_owner: string
+          p_token_id: number
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

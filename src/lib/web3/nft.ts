@@ -232,15 +232,12 @@ export const buyNFT = async (
       .update({ active: false })
       .eq('listing_id', listingId);
 
-    // Update NFT ownership - this is the critical ownership transfer
-    await supabase
-      .from('nfts')
-      .update({ 
-        owner_address: buyerAddress.toLowerCase(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('token_id', tokenId)
-      .eq('contract_address', CONTRACTS.NFTCollection);
+    // Update NFT ownership using security definer function (bypasses RLS)
+    await supabase.rpc('transfer_nft_ownership', {
+      p_token_id: tokenId,
+      p_contract_address: CONTRACTS.NFTCollection,
+      p_new_owner: buyerAddress.toLowerCase(),
+    });
 
     // Record sale activity with both from and to addresses
     await supabase.from('activities').insert({
@@ -389,11 +386,12 @@ export const acceptOffer = async (
       .eq('contract_address', CONTRACTS.NFTCollection)
       .eq('status', 'pending');
 
-    await supabase
-      .from('nfts')
-      .update({ owner_address: offererAddress.toLowerCase() })
-      .eq('token_id', tokenId)
-      .eq('contract_address', CONTRACTS.NFTCollection);
+    // Update NFT ownership using security definer function (bypasses RLS)
+    await supabase.rpc('transfer_nft_ownership', {
+      p_token_id: tokenId,
+      p_contract_address: CONTRACTS.NFTCollection,
+      p_new_owner: offererAddress.toLowerCase(),
+    });
 
     // Log to offer_logs
     await supabase.from('offer_logs').insert({
@@ -499,12 +497,12 @@ export const transferNFT = async (
       .eq('contract_address', CONTRACTS.NFTCollection)
       .single();
 
-    // Update database
-    await supabase
-      .from('nfts')
-      .update({ owner_address: toAddress.toLowerCase() })
-      .eq('token_id', tokenId)
-      .eq('contract_address', CONTRACTS.NFTCollection);
+    // Update NFT ownership using security definer function (bypasses RLS)
+    await supabase.rpc('transfer_nft_ownership', {
+      p_token_id: tokenId,
+      p_contract_address: CONTRACTS.NFTCollection,
+      p_new_owner: toAddress.toLowerCase(),
+    });
 
     // Record activity
     await supabase.from('activities').insert({
