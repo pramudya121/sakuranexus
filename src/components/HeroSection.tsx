@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, ArrowLeftRight, ChevronDown } from "lucide-react";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { Spotlight } from "@/components/ui/spotlight";
-import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { PriceTicker } from "@/components/ui/price-ticker";
 import { Button } from "@/components/ui/button";
@@ -91,11 +90,7 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-tight">
               <span className="text-foreground">Trade & Collect</span>
               <br />
-              <TextGenerateEffect
-                words="Digital Art"
-                className="gradient-text inline-block text-5xl md:text-7xl lg:text-8xl"
-                duration={0.8}
-              />
+              <span className="gradient-text">Digital Art</span>
             </h1>
           </div>
 
