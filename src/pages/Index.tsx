@@ -91,10 +91,10 @@ const Index = memo(function Index() {
   ];
 
   const quickStats = [
-    { label: 'Total NFTs', value: stats.totalNFTs > 0 ? stats.totalNFTs : 10000, suffix: '+' },
-    { label: 'Volume Traded', value: stats.totalVolume > 0 ? Math.floor(stats.totalVolume / 1000) : 500, suffix: 'K+' },
-    { label: 'Active Users', value: stats.activeUsers > 0 ? stats.activeUsers : 5000, suffix: '+' },
-    { label: 'Total Pools', value: 50, suffix: '+' },
+    { label: 'Total NFTs', value: stats.totalNFTs > 0 ? stats.totalNFTs : 28, suffix: '+' },
+    { label: 'Volume Traded', value: stats.totalVolume > 0 ? Math.round(stats.totalVolume) : 35, suffix: ' NEX' },
+    { label: 'Active Users', value: stats.activeUsers > 0 ? stats.activeUsers : 15, suffix: '+' },
+    { label: 'Total Pools', value: 6, suffix: '+' },
   ];
 
   const testimonials = [
