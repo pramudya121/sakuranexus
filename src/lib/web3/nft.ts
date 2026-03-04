@@ -168,7 +168,7 @@ export const listNFT = async (
       .select('id')
       .eq('token_id', tokenId)
       .eq('contract_address', CONTRACTS.NFTCollection)
-      .single();
+      .maybeSingle();
 
     if (nft) {
       await supabase.from('listings').insert({
@@ -217,7 +217,7 @@ export const buyNFT = async (
       .from('listings')
       .select('seller_address, nft_id')
       .eq('listing_id', listingId)
-      .single();
+      .maybeSingle();
 
     const sellerAddress = listingData?.seller_address || '';
     const nftId = listingData?.nft_id;
@@ -256,7 +256,7 @@ export const buyNFT = async (
       .select('name')
       .eq('token_id', tokenId)
       .eq('contract_address', CONTRACTS.NFTCollection)
-      .single();
+      .maybeSingle();
 
     // Create notification for seller
     if (sellerAddress && nftId) {
@@ -311,7 +311,7 @@ export const makeOffer = async (
       .select('id')
       .eq('token_id', tokenId)
       .eq('contract_address', CONTRACTS.NFTCollection)
-      .single();
+      .maybeSingle();
 
     if (nft) {
       await supabase.from('offers').insert({
@@ -377,7 +377,18 @@ export const acceptOffer = async (
     
     console.log('Offer accepted successfully:', receipt.hash);
 
-    // Update database
+    // Get offer price before updating status
+    const { data: offerData } = await supabase
+      .from('offers')
+      .select('offer_price')
+      .eq('token_id', tokenId)
+      .eq('contract_address', CONTRACTS.NFTCollection)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    const acceptedPrice = offerData?.offer_price || '0';
+
+    // Update offer status
     await supabase
       .from('offers')
       .update({ status: 'accepted' })
@@ -385,12 +396,37 @@ export const acceptOffer = async (
       .eq('contract_address', CONTRACTS.NFTCollection)
       .eq('status', 'pending');
 
+    // Get current owner (seller) before transferring
+    const { data: nftData } = await supabase
+      .from('nfts')
+      .select('id, owner_address')
+      .eq('token_id', tokenId)
+      .eq('contract_address', CONTRACTS.NFTCollection)
+      .maybeSingle();
+
+    const sellerAddress = nftData?.owner_address || '';
+    const nftId = nftData?.id;
+
     // Update NFT ownership using security definer function (bypasses RLS)
     await supabase.rpc('transfer_nft_ownership', {
       p_token_id: tokenId,
       p_contract_address: CONTRACTS.NFTCollection,
       p_new_owner: offererAddress.toLowerCase(),
     });
+
+    // Deactivate any active listing for this NFT
+    const { data: activeListing } = await supabase
+      .from('listings')
+      .select('listing_id')
+      .eq('token_id', tokenId)
+      .eq('active', true)
+      .maybeSingle();
+
+    if (activeListing) {
+      await supabase.rpc('deactivate_listing', {
+        p_listing_id: activeListing.listing_id,
+      });
+    }
 
     // Log to offer_logs
     await supabase.from('offer_logs').insert({
@@ -400,23 +436,36 @@ export const acceptOffer = async (
       transaction_hash: receipt.hash,
     });
 
-    // Record activity
-    const { data: offer } = await supabase
-      .from('offers')
-      .select('offer_price')
-      .eq('token_id', tokenId)
-      .eq('contract_address', CONTRACTS.NFTCollection)
-      .eq('status', 'accepted')
-      .single();
-
+    // Record activity with both addresses
     await supabase.from('activities').insert({
       activity_type: 'offer_accepted',
+      from_address: sellerAddress.toLowerCase(),
       to_address: offererAddress.toLowerCase(),
-      price: offer?.offer_price || '0',
+      price: acceptedPrice,
       contract_address: CONTRACTS.NFTCollection,
       token_id: tokenId,
       transaction_hash: receipt.hash,
+      nft_id: nftId,
     });
+
+    // Create notifications
+    if (nftId) {
+      const { data: nftInfo } = await supabase
+        .from('nfts')
+        .select('name')
+        .eq('token_id', tokenId)
+        .eq('contract_address', CONTRACTS.NFTCollection)
+        .maybeSingle();
+
+      await supabase.rpc('create_notification', {
+        p_recipient_address: offererAddress.toLowerCase(),
+        p_sender_address: sellerAddress.toLowerCase(),
+        p_notification_type: 'offer_accepted',
+        p_title: 'Offer Accepted! 🎉',
+        p_message: `Your offer of ${acceptedPrice} NEX for ${nftInfo?.name || 'NFT'} was accepted`,
+        p_nft_id: nftId,
+      });
+    }
 
     return { success: true };
   } catch (error: any) {
@@ -442,7 +491,7 @@ export const cancelOffer = async (
       .eq('token_id', tokenId)
       .eq('contract_address', CONTRACTS.NFTCollection)
       .eq('status', 'pending')
-      .single();
+      .maybeSingle();
 
     const tx = await contract.cancelOffer(CONTRACTS.NFTCollection, tokenId);
     const receipt = await tx.wait();
@@ -494,7 +543,7 @@ export const transferNFT = async (
       .select('id, name')
       .eq('token_id', tokenId)
       .eq('contract_address', CONTRACTS.NFTCollection)
-      .single();
+      .maybeSingle();
 
     // Update NFT ownership using security definer function (bypasses RLS)
     await supabase.rpc('transfer_nft_ownership', {
