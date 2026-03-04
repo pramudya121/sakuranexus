@@ -399,6 +399,7 @@ export type Database = {
         }
         Returns: string
       }
+      deactivate_listing: { Args: { p_listing_id: number }; Returns: boolean }
       transfer_nft_ownership: {
         Args: {
           p_contract_address: string
