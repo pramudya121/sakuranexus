@@ -211,10 +211,10 @@ const NFTDetail = () => {
   };
 
   const handleAcceptOffer = async (offer: Offer) => {
-    if (!account || !nft || !offer.offer_id) {
+    if (!account || !nft) {
       toast({
         title: 'Error',
-        description: 'Invalid offer. Please refresh and try again.',
+        description: 'Please connect wallet and try again.',
         variant: 'destructive',
       });
       return;

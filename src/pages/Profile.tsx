@@ -233,8 +233,7 @@ const Profile = () => {
           nfts (name, image_url)
         `)
         .in('token_id', tokenIds)
-        .eq('status', 'pending')
-        .not('offer_id', 'is', null);
+        .eq('status', 'pending');
 
       setReceivedOffers(received || []);
     }
@@ -246,8 +245,7 @@ const Profile = () => {
         nfts (name, image_url)
       `)
       .eq('offerer_address', address.toLowerCase())
-      .eq('status', 'pending')
-      .not('offer_id', 'is', null);
+      .eq('status', 'pending');
 
     setSentOffers(sent || []);
   };
@@ -302,10 +300,10 @@ const Profile = () => {
   };
 
   const handleAcceptOffer = async (offer: Offer) => {
-    if (!account || !offer.offer_id) {
+    if (!account) {
       toast({
         title: 'Error',
-        description: 'Invalid offer',
+        description: 'Please connect wallet',
         variant: 'destructive',
       });
       return;
