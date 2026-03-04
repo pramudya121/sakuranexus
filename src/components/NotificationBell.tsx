@@ -112,7 +112,7 @@ const NotificationBell = () => {
         .from('nfts')
         .select('token_id')
         .eq('id', notification.nft_id)
-        .single();
+        .maybeSingle();
       
       if (data) {
         navigate(`/nft/${data.token_id}`);
