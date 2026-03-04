@@ -226,11 +226,10 @@ export const buyNFT = async (
     const tx = await contract.buyNFT(listingId, { value: priceInWei });
     const receipt = await tx.wait();
 
-    // Update listing to inactive
-    await supabase
-      .from('listings')
-      .update({ active: false })
-      .eq('listing_id', listingId);
+    // Update listing to inactive using security definer function (bypasses RLS)
+    await supabase.rpc('deactivate_listing', {
+      p_listing_id: listingId,
+    });
 
     // Update NFT ownership using security definer function (bypasses RLS)
     await supabase.rpc('transfer_nft_ownership', {
