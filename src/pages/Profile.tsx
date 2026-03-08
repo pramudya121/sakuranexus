@@ -663,7 +663,7 @@ const Profile = () => {
                   <p className="text-xl sm:text-2xl font-bold">{stats.totalVolume}</p>
                   <p className="text-xs text-muted-foreground">NEX</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-primary/50" />
+                <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-primary/50" />
               </div>
             </CardContent>
           </Card>
