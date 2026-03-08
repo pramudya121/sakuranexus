@@ -524,7 +524,7 @@ const NFTAnalytics = () => {
                           <td className="p-4 text-right">{collection.floor} NEX</td>
                           <td className="p-4 text-right font-semibold">{collection.volume24h} NEX</td>
                           <td className="p-4 text-right">
-                            <span className={collection.change >= 0 ? 'text-green-500' : 'text-red-500'}>
+                            <span className={collection.change >= 0 ? 'text-primary' : 'text-destructive'}>
                               {collection.change >= 0 ? '+' : ''}{collection.change}%
                             </span>
                           </td>
