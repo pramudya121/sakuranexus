@@ -735,10 +735,10 @@ const Profile = () => {
                     owner={nft.owner_address}
                     price={nft.listing?.price}
                     isListed={!!nft.listing?.active}
-                    showListButton={!nft.listing?.active}
-                    showTransferButton={!nft.listing?.active}
-                    showCancelButton={!!nft.listing?.active}
-                    isOwner={true}
+                    showListButton={isOwnProfile && !nft.listing?.active}
+                    showTransferButton={isOwnProfile && !nft.listing?.active}
+                    showCancelButton={isOwnProfile && !!nft.listing?.active}
+                    isOwner={isOwnProfile}
                     nftId={nft.id}
                     walletAddress={account}
                     onList={() => handleListNFT(nft)}
