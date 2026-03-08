@@ -269,22 +269,9 @@ const StakingAdminPanel = () => {
     return STAKABLE_TOKENS.find(t => t.address === selectedToken);
   };
 
-  if (loading) {
-    return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Shield className="w-4 h-4" />
-            Admin
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="w-8 h-8 animate-spin" />
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
+  // Don't render anything if loading or not owner
+  if (loading || !isOwner) {
+    return null;
   }
 
   return (
