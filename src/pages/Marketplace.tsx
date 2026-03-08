@@ -448,12 +448,13 @@ const Marketplace = memo(function Marketplace() {
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="h-12 w-12 rounded-xl border-2 border-border/50 hover:border-primary/50 transition-all"
+                  className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border-2 border-border/50 hover:border-primary/50 transition-all"
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                 >
-                  <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 sm:w-5 sm:h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </Button>
+                </div>
               </div>
 
               {/* Advanced Filters Panel - Redesigned */}

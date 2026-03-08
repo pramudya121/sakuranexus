@@ -133,7 +133,7 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
                 key={index}
                 className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center hover:scale-105 transition-transform duration-300 border border-primary/10 hover:border-primary/30"
               >
-                <div className="text-2xl md:text-3xl font-bold gradient-text">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold gradient-text">
                   {stat.prefix}
                   <NumberTicker
                     value={stat.value}
