@@ -138,7 +138,7 @@ const Index = memo(function Index() {
               <Star className="w-4 h-4" />
               Platform Features
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
               Everything in <span className="gradient-text">One Place</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
