@@ -684,39 +684,40 @@ const Profile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="collected" className="space-y-4 sm:space-y-6 pb-24">
-          <TabsList className={`grid w-full max-w-3xl mx-auto ${isOwnProfile ? 'grid-cols-3 sm:grid-cols-6' : 'grid-cols-3'} h-auto`}>
-            <TabsTrigger value="collected" className="gap-2">
-              <Package className="w-4 h-4" />
-              <span className="hidden sm:inline">Collected</span>
-              <span className="sm:hidden">Items</span>
-            </TabsTrigger>
-            <TabsTrigger value="created" className="gap-2">
-              <Eye className="w-4 h-4" />
-              <span className="hidden sm:inline">Created</span>
-            </TabsTrigger>
-            {isOwnProfile && (
-              <TabsTrigger value="favorited" className="gap-2">
-                <Gift className="w-4 h-4" />
-                <span className="hidden sm:inline">Favorited</span>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className={`inline-flex w-auto min-w-full sm:grid sm:w-full sm:max-w-3xl sm:mx-auto ${isOwnProfile ? 'sm:grid-cols-6' : 'sm:grid-cols-3'} h-auto`}>
+              <TabsTrigger value="collected" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Items
               </TabsTrigger>
-            )}
-            <TabsTrigger value="activity" className="gap-2">
-              <ActivityIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Activity</span>
-            </TabsTrigger>
-            {isOwnProfile && (
-              <TabsTrigger value="offers" className="gap-2">
-                <Tag className="w-4 h-4" />
-                <span className="hidden sm:inline">Offers</span>
+              <TabsTrigger value="created" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Created
               </TabsTrigger>
-            )}
-            {isOwnProfile && (
-              <TabsTrigger value="portfolio" className="gap-2">
-                <Wallet className="w-4 h-4" />
-                <span className="hidden sm:inline">Portfolio</span>
+              {isOwnProfile && (
+                <TabsTrigger value="favorited" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                  <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Favs
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="activity" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                <ActivityIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Activity
               </TabsTrigger>
-            )}
-          </TabsList>
+              {isOwnProfile && (
+                <TabsTrigger value="offers" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                  <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Offers
+                </TabsTrigger>
+              )}
+              {isOwnProfile && (
+                <TabsTrigger value="portfolio" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                  <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Portfolio
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
 
           {/* Collected NFTs */}
           <TabsContent value="collected">
