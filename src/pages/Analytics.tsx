@@ -321,8 +321,8 @@ const Analytics = () => {
                     Sales Volume
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="px-2 sm:px-6 pb-4">
+                  <ResponsiveContainer width="100%" height={250}>
                     <AreaChart data={analyticsData}>
                       <defs>
                         <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -331,8 +331,8 @@ const Analytics = () => {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} width={40} />
                       <Tooltip content={<CustomTooltip />} />
                       <Area 
                         type="monotone" 
