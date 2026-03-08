@@ -682,7 +682,7 @@ const Profile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="collected" className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-6">
+          <TabsList className={`grid w-full max-w-3xl mx-auto ${isOwnProfile ? 'grid-cols-6' : 'grid-cols-3'}`}>
             <TabsTrigger value="collected" className="gap-2">
               <Package className="w-4 h-4" />
               <span className="hidden sm:inline">Collected</span>
@@ -692,22 +692,28 @@ const Profile = () => {
               <Eye className="w-4 h-4" />
               <span className="hidden sm:inline">Created</span>
             </TabsTrigger>
-            <TabsTrigger value="favorited" className="gap-2">
-              <Gift className="w-4 h-4" />
-              <span className="hidden sm:inline">Favorited</span>
-            </TabsTrigger>
+            {isOwnProfile && (
+              <TabsTrigger value="favorited" className="gap-2">
+                <Gift className="w-4 h-4" />
+                <span className="hidden sm:inline">Favorited</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger value="activity" className="gap-2">
               <ActivityIcon className="w-4 h-4" />
               <span className="hidden sm:inline">Activity</span>
             </TabsTrigger>
-            <TabsTrigger value="offers" className="gap-2">
-              <Tag className="w-4 h-4" />
-              <span className="hidden sm:inline">Offers</span>
-            </TabsTrigger>
-            <TabsTrigger value="portfolio" className="gap-2">
-              <Wallet className="w-4 h-4" />
-              <span className="hidden sm:inline">Portfolio</span>
-            </TabsTrigger>
+            {isOwnProfile && (
+              <TabsTrigger value="offers" className="gap-2">
+                <Tag className="w-4 h-4" />
+                <span className="hidden sm:inline">Offers</span>
+              </TabsTrigger>
+            )}
+            {isOwnProfile && (
+              <TabsTrigger value="portfolio" className="gap-2">
+                <Wallet className="w-4 h-4" />
+                <span className="hidden sm:inline">Portfolio</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Collected NFTs */}
