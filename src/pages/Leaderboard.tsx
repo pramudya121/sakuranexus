@@ -99,7 +99,7 @@ const Leaderboard = () => {
     const medal = index < 3 ? medals[index] : `#${index + 1}`;
 
     return (
-      <Card key={entry.wallet_address} className="p-4 glass hover:shadow-sakura transition-all">
+      <Card key={entry.wallet_address} className="p-4 border-border/50 hover:shadow-md transition-all">
         <div className="flex items-center gap-4">
           <div className="text-2xl font-bold w-12">{medal}</div>
           <Avatar className="w-12 h-12">
