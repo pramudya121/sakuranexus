@@ -79,7 +79,10 @@ interface ActivityItem {
 const Profile = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { walletAddress: paramAddress } = useParams();
   const [account, setAccount] = useState<string | null>(null);
+  const [viewingAddress, setViewingAddress] = useState<string | null>(null);
+  const [isOwnProfile, setIsOwnProfile] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nfts, setNfts] = useState<NFTWithListing[]>([]);
   const [createdNfts, setCreatedNfts] = useState<NFT[]>([]);
