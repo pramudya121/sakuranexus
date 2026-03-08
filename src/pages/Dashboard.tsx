@@ -158,10 +158,10 @@ const Dashboard = memo(function Dashboard() {
 
         {/* No Wallet Warning */}
         {!walletAddress && (
-          <Card className="mb-6 border-orange-500/30 bg-orange-500/5">
+          <Card className="mb-6 border-destructive/30 bg-destructive/5">
             <CardContent className="flex items-center gap-3 p-4">
-              <AlertCircle className="w-5 h-5 text-orange-500" />
-              <p className="text-sm text-orange-600 dark:text-orange-400">
+              <AlertCircle className="w-5 h-5 text-destructive" />
+              <p className="text-sm text-destructive">
                 Hubungkan wallet Anda untuk melihat data portfolio real-time
               </p>
             </CardContent>
