@@ -369,7 +369,7 @@ const Index = memo(function Index() {
         
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-primary-foreground mb-4 sm:mb-6">
               Ready to Begin? 🌸
             </h2>
             <p className="text-xl text-primary-foreground/80 mb-10 leading-relaxed">
