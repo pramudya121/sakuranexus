@@ -638,7 +638,7 @@ const Profile = () => {
                   <p className="text-xs sm:text-sm text-muted-foreground mb-1">Owned</p>
                   <p className="text-xl sm:text-2xl font-bold">{stats.totalOwned}</p>
                 </div>
-                <Package className="w-8 h-8 text-primary/50" />
+                <Package className="w-6 h-6 sm:w-8 sm:h-8 text-primary/50" />
               </div>
             </CardContent>
           </Card>
