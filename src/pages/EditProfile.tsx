@@ -190,7 +190,7 @@ const EditProfile = () => {
 
         <Card className="max-w-2xl mx-auto border-border/50 shadow-lg overflow-hidden">
           {/* Banner Upload */}
-          <div className="relative h-40 bg-muted">
+          <div className="relative h-28 sm:h-40 bg-muted">
             {bannerPreview ? (
               <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
             ) : (
