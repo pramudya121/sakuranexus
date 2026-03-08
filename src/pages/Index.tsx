@@ -1,7 +1,7 @@
 import { useEffect, useState, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, TrendingUp, Shield, Zap, ArrowLeftRight, Coins, Star, Image, Users, Droplets, Brain, BarChart3, Wallet } from 'lucide-react';
+import { ArrowRight, Sparkles, TrendingUp, Shield, Zap, ArrowLeftRight, Coins, Star, Image, Users, Droplets, Brain, BarChart3, Wallet, Github, Twitter, ExternalLink } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import HeroSection from '@/components/HeroSection';
@@ -51,42 +51,36 @@ const Index = memo(function Index() {
       title: 'NFT Marketplace',
       description: 'Mint, buy, sell, and trade unique digital collectibles with ease',
       link: '/marketplace',
-      color: 'from-pink-500 to-rose-500',
     },
     {
       icon: ArrowLeftRight,
       title: 'DEX Trading',
       description: 'Swap tokens instantly with the best rates and lowest fees',
       link: '/dex/swap',
-      color: 'from-violet-500 to-purple-500',
     },
     {
       icon: Droplets,
       title: 'Liquidity Pools',
       description: 'Provide liquidity and earn passive income from trading fees',
       link: '/dex/liquidity',
-      color: 'from-blue-500 to-cyan-500',
     },
     {
       icon: Coins,
       title: 'Staking Rewards',
       description: 'Stake your tokens and earn attractive APR rewards',
       link: '/dex/staking',
-      color: 'from-amber-500 to-orange-500',
     },
     {
       icon: Brain,
       title: 'AI Features Hub',
       description: 'AI-powered art generation, price prediction, and analytics',
       link: '/ai-features',
-      color: 'from-emerald-500 to-teal-500',
     },
     {
       icon: BarChart3,
       title: 'Portfolio Analytics',
       description: 'Track your holdings, performance, and tax reports in real-time',
       link: '/dashboard',
-      color: 'from-indigo-500 to-blue-500',
     },
   ];
 
@@ -105,6 +99,27 @@ const Index = memo(function Index() {
     { name: 'BlockchainDev', role: 'Developer', text: 'Clean smart contracts and great UX. This is how Web3 should be built.' },
     { name: 'WhaleWatcher', role: 'Investor', text: 'Portfolio analytics help me track everything in one place. Love it!' },
   ];
+
+  const footerLinks = {
+    Platform: [
+      { label: 'Marketplace', path: '/marketplace' },
+      { label: 'Collections', path: '/collections' },
+      { label: 'Auctions', path: '/auctions' },
+      { label: 'Mint NFT', path: '/mint' },
+    ],
+    DeFi: [
+      { label: 'Swap', path: '/dex/swap' },
+      { label: 'Liquidity', path: '/dex/liquidity' },
+      { label: 'Pools', path: '/dex/pools' },
+      { label: 'Staking', path: '/dex/staking' },
+    ],
+    Resources: [
+      { label: 'Dashboard', path: '/dashboard' },
+      { label: 'Analytics', path: '/analytics' },
+      { label: 'AI Hub', path: '/ai-features' },
+      { label: 'Guide', path: '/guide' },
+    ],
+  };
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
@@ -137,8 +152,8 @@ const Index = memo(function Index() {
               return (
                 <Link to={feature.link} key={index}>
                   <SpotlightCard className="h-full cursor-pointer group">
-                    <div className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${feature.color} mb-4 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
-                      <Icon className="w-6 h-6 text-white" />
+                    <div className="inline-flex p-4 rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                      <Icon className="w-6 h-6 text-primary" />
                     </div>
                     <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">{feature.title}</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
@@ -227,7 +242,7 @@ const Index = memo(function Index() {
                     const Icon = item.icon;
                     return (
                       <div key={index} className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors">
-                        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                           <Icon className="w-6 h-6 text-primary" />
                         </div>
                         <div>
@@ -287,9 +302,9 @@ const Index = memo(function Index() {
                     <div className="p-5 rounded-2xl bg-muted/50 hover:bg-muted/70 transition-colors">
                       <div className="text-sm text-muted-foreground mb-2">To</div>
                       <div className="flex items-center justify-between">
-                        <span className="text-3xl font-bold text-green-500">2,450</span>
+                        <span className="text-3xl font-bold text-primary">2,450</span>
                         <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-background border border-border/50">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-violet-500 to-purple-500" />
+                          <div className="w-8 h-8 rounded-full bg-primary/20" />
                           <span className="font-semibold">NXSA</span>
                         </div>
                       </div>
@@ -329,7 +344,7 @@ const Index = memo(function Index() {
                 <div className="glass rounded-2xl p-6 border border-primary/10 hover:border-primary/30 transition-colors h-full">
                   <p className="text-sm text-muted-foreground mb-4 leading-relaxed italic">"{t.text}"</p>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-10 h-10 rounded-full bg-gradient-sakura flex items-center justify-center text-primary-foreground font-bold text-sm">
                       {t.name[0]}
                     </div>
                     <div>
@@ -348,27 +363,27 @@ const Index = memo(function Index() {
       <section className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-foreground/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-primary-foreground/5 rounded-full blur-3xl" />
         </div>
         
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
+            <h2 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
               Ready to Begin? 🌸
             </h2>
-            <p className="text-xl text-white/80 mb-10 leading-relaxed">
+            <p className="text-xl text-primary-foreground/80 mb-10 leading-relaxed">
               Join thousands of creators and traders on the NEXUSAKURA platform
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/mint">
-                <Button size="lg" className="bg-white text-primary hover:bg-white/90 px-10 py-7 h-auto rounded-2xl text-lg font-semibold">
+                <Button size="lg" className="bg-background text-primary hover:bg-background/90 px-10 py-7 h-auto rounded-2xl text-lg font-semibold">
                   <Sparkles className="mr-2 w-5 h-5" />
                   Create NFT
                 </Button>
               </Link>
               <Link to="/dex/liquidity">
-                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 px-10 py-7 h-auto rounded-2xl text-lg">
+                <Button size="lg" variant="outline" className="border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10 px-10 py-7 h-auto rounded-2xl text-lg">
                   <Droplets className="mr-2 w-5 h-5" />
                   Add Liquidity
                 </Button>
@@ -379,26 +394,58 @@ const Index = memo(function Index() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-border/50">
+      <footer className="py-16 border-t border-border/50 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold gradient-text">NEXUSAKURA</span>
-              <span className="text-muted-foreground">© 2025</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+            {/* Brand */}
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl font-bold gradient-text">NEXUSAKURA</span>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                The premier NFT marketplace and DEX on Nexus blockchain. Trade, stake, and earn with Sakura.
+              </p>
+              <div className="flex items-center gap-3">
+                <a href="#" className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors">
+                  <Twitter className="w-4 h-4" />
+                </a>
+                <a href="#" className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-colors">
+                  <Github className="w-4 h-4" />
+                </a>
+              </div>
             </div>
-            <div className="flex items-center gap-6">
-              <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors">
-                Marketplace
-              </Link>
-              <Link to="/dex/swap" className="text-muted-foreground hover:text-foreground transition-colors">
-                DEX
-              </Link>
-              <Link to="/ai-features" className="text-muted-foreground hover:text-foreground transition-colors">
-                AI Hub
-              </Link>
-              <Link to="/analytics" className="text-muted-foreground hover:text-foreground transition-colors">
-                Analytics
-              </Link>
+
+            {/* Link Columns */}
+            {Object.entries(footerLinks).map(([title, links]) => (
+              <div key={title}>
+                <h4 className="font-semibold text-sm mb-4">{title}</h4>
+                <ul className="space-y-2.5">
+                  {links.map((link) => (
+                    <li key={link.path}>
+                      <Link 
+                        to={link.path} 
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} NEXUSAKURA. All rights reserved.
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              Live on Nexus Testnet
             </div>
           </div>
         </div>
