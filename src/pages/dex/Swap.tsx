@@ -110,11 +110,6 @@ const Swap = memo(() => {
             <TradingChart tokenIn={chartTokenIn} tokenOut={chartTokenOut} />
           </div>
         )}
-
-        {/* Swap Box - Primary Focus */}
-        <div className="max-w-lg mx-auto mb-16">
-          <SwapBox />
-        </div>
       </main>
     </div>
   );
