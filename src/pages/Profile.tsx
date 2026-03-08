@@ -514,7 +514,7 @@ const Profile = () => {
       <Navigation />
       
       {/* Banner Section */}
-      <div className="relative h-56 sm:h-64 overflow-hidden">
+      <div className="relative h-40 sm:h-56 md:h-64 overflow-hidden">
         {userProfile?.banner_url ? (
           <img 
             src={userProfile.banner_url} 
@@ -529,10 +529,10 @@ const Profile = () => {
 
       <div className="container mx-auto px-4 relative">
         {/* Profile Header with Avatar */}
-        <div className="relative -mt-20 mb-8">
-          <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+        <div className="relative -mt-16 sm:-mt-20 mb-6 sm:mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-end gap-4 sm:gap-6">
             {/* Avatar */}
-            <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-background shadow-lg">
+            <Avatar className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 border-4 border-background shadow-lg">
               <AvatarImage src={userProfile?.avatar_url} />
               <AvatarFallback className="bg-primary/10 text-primary text-4xl">
                 {userProfile?.username?.[0]?.toUpperCase() || '🌸'}
@@ -540,9 +540,9 @@ const Profile = () => {
             </Avatar>
 
             {/* Profile Info */}
-            <div className="flex-1 md:mb-4">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-bold">
+            <div className="flex-1 md:mb-4 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
                   {userProfile?.username || 'Unnamed User'}
                 </h1>
                 <UserBadges walletAddress={viewingAddress || account} />
@@ -684,39 +684,40 @@ const Profile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="collected" className="space-y-4 sm:space-y-6 pb-24">
-          <TabsList className={`grid w-full max-w-3xl mx-auto ${isOwnProfile ? 'grid-cols-3 sm:grid-cols-6' : 'grid-cols-3'} h-auto`}>
-            <TabsTrigger value="collected" className="gap-2">
-              <Package className="w-4 h-4" />
-              <span className="hidden sm:inline">Collected</span>
-              <span className="sm:hidden">Items</span>
-            </TabsTrigger>
-            <TabsTrigger value="created" className="gap-2">
-              <Eye className="w-4 h-4" />
-              <span className="hidden sm:inline">Created</span>
-            </TabsTrigger>
-            {isOwnProfile && (
-              <TabsTrigger value="favorited" className="gap-2">
-                <Gift className="w-4 h-4" />
-                <span className="hidden sm:inline">Favorited</span>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className={`inline-flex w-auto min-w-full sm:grid sm:w-full sm:max-w-3xl sm:mx-auto ${isOwnProfile ? 'sm:grid-cols-6' : 'sm:grid-cols-3'} h-auto`}>
+              <TabsTrigger value="collected" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Items
               </TabsTrigger>
-            )}
-            <TabsTrigger value="activity" className="gap-2">
-              <ActivityIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Activity</span>
-            </TabsTrigger>
-            {isOwnProfile && (
-              <TabsTrigger value="offers" className="gap-2">
-                <Tag className="w-4 h-4" />
-                <span className="hidden sm:inline">Offers</span>
+              <TabsTrigger value="created" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Created
               </TabsTrigger>
-            )}
-            {isOwnProfile && (
-              <TabsTrigger value="portfolio" className="gap-2">
-                <Wallet className="w-4 h-4" />
-                <span className="hidden sm:inline">Portfolio</span>
+              {isOwnProfile && (
+                <TabsTrigger value="favorited" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                  <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Favs
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="activity" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                <ActivityIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Activity
               </TabsTrigger>
-            )}
-          </TabsList>
+              {isOwnProfile && (
+                <TabsTrigger value="offers" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                  <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Offers
+                </TabsTrigger>
+              )}
+              {isOwnProfile && (
+                <TabsTrigger value="portfolio" className="gap-1.5 text-xs sm:text-sm px-3 sm:px-4">
+                  <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Portfolio
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
 
           {/* Collected NFTs */}
           <TabsContent value="collected">
@@ -851,28 +852,38 @@ const Profile = () => {
                   <div className="space-y-3">
                     {receivedOffers.map((offer) => (
                       <Card key={offer.id} className="card-hover">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-4">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-center gap-3 sm:gap-4">
                             {offer.nfts && (
                               <img 
                                 src={offer.nfts.image_url} 
                                 alt={offer.nfts.name}
-                                className="w-12 h-12 rounded-lg object-cover"
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover"
                               />
                             )}
-                            <div className="flex-1">
-                              <p className="font-medium">{offer.nfts?.name}</p>
-                              <p className="text-sm text-muted-foreground">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm sm:text-base truncate">{offer.nfts?.name}</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
                                 by {formatAddress(offer.offerer_address)}
                               </p>
+                              <div className="flex items-center justify-between mt-1 sm:hidden">
+                                <p className="font-bold gradient-text text-sm">{offer.offer_price} NEX</p>
+                                <Button 
+                                  onClick={() => handleAcceptOffer(offer)}
+                                  className="btn-hero h-7 text-xs px-3"
+                                  size="sm"
+                                >
+                                  Accept
+                                </Button>
+                              </div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right hidden sm:block">
                               <p className="font-bold gradient-text">{offer.offer_price} NEX</p>
                               <p className="text-xs text-muted-foreground">{formatTime(offer.created_at)}</p>
                             </div>
                             <Button 
                               onClick={() => handleAcceptOffer(offer)}
-                              className="btn-hero"
+                              className="btn-hero hidden sm:inline-flex"
                             >
                               Accept
                             </Button>
@@ -895,26 +906,38 @@ const Profile = () => {
                   <div className="space-y-3">
                     {sentOffers.map((offer) => (
                       <Card key={offer.id} className="card-hover">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-4">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-center gap-3 sm:gap-4">
                             {offer.nfts && (
                               <img 
                                 src={offer.nfts.image_url} 
                                 alt={offer.nfts.name}
-                                className="w-12 h-12 rounded-lg object-cover"
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover"
                               />
                             )}
-                            <div className="flex-1">
-                              <p className="font-medium">{offer.nfts?.name}</p>
-                              <p className="text-sm text-muted-foreground">Pending acceptance</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm sm:text-base truncate">{offer.nfts?.name}</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">Pending</p>
+                              <div className="flex items-center justify-between mt-1 sm:hidden">
+                                <p className="font-bold gradient-text text-sm">{offer.offer_price} NEX</p>
+                                <Button 
+                                  onClick={() => handleCancelOffer(offer)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-xs px-3"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right hidden sm:block">
                               <p className="font-bold gradient-text">{offer.offer_price} NEX</p>
                               <p className="text-xs text-muted-foreground">{formatTime(offer.created_at)}</p>
                             </div>
                             <Button 
                               onClick={() => handleCancelOffer(offer)}
                               variant="outline"
+                              className="hidden sm:inline-flex"
                             >
                               Cancel
                             </Button>

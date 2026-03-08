@@ -188,9 +188,9 @@ const EditProfile = () => {
           Back to Profile
         </Button>
 
-        <Card className="max-w-2xl mx-auto border-border/50 shadow-lg overflow-hidden">
+        <Card className="max-w-2xl mx-auto border-border/50 shadow-lg overflow-hidden mx-0 sm:mx-auto">
           {/* Banner Upload */}
-          <div className="relative h-40 bg-muted">
+          <div className="relative h-28 sm:h-40 bg-muted">
             {bannerPreview ? (
               <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
             ) : (
@@ -206,13 +206,13 @@ const EditProfile = () => {
             <Input id="banner-upload" type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
           </div>
 
-          <div className="p-6 sm:p-8">
-            <h1 className="text-2xl font-bold mb-6 gradient-text">Edit Profile</h1>
+          <div className="p-4 sm:p-6 md:p-8">
+            <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 gradient-text">Edit Profile</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Avatar Upload */}
-              <div className="flex items-center gap-5">
-                <Avatar className="w-20 h-20 border-2 border-border">
+              <div className="flex items-center gap-3 sm:gap-5">
+                <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-border">
                   <AvatarImage src={avatarPreview} />
                   <AvatarFallback className="bg-primary/10 text-primary text-xl">
                     <User className="w-8 h-8" />
