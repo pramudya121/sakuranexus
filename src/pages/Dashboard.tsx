@@ -209,7 +209,7 @@ const Dashboard = memo(function Dashboard() {
               {isLoading ? (
                 <Skeleton className="h-8 w-16 mt-3" />
               ) : (
-                <p className="text-2xl font-bold mt-3">
+                <p className="text-lg sm:text-2xl font-bold mt-2 sm:mt-3">
                   <NumberTicker value={stats.totalTrades} />
                 </p>
               )}
