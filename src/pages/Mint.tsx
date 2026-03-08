@@ -255,7 +255,7 @@ const Mint = () => {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5">
+              <CardContent className="space-y-4 sm:space-y-5 p-4 sm:p-6 pt-0 sm:pt-0">
                 <div>
                   <label className="text-sm font-medium mb-2 block">
                     Name <span className="text-destructive">*</span>
