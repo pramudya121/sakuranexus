@@ -529,10 +529,10 @@ const Profile = () => {
 
       <div className="container mx-auto px-4 relative">
         {/* Profile Header with Avatar */}
-        <div className="relative -mt-20 mb-8">
-          <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+        <div className="relative -mt-16 sm:-mt-20 mb-6 sm:mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-end gap-4 sm:gap-6">
             {/* Avatar */}
-            <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-background shadow-lg">
+            <Avatar className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 border-4 border-background shadow-lg">
               <AvatarImage src={userProfile?.avatar_url} />
               <AvatarFallback className="bg-primary/10 text-primary text-4xl">
                 {userProfile?.username?.[0]?.toUpperCase() || '🌸'}
