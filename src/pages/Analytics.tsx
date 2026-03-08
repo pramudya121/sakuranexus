@@ -524,7 +524,7 @@ const Analytics = () => {
                       <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={10} width={40} />
                       <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={10} width={35} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
+                      <Legend wrapperStyle={{ fontSize: '11px' }} />
                       <Bar yAxisId="left" dataKey="swapVolume" fill="hsl(328, 85%, 55%)" name="Volume" radius={[4, 4, 0, 0]} />
                       <Line yAxisId="right" type="monotone" dataKey="trades" stroke="hsl(200, 80%, 55%)" strokeWidth={2} name="Trades" dot={false} />
                     </ComposedChart>
