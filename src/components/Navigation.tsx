@@ -17,7 +17,8 @@ import {
   Heart,
   Sparkles,
   FolderOpen,
-  Brain
+  Brain,
+  BookOpen
 } from 'lucide-react';
 import ConnectWallet from './ConnectWallet';
 import NotificationBell from './NotificationBell';
