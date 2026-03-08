@@ -298,14 +298,14 @@ const Analytics = () => {
         </div>
 
         {/* Main Tabs */}
-        <Tabs defaultValue="nft" className="space-y-6">
-          <TabsList className="w-full max-w-md mx-auto grid grid-cols-2">
-            <TabsTrigger value="nft" className="gap-2">
-              <Layers className="w-4 h-4" />
-              NFT Marketplace
+        <Tabs defaultValue="nft" className="space-y-4 sm:space-y-6">
+          <TabsList className="w-full max-w-sm sm:max-w-md mx-auto grid grid-cols-2">
+            <TabsTrigger value="nft" className="gap-1.5 text-xs sm:text-sm">
+              <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              NFT
             </TabsTrigger>
-            <TabsTrigger value="dex" className="gap-2">
-              <Wallet className="w-4 h-4" />
+            <TabsTrigger value="dex" className="gap-1.5 text-xs sm:text-sm">
+              <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               DEX
             </TabsTrigger>
           </TabsList>
