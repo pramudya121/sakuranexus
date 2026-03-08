@@ -581,7 +581,7 @@ const NFTDetail = () => {
                     </div>
                   ) : (
                     <>
-                      <div className="h-[300px] w-full">
+                      <div className="h-[220px] sm:h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={priceHistory}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
