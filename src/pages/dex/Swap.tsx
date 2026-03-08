@@ -4,7 +4,6 @@ import SakuraFalling from '@/components/SakuraFalling';
 import SwapBox from '@/components/dex/SwapBox';
 import DEXNavigation from '@/components/dex/DEXNavigation';
 import TradingChart from '@/components/dex/TradingChart';
-import RealTimePriceBar from '@/components/dex/RealTimePriceBar';
 import GasEstimator from '@/components/dex/GasEstimator';
 import { useTokenPrice } from '@/hooks/usePriceWebSocket';
 import { 
@@ -32,12 +31,8 @@ const Swap = memo(() => {
       <SakuraFalling />
       <Navigation />
       
-      {/* Price Ticker - sticky below nav */}
-      <div className="sticky top-16 z-40">
-        <RealTimePriceBar />
-      </div>
       
-      <main className="container mx-auto px-4 pt-6 pb-12">
+      <main className="container mx-auto px-4 pt-24 pb-12">
         <DEXNavigation />
         
         {/* Hero */}
