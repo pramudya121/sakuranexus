@@ -87,7 +87,7 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
 
           {/* Headline */}
           <div className="animate-fade-in-up stagger-2">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-tight">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-tight">
               <span className="text-foreground">Trade & Collect</span>
               <br />
               <span className="gradient-text">Digital Art</span>
@@ -95,7 +95,7 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
           </div>
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in-up stagger-3">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in-up stagger-3 px-2">
             The premier NFT marketplace and decentralized exchange on Nexus blockchain.
             Experience the beauty of{" "}
             <span className="text-primary font-medium">Sakura</span> while trading.
@@ -127,13 +127,13 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-16 max-w-4xl mx-auto animate-fade-in-up stagger-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-12 sm:pt-16 max-w-4xl mx-auto animate-fade-in-up stagger-5">
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className="glass rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300 border border-primary/10 hover:border-primary/30"
+                className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center hover:scale-105 transition-transform duration-300 border border-primary/10 hover:border-primary/30"
               >
-                <div className="text-2xl md:text-3xl font-bold gradient-text">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold gradient-text">
                   {stat.prefix}
                   <NumberTicker
                     value={stat.value}

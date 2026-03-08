@@ -541,8 +541,8 @@ const Profile = () => {
 
             {/* Profile Info */}
             <div className="flex-1 md:mb-4">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-bold">
                   {userProfile?.username || 'Unnamed User'}
                 </h1>
                 <UserBadges walletAddress={viewingAddress || account} />
@@ -630,61 +630,61 @@ const Profile = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Card className="card-hover">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Owned</p>
-                  <p className="text-2xl font-bold">{stats.totalOwned}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Owned</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.totalOwned}</p>
                 </div>
-                <Package className="w-8 h-8 text-primary/50" />
+                <Package className="w-6 h-6 sm:w-8 sm:h-8 text-primary/50" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="card-hover">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Created</p>
-                  <p className="text-2xl font-bold">{stats.totalCreated}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Created</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.totalCreated}</p>
                 </div>
-                <Eye className="w-8 h-8 text-accent/50" />
+                <Eye className="w-6 h-6 sm:w-8 sm:h-8 text-accent/50" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="card-hover">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Volume</p>
-                  <p className="text-2xl font-bold">{stats.totalVolume}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Volume</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.totalVolume}</p>
                   <p className="text-xs text-muted-foreground">NEX</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-primary/50" />
+                <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-primary/50" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="card-hover">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Floor</p>
-                  <p className="text-2xl font-bold">{stats.floorPrice}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Floor</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.floorPrice}</p>
                   <p className="text-xs text-muted-foreground">NEX</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-accent/50" />
+                <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-accent/50" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="collected" className="space-y-6">
-          <TabsList className={`grid w-full max-w-3xl mx-auto ${isOwnProfile ? 'grid-cols-6' : 'grid-cols-3'}`}>
+        <Tabs defaultValue="collected" className="space-y-4 sm:space-y-6 pb-24">
+          <TabsList className={`grid w-full max-w-3xl mx-auto ${isOwnProfile ? 'grid-cols-3 sm:grid-cols-6' : 'grid-cols-3'} h-auto`}>
             <TabsTrigger value="collected" className="gap-2">
               <Package className="w-4 h-4" />
               <span className="hidden sm:inline">Collected</span>
@@ -727,7 +727,7 @@ const Profile = () => {
                 <p className="text-muted-foreground">Start collecting NFTs!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {nfts.map((nft) => (
                   <NFTCard
                     key={nft.id}
@@ -761,7 +761,7 @@ const Profile = () => {
                 <p className="text-muted-foreground">Start minting your NFTs!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {createdNfts.map((nft) => (
                   <NFTCard
                     key={nft.id}
@@ -784,7 +784,7 @@ const Profile = () => {
                 <p className="text-muted-foreground">Add NFTs to your watchlist!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {watchlist.map((nft) => (
                   <NFTCard
                     key={nft.id}

@@ -138,7 +138,7 @@ const Index = memo(function Index() {
               <Star className="w-4 h-4" />
               Platform Features
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
               Everything in <span className="gradient-text">One Place</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -146,7 +146,7 @@ const Index = memo(function Index() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -177,7 +177,7 @@ const Index = memo(function Index() {
               <Wallet className="w-4 h-4" />
               Getting Started
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
               How It <span className="gradient-text">Works</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -185,7 +185,7 @@ const Index = memo(function Index() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {[
               { step: '01', title: 'Connect Wallet', desc: 'Connect your MetaMask or any Web3 wallet to the Nexus Testnet', icon: Wallet },
               { step: '02', title: 'Explore & Trade', desc: 'Browse NFTs, swap tokens, provide liquidity, or stake for rewards', icon: ArrowLeftRight },
@@ -224,7 +224,7 @@ const Index = memo(function Index() {
                   <Zap className="w-4 h-4" />
                   Decentralized Exchange
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">
                   Trade with
                   <span className="gradient-text"> Zero Limits</span>
                 </h2>
@@ -330,7 +330,7 @@ const Index = memo(function Index() {
               <Users className="w-4 h-4" />
               Community
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
               Loved by <span className="gradient-text">Traders</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -340,7 +340,7 @@ const Index = memo(function Index() {
 
           <Marquee className="[--duration:40s]" pauseOnHover>
             {testimonials.map((t, i) => (
-              <div key={i} className="mx-4 w-80">
+              <div key={i} className="mx-2 sm:mx-4 w-64 sm:w-80">
                 <div className="glass rounded-2xl p-6 border border-primary/10 hover:border-primary/30 transition-colors h-full">
                   <p className="text-sm text-muted-foreground mb-4 leading-relaxed italic">"{t.text}"</p>
                   <div className="flex items-center gap-3">
@@ -369,10 +369,10 @@ const Index = memo(function Index() {
         
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-primary-foreground mb-4 sm:mb-6">
               Ready to Begin? 🌸
             </h2>
-            <p className="text-xl text-primary-foreground/80 mb-10 leading-relaxed">
+            <p className="text-base sm:text-xl text-primary-foreground/80 mb-8 sm:mb-10 leading-relaxed px-2">
               Join thousands of creators and traders on the NEXUSAKURA platform
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

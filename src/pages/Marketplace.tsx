@@ -358,7 +358,7 @@ const Marketplace = memo(function Marketplace() {
               NFT Marketplace
             </span>
           </div>
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up stagger-1">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 animate-fade-in-up stagger-1">
             <span className="gradient-text">Discover NFTs</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto animate-fade-in-up stagger-2">
@@ -384,9 +384,9 @@ const Marketplace = memo(function Marketplace() {
           <div className="lg:col-span-9 order-1 lg:order-2">
             {/* Search and Filters - Redesigned */}
             <div className="mb-8 space-y-4">
-              <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                 {/* Search Input */}
-                <div className="relative flex-1 min-w-[280px]">
+                <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     placeholder="Search NFTs by name or ID..."
@@ -396,9 +396,9 @@ const Marketplace = memo(function Marketplace() {
                   />
                 </div>
                 
-                {/* Sort Dropdown */}
+                <div className="flex flex-wrap gap-2 items-center">
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[180px] h-12 rounded-xl border-2 border-border/50 bg-card/50 backdrop-blur-sm">
+                  <SelectTrigger className="w-[140px] sm:w-[180px] h-10 sm:h-12 rounded-xl border-2 border-border/50 bg-card/50 backdrop-blur-sm text-sm">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -413,7 +413,7 @@ const Marketplace = memo(function Marketplace() {
                 <Button 
                   variant={showFilters ? "default" : "outline"} 
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`gap-2 h-12 px-5 rounded-xl transition-all ${showFilters ? 'btn-hero' : 'border-2 hover:border-primary/50'}`}
+                  className={`gap-2 h-10 sm:h-12 px-4 sm:px-5 rounded-xl transition-all text-sm ${showFilters ? 'btn-hero' : 'border-2 hover:border-primary/50'}`}
                 >
                   <SlidersHorizontal className="w-4 h-4" />
                   Filters
@@ -448,12 +448,13 @@ const Marketplace = memo(function Marketplace() {
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="h-12 w-12 rounded-xl border-2 border-border/50 hover:border-primary/50 transition-all"
+                  className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border-2 border-border/50 hover:border-primary/50 transition-all"
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                 >
-                  <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 sm:w-5 sm:h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </Button>
+                </div>
               </div>
 
               {/* Advanced Filters Panel - Redesigned */}

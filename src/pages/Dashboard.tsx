@@ -169,10 +169,10 @@ const Dashboard = memo(function Dashboard() {
         )}
 
         {/* Quick Stats with BorderBeam */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
             <BorderBeam size={80} duration={10} delay={0} />
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <DollarSign className="w-5 h-5 text-primary" />
@@ -184,7 +184,7 @@ const Dashboard = memo(function Dashboard() {
               {isLoading ? (
                 <Skeleton className="h-8 w-24 mt-3" />
               ) : (
-                <p className="text-2xl font-bold mt-3">
+                <p className="text-lg sm:text-2xl font-bold mt-2 sm:mt-3">
                   {stats.totalVolume7d > 0 
                     ? <><NumberTicker value={stats.totalVolume7d} /> NEX</>
                     : '$0.00'
@@ -197,7 +197,7 @@ const Dashboard = memo(function Dashboard() {
 
           <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
             <BorderBeam size={80} duration={10} delay={2} />
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-accent/10">
                   <Activity className="w-5 h-5 text-accent" />
@@ -209,7 +209,7 @@ const Dashboard = memo(function Dashboard() {
               {isLoading ? (
                 <Skeleton className="h-8 w-16 mt-3" />
               ) : (
-                <p className="text-2xl font-bold mt-3">
+                <p className="text-lg sm:text-2xl font-bold mt-2 sm:mt-3">
                   <NumberTicker value={stats.totalTrades} />
                 </p>
               )}
@@ -219,7 +219,7 @@ const Dashboard = memo(function Dashboard() {
 
           <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
             <BorderBeam size={80} duration={10} delay={4} />
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Percent className="w-5 h-5 text-primary" />
@@ -228,14 +228,14 @@ const Dashboard = memo(function Dashboard() {
                   APR
                 </Badge>
               </div>
-              <p className="text-2xl font-bold mt-3"><NumberTicker value={stats.stakingAPR} />%</p>
+              <p className="text-lg sm:text-2xl font-bold mt-2 sm:mt-3"><NumberTicker value={stats.stakingAPR} />%</p>
               <p className="text-sm text-muted-foreground">Avg Staking APR</p>
             </CardContent>
           </Card>
 
           <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
             <BorderBeam size={80} duration={10} delay={6} />
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-accent/10">
                   <Image className="w-5 h-5 text-accent" />
@@ -247,7 +247,7 @@ const Dashboard = memo(function Dashboard() {
               {isLoading ? (
                 <Skeleton className="h-8 w-12 mt-3" />
               ) : (
-                <p className="text-2xl font-bold mt-3"><NumberTicker value={stats.nftsOwned} /></p>
+                <p className="text-lg sm:text-2xl font-bold mt-2 sm:mt-3"><NumberTicker value={stats.nftsOwned} /></p>
               )}
               <p className="text-sm text-muted-foreground">NFTs Owned</p>
             </CardContent>
