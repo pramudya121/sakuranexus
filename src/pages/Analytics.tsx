@@ -424,7 +424,7 @@ const Analytics = () => {
           {/* DEX Tab */}
           <TabsContent value="dex" className="space-y-6">
             {/* DEX Stats with GlowingStars */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
               <GlowingStarsBackgroundCard className="p-4">
                 <div className="relative z-20">
                   <div className="text-xs text-muted-foreground uppercase mb-1 flex items-center gap-2">
