@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Upload, User, ArrowLeft } from 'lucide-react';
+import { Loader2, Upload, User, ArrowLeft, Twitter, Instagram, MessageCircle, Globe, Camera } from 'lucide-react';
 
 interface UserProfile {
   username: string;
@@ -51,16 +51,12 @@ const EditProfile = () => {
   const loadProfile = async () => {
     const account = await getCurrentAccount();
     if (!account) {
-      toast({
-        title: 'Connect Wallet',
-        description: 'Please connect your wallet first',
-        variant: 'destructive',
-      });
+      toast({ title: 'Connect Wallet', description: 'Please connect your wallet first', variant: 'destructive' });
       navigate('/');
       return;
     }
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('user_profiles')
       .select('*')
       .eq('wallet_address', account.toLowerCase())
@@ -80,7 +76,6 @@ const EditProfile = () => {
       setAvatarPreview(data.avatar_url || '');
       setBannerPreview(data.banner_url || '');
     }
-
     setIsLoading(false);
   };
 
@@ -89,9 +84,7 @@ const EditProfile = () => {
     if (file) {
       setAvatarFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
+      reader.onloadend = () => setAvatarPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
@@ -101,69 +94,19 @@ const EditProfile = () => {
     if (file) {
       setBannerFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setBannerPreview(reader.result as string);
-      };
+      reader.onloadend = () => setBannerPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const uploadAvatar = async (walletAddress: string): Promise<string | null> => {
-    if (!avatarFile) return profile.avatar_url;
-
+  const uploadFile = async (file: File, path: string): Promise<string | null> => {
     try {
-      const fileExt = avatarFile.name.split('.').pop();
-      const fileName = `${walletAddress}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('nft-images')
-        .upload(filePath, avatarFile);
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage
-        .from('nft-images')
-        .getPublicUrl(filePath);
-
+      const { error } = await supabase.storage.from('nft-images').upload(path, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from('nft-images').getPublicUrl(path);
       return data.publicUrl;
     } catch (error) {
-      console.error('Error uploading avatar:', error);
-      toast({
-        title: 'Upload Failed',
-        description: 'Failed to upload avatar image',
-        variant: 'destructive',
-      });
-      return null;
-    }
-  };
-
-  const uploadBanner = async (walletAddress: string): Promise<string | null> => {
-    if (!bannerFile) return profile.banner_url;
-
-    try {
-      const fileExt = bannerFile.name.split('.').pop();
-      const fileName = `banner-${walletAddress}-${Date.now()}.${fileExt}`;
-      const filePath = `banners/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('nft-images')
-        .upload(filePath, bannerFile);
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage
-        .from('nft-images')
-        .getPublicUrl(filePath);
-
-      return data.publicUrl;
-    } catch (error) {
-      console.error('Error uploading banner:', error);
-      toast({
-        title: 'Upload Failed',
-        description: 'Failed to upload banner image',
-        variant: 'destructive',
-      });
+      console.error('Upload error:', error);
       return null;
     }
   };
@@ -174,18 +117,19 @@ const EditProfile = () => {
     if (!account) return;
 
     setIsSaving(true);
-
     try {
       let avatarUrl = profile.avatar_url;
       if (avatarFile) {
-        const uploadedUrl = await uploadAvatar(account);
-        if (uploadedUrl) avatarUrl = uploadedUrl;
+        const ext = avatarFile.name.split('.').pop();
+        const uploaded = await uploadFile(avatarFile, `avatars/${account}-${Date.now()}.${ext}`);
+        if (uploaded) avatarUrl = uploaded;
       }
 
       let bannerUrl = profile.banner_url;
       if (bannerFile) {
-        const uploadedUrl = await uploadBanner(account);
-        if (uploadedUrl) bannerUrl = uploadedUrl;
+        const ext = bannerFile.name.split('.').pop();
+        const uploaded = await uploadFile(bannerFile, `banners/banner-${account}-${Date.now()}.${ext}`);
+        if (uploaded) bannerUrl = uploaded;
       }
 
       const { error } = await supabase
@@ -201,25 +145,15 @@ const EditProfile = () => {
           discord_handle: profile.discord_handle,
           website_url: profile.website_url,
           updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'wallet_address'
-        });
+        }, { onConflict: 'wallet_address' });
 
       if (error) throw error;
 
-      toast({
-        title: 'Profile Updated!',
-        description: 'Your profile has been saved successfully',
-      });
-
+      toast({ title: 'Profile Updated!', description: 'Your profile has been saved successfully' });
       navigate('/profile');
     } catch (error) {
       console.error('Error saving profile:', error);
-      toast({
-        title: 'Save Failed',
-        description: 'Failed to save profile changes',
-        variant: 'destructive',
-      });
+      toast({ title: 'Save Failed', description: 'Failed to save profile changes', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -227,18 +161,18 @@ const EditProfile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen bg-background relative">
       <div 
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-15"
         style={{
-          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(328 85% 55% / 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(320 90% 60% / 0.15) 0%, transparent 50%)',
+          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(var(--primary) / 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(var(--accent) / 0.1) 0%, transparent 50%)',
         }}
       />
       <SakuraFalling />
@@ -254,123 +188,146 @@ const EditProfile = () => {
           Back to Profile
         </Button>
 
-        <Card className="max-w-2xl mx-auto p-8 bg-background/95 backdrop-blur-md shadow-elegant border-2 border-primary/20">
-          <h1 className="text-3xl font-bold mb-6 gradient-text">Edit Profile</h1>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Avatar Upload */}
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="w-32 h-32 border-4 border-primary/20 shadow-elegant">
-                <AvatarImage src={avatarPreview} />
-                <AvatarFallback className="bg-gradient-sakura text-white text-2xl">
-                  <User className="w-12 h-12" />
-                </AvatarFallback>
-              </Avatar>
-              <Label
-                htmlFor="avatar-upload"
-                className="cursor-pointer px-4 py-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <Upload className="w-4 h-4" />
-                Change Avatar
-              </Label>
-              <Input
-                id="avatar-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                className="hidden"
-              />
-            </div>
-
-            {/* Username */}
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                placeholder="Enter your username"
-                value={profile.username}
-                onChange={(e) => setProfile({ ...profile, username: e.target.value })}
-                className="border-2 focus:border-primary"
-              />
-            </div>
-
-            {/* Bio */}
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                placeholder="Tell us about yourself..."
-                value={profile.bio}
-                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                className="border-2 focus:border-primary min-h-[100px]"
-              />
-            </div>
-
-            {/* Social Links */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Social Links</h3>
-              
-              <div className="space-y-2">
-                <Label htmlFor="twitter">Twitter Handle</Label>
-                <Input
-                  id="twitter"
-                  placeholder="@username"
-                  value={profile.twitter_handle}
-                  onChange={(e) => setProfile({ ...profile, twitter_handle: e.target.value })}
-                  className="border-2 focus:border-primary"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="instagram">Instagram Handle</Label>
-                <Input
-                  id="instagram"
-                  placeholder="@username"
-                  value={profile.instagram_handle}
-                  onChange={(e) => setProfile({ ...profile, instagram_handle: e.target.value })}
-                  className="border-2 focus:border-primary"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="discord">Discord Handle</Label>
-                <Input
-                  id="discord"
-                  placeholder="username#1234"
-                  value={profile.discord_handle}
-                  onChange={(e) => setProfile({ ...profile, discord_handle: e.target.value })}
-                  className="border-2 focus:border-primary"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="website">Website</Label>
-                <Input
-                  id="website"
-                  type="url"
-                  placeholder="https://yourwebsite.com"
-                  value={profile.website_url}
-                  onChange={(e) => setProfile({ ...profile, website_url: e.target.value })}
-                  className="border-2 focus:border-primary"
-                />
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isSaving}
-              className="w-full btn-hero h-12 text-lg"
+        <Card className="max-w-2xl mx-auto border-border/50 shadow-lg overflow-hidden">
+          {/* Banner Upload */}
+          <div className="relative h-40 bg-muted">
+            {bannerPreview ? (
+              <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10" />
+            )}
+            <Label
+              htmlFor="banner-upload"
+              className="absolute bottom-3 right-3 cursor-pointer px-3 py-1.5 bg-background/80 backdrop-blur-sm hover:bg-background rounded-lg transition-colors flex items-center gap-2 text-sm border border-border/50"
             >
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Save Profile'
-              )}
-            </Button>
-          </form>
+              <Camera className="w-4 h-4" />
+              Change Banner
+            </Label>
+            <Input id="banner-upload" type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
+          </div>
+
+          <div className="p-6 sm:p-8">
+            <h1 className="text-2xl font-bold mb-6 gradient-text">Edit Profile</h1>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Avatar Upload */}
+              <div className="flex items-center gap-5">
+                <Avatar className="w-20 h-20 border-2 border-border">
+                  <AvatarImage src={avatarPreview} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                    <User className="w-8 h-8" />
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <Label
+                    htmlFor="avatar-upload"
+                    className="cursor-pointer px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Change Avatar
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1.5">PNG, JPG (Max 5MB)</p>
+                </div>
+                <Input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+              </div>
+
+              {/* Username */}
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  placeholder="Enter your username"
+                  value={profile.username}
+                  onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+                />
+              </div>
+
+              {/* Bio */}
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  placeholder="Tell us about yourself..."
+                  value={profile.bio}
+                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                  className="min-h-[100px]"
+                />
+              </div>
+
+              {/* Social Links */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-base border-b border-border/50 pb-2">Social Links</h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="twitter" className="flex items-center gap-2">
+                    <Twitter className="w-4 h-4 text-muted-foreground" />
+                    Twitter
+                  </Label>
+                  <Input
+                    id="twitter"
+                    placeholder="@username"
+                    value={profile.twitter_handle}
+                    onChange={(e) => setProfile({ ...profile, twitter_handle: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="instagram" className="flex items-center gap-2">
+                    <Instagram className="w-4 h-4 text-muted-foreground" />
+                    Instagram
+                  </Label>
+                  <Input
+                    id="instagram"
+                    placeholder="@username"
+                    value={profile.instagram_handle}
+                    onChange={(e) => setProfile({ ...profile, instagram_handle: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="discord" className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 text-muted-foreground" />
+                    Discord
+                  </Label>
+                  <Input
+                    id="discord"
+                    placeholder="username#1234"
+                    value={profile.discord_handle}
+                    onChange={(e) => setProfile({ ...profile, discord_handle: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website" className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-muted-foreground" />
+                    Website
+                  </Label>
+                  <Input
+                    id="website"
+                    type="url"
+                    placeholder="https://yourwebsite.com"
+                    value={profile.website_url}
+                    onChange={(e) => setProfile({ ...profile, website_url: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isSaving}
+                className="w-full btn-hero h-12 text-lg"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Profile'
+                )}
+              </Button>
+            </form>
+          </div>
         </Card>
       </div>
     </div>
