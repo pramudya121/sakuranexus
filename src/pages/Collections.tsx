@@ -106,8 +106,8 @@ const CollectionCard = memo(({ collection, onClick }: { collection: Collection; 
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-      {collection.is_verified && (
-        <Badge className="absolute top-3 right-3 bg-blue-500">
+    {collection.is_verified && (
+        <Badge className="absolute top-3 right-3 bg-primary text-primary-foreground">
           <Star className="w-3 h-3 mr-1 fill-current" />
           Verified
         </Badge>
@@ -131,7 +131,7 @@ const CollectionCard = memo(({ collection, onClick }: { collection: Collection; 
         <div>
           <p className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Volume</p>
           <p className="text-base sm:text-xl font-bold flex items-center gap-1">
-            <TrendingUp className="w-3 sm:w-4 h-3 sm:h-4 text-green-500" />
+            <TrendingUp className="w-3 sm:w-4 h-3 sm:h-4 text-primary" />
             {collection.total_volume}
           </p>
         </div>
