@@ -511,18 +511,18 @@ const Analytics = () => {
               {/* Volume Chart */}
               <Card className="border-border/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-primary" />
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                    <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     Swap Volume & Trades
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="px-2 sm:px-6 pb-4">
+                  <ResponsiveContainer width="100%" height={250}>
                     <ComposedChart data={dexData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
+                      <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={10} width={40} />
+                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={10} width={35} />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend />
                       <Bar yAxisId="left" dataKey="swapVolume" fill="hsl(328, 85%, 55%)" name="Volume" radius={[4, 4, 0, 0]} />
