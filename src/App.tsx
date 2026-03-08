@@ -3,7 +3,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import { PageTransition } from "@/components/PageTransition";
 import AIChat from "@/components/AIChat";
 import { AppWrapper } from "@/components/AppWrapper";
 import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton";
@@ -50,6 +52,49 @@ const queryClient = new QueryClient({
   },
 });
 
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Suspense fallback={<PageLoadingSkeleton />} key={location.pathname}>
+        <PageTransition key={location.pathname}>
+          <Routes location={location}>
+            <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/collections" element={<Collections />} />
+            <Route path="/mint" element={<Mint />} />
+            <Route path="/activity" element={<Activity />} />
+            <Route path="/nft/:tokenId" element={<NFTDetail />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/analytics" element={<Analytics />} />
+            
+            <Route path="/auctions" element={<Auctions />} />
+            <Route path="/auction/:auctionId" element={<AuctionDetail />} />
+            <Route path="/my-auctions" element={<MyAuctions />} />
+            <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="/ai-features" element={<AIFeatures />} />
+            <Route path="/guide" element={<Guide />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:walletAddress" element={<Profile />} />
+            <Route path="/profile/edit" element={<EditProfile />} />
+            <Route path="/dex/swap" element={<Swap />} />
+            <Route path="/dex/liquidity" element={<Liquidity />} />
+            <Route path="/dex/pools" element={<Pools />} />
+            <Route path="/dex/staking" element={<Staking />} />
+            <Route path="/dex/history" element={<TransactionHistoryPage />} />
+            <Route path="/dex/pool/:pairAddress" element={<PoolDetail />} />
+            <Route path="/dex/token/:tokenAddress" element={<TokenAnalytics />} />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </PageTransition>
+      </Suspense>
+    </AnimatePresence>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider delayDuration={200}>
@@ -57,39 +102,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AppWrapper>
-          <Suspense fallback={<PageLoadingSkeleton />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="/collections" element={<Collections />} />
-              <Route path="/mint" element={<Mint />} />
-              <Route path="/activity" element={<Activity />} />
-              <Route path="/nft/:tokenId" element={<NFTDetail />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/analytics" element={<Analytics />} />
-              
-              <Route path="/auctions" element={<Auctions />} />
-              <Route path="/auction/:auctionId" element={<AuctionDetail />} />
-              <Route path="/my-auctions" element={<MyAuctions />} />
-              <Route path="/watchlist" element={<Watchlist />} />
-              <Route path="/ai-features" element={<AIFeatures />} />
-              <Route path="/guide" element={<Guide />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/profile/:walletAddress" element={<Profile />} />
-              <Route path="/profile/edit" element={<EditProfile />} />
-              <Route path="/dex/swap" element={<Swap />} />
-              <Route path="/dex/liquidity" element={<Liquidity />} />
-              <Route path="/dex/pools" element={<Pools />} />
-              <Route path="/dex/staking" element={<Staking />} />
-              <Route path="/dex/history" element={<TransactionHistoryPage />} />
-              <Route path="/dex/pool/:pairAddress" element={<PoolDetail />} />
-              <Route path="/dex/token/:tokenAddress" element={<TokenAnalytics />} />
-              
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+          <AnimatedRoutes />
           <AIChat />
           <PriceAlertNotifier />
           <MobileFloatingDock />
