@@ -159,36 +159,36 @@ const Mint = () => {
       <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 px-4 py-1.5">
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+          <div className="text-center mb-8 sm:mb-12">
+            <Badge className="mb-3 sm:mb-4 bg-primary/10 text-primary border-primary/20 px-3 sm:px-4 py-1 sm:py-1.5">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
               Create NFT
             </Badge>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-2 sm:mb-4">
               <span className="gradient-text">Mint Your NFT</span>
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
               Transform your digital art into a unique NFT on NEXUSLABS Testnet
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-8">
             {/* Upload Section */}
             <Card className="border-border/50 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xl">
-                    <Upload className="w-5 h-5 text-primary" />
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-base sm:text-xl">
+                    <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     Upload Artwork
                   </div>
                   <AIArtGenerator onImageGenerated={handleAIImageGenerated} />
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
                 {!preview ? (
-                  <label className="flex flex-col items-center justify-center h-80 sm:h-96 border-2 border-dashed border-border rounded-2xl cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all group">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                      <Upload className="w-8 h-8 text-primary" />
+                  <label className="flex flex-col items-center justify-center h-56 sm:h-80 md:h-96 border-2 border-dashed border-border rounded-2xl cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all group">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                      <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                     </div>
                     <span className="text-lg font-medium mb-1">Click to upload</span>
                     <span className="text-sm text-muted-foreground">PNG, JPG, GIF (Max 10MB)</span>
@@ -231,10 +231,10 @@ const Mint = () => {
 
             {/* Details Section */}
             <Card className="border-border/50 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xl">
-                    <FileText className="w-5 h-5 text-primary" />
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-base sm:text-xl">
+                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     NFT Details
                   </div>
                   {preview && (
@@ -255,7 +255,7 @@ const Mint = () => {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5">
+              <CardContent className="space-y-4 sm:space-y-5 p-4 sm:p-6 pt-0 sm:pt-0">
                 <div>
                   <label className="text-sm font-medium mb-2 block">
                     Name <span className="text-destructive">*</span>
@@ -332,10 +332,10 @@ const Mint = () => {
           </div>
 
           {/* How It Works */}
-          <Card className="mt-8 border-border/50">
-            <CardContent className="p-6 sm:p-8">
-              <h3 className="text-2xl font-bold mb-6 gradient-text">How Minting Works</h3>
-              <div className="grid sm:grid-cols-3 gap-6">
+          <Card className="mt-6 sm:mt-8 border-border/50">
+            <CardContent className="p-4 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 gradient-text">How Minting Works</h3>
+              <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
                 {[
                   { icon: Image, title: 'Upload Image', desc: 'Your image is securely uploaded to decentralized storage', step: 1 },
                   { icon: FileText, title: 'Create Metadata', desc: 'NFT metadata is generated with your name and description', step: 2 },

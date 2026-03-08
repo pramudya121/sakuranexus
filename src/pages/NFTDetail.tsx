@@ -262,9 +262,9 @@ const NFTDetail = () => {
           Back
         </Button>
 
-        <div className="grid lg:grid-cols-5 gap-8">
+        <div className="grid lg:grid-cols-5 gap-4 sm:gap-8">
           {/* Image Section - 3 cols */}
-          <div className="lg:col-span-3 space-y-4">
+          <div className="lg:col-span-3 space-y-3 sm:space-y-4">
             <Card className="overflow-hidden border-border/50">
               <CardContent className="p-0">
                 <div className="aspect-square bg-muted/30 relative">
@@ -274,7 +274,7 @@ const NFTDetail = () => {
                     className="w-full h-full object-cover"
                   />
                   {listing && (
-                    <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground border-0 shadow-lg text-sm px-3 py-1">
+                    <Badge className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-primary text-primary-foreground border-0 shadow-lg text-xs sm:text-sm px-2 sm:px-3 py-1">
                       For Sale
                     </Badge>
                   )}
@@ -283,39 +283,39 @@ const NFTDetail = () => {
             </Card>
 
             {/* Quick Info Cards */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <Card className="border-border/50">
-                <CardContent className="p-4 text-center">
-                  <Hash className="w-5 h-5 mx-auto text-primary mb-1" />
-                  <p className="text-xs text-muted-foreground">Token ID</p>
-                  <p className="font-bold text-lg">#{nft.token_id}</p>
+                <CardContent className="p-2.5 sm:p-4 text-center">
+                  <Hash className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-primary mb-1" />
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Token ID</p>
+                  <p className="font-bold text-sm sm:text-lg">#{nft.token_id}</p>
                 </CardContent>
               </Card>
               <Card className="border-border/50">
-                <CardContent className="p-4 text-center">
-                  <Tag className="w-5 h-5 mx-auto text-primary mb-1" />
-                  <p className="text-xs text-muted-foreground">Offers</p>
-                  <p className="font-bold text-lg">{offers.length}</p>
+                <CardContent className="p-2.5 sm:p-4 text-center">
+                  <Tag className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-primary mb-1" />
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Offers</p>
+                  <p className="font-bold text-sm sm:text-lg">{offers.length}</p>
                 </CardContent>
               </Card>
               <Card className="border-border/50">
-                <CardContent className="p-4 text-center">
-                  <Activity className="w-5 h-5 mx-auto text-primary mb-1" />
-                  <p className="text-xs text-muted-foreground">Trades</p>
-                  <p className="font-bold text-lg">{activities.length}</p>
+                <CardContent className="p-2.5 sm:p-4 text-center">
+                  <Activity className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-primary mb-1" />
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Trades</p>
+                  <p className="font-bold text-sm sm:text-lg">{activities.length}</p>
                 </CardContent>
               </Card>
             </div>
           </div>
 
           {/* Details Section - 2 cols */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Main Info Card */}
             <Card className="border-border/50">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
                   <div className="flex-1 min-w-0">
-                    <h1 className="text-3xl font-bold mb-1 truncate">{nft.name}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-1 truncate">{nft.name}</h1>
                     <p className="text-sm text-muted-foreground font-mono">Token #{nft.token_id}</p>
                   </div>
                   <SocialShareMenu
@@ -498,7 +498,7 @@ const NFTDetail = () => {
         {/* Tabs */}
         <div className="mt-8">
           <Tabs defaultValue="activity" className="w-full">
-            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-6">
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-4 sm:mb-6 h-auto">
               <TabsTrigger value="activity" className="gap-1.5">
                 <Activity className="w-4 h-4" />
                 <span className="hidden sm:inline">Activity</span>
@@ -581,15 +581,16 @@ const NFTDetail = () => {
                     </div>
                   ) : (
                     <>
-                      <div className="h-[300px] w-full">
+                      <div className="h-[220px] sm:h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={priceHistory}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
                             <YAxis 
                               stroke="hsl(var(--muted-foreground))" 
-                              fontSize={12}
-                              label={{ value: 'Price (NEX)', angle: -90, position: 'insideLeft' }}
+                              fontSize={10}
+                              width={45}
+                              label={{ value: 'NEX', angle: -90, position: 'insideLeft', style: { fontSize: 10 } }}
                             />
                             <Tooltip 
                               contentStyle={{ 
@@ -609,22 +610,22 @@ const NFTDetail = () => {
                         </ResponsiveContainer>
                       </div>
                       
-                      <div className="grid grid-cols-3 gap-4 mt-6">
-                        <div className="p-4 rounded-xl bg-muted/50 text-center">
-                          <div className="text-xs text-muted-foreground mb-1">Total Sales</div>
-                          <div className="text-2xl font-bold">{priceHistory.length}</div>
+                      <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-6">
+                        <div className="p-2.5 sm:p-4 rounded-xl bg-muted/50 text-center">
+                          <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">Total Sales</div>
+                          <div className="text-lg sm:text-2xl font-bold">{priceHistory.length}</div>
                         </div>
-                        <div className="p-4 rounded-xl bg-muted/50 text-center">
-                          <div className="text-xs text-muted-foreground mb-1">Avg Price</div>
-                          <div className="text-2xl font-bold">
+                        <div className="p-2.5 sm:p-4 rounded-xl bg-muted/50 text-center">
+                          <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">Avg Price</div>
+                          <div className="text-lg sm:text-2xl font-bold">
                             {(priceHistory.reduce((sum, p) => sum + p.price, 0) / priceHistory.length).toFixed(2)}
                           </div>
-                          <div className="text-xs text-muted-foreground">NEX</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">NEX</div>
                         </div>
-                        <div className="p-4 rounded-xl bg-muted/50 text-center">
-                          <div className="text-xs text-muted-foreground mb-1">Last Sale</div>
-                          <div className="text-2xl font-bold">{priceHistory[0]?.price.toFixed(2)}</div>
-                          <div className="text-xs text-muted-foreground">NEX</div>
+                        <div className="p-2.5 sm:p-4 rounded-xl bg-muted/50 text-center">
+                          <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">Last Sale</div>
+                          <div className="text-lg sm:text-2xl font-bold">{priceHistory[0]?.price.toFixed(2)}</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">NEX</div>
                         </div>
                       </div>
                     </>

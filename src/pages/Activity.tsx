@@ -231,16 +231,16 @@ const Activity = () => {
 
       <div className="container mx-auto px-4 pt-24 pb-12">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold gradient-text mb-4">Activity Feed</h1>
-          <p className="text-muted-foreground text-lg">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-5xl font-bold gradient-text mb-2 sm:mb-4">Activity Feed</h1>
+          <p className="text-muted-foreground text-sm sm:text-lg">
             Real-time activity across the marketplace
           </p>
         </div>
 
         {/* Filters */}
-        <Card className="p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-3 sm:p-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -309,15 +309,15 @@ const Activity = () => {
               
               return (
                 <Card key={activity.id} className="card-hover overflow-hidden">
-                  <div className="flex items-center gap-4 p-4">
+                  <div className="flex items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4">
                     {/* Icon */}
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${getActivityColor(activity.activity_type)}`}>
+                    <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ${getActivityColor(activity.activity_type)}`}>
                       {getActivityIcon(activity.activity_type)}
                     </div>
 
-                    {/* NFT Image */}
+                    {/* NFT Image - hidden on very small screens */}
                     {activity.nfts && (
-                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted">
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-muted shrink-0 hidden xs:block">
                         <img
                           src={activity.nfts.image_url}
                           alt={activity.nfts.name}
@@ -328,21 +328,28 @@ const Activity = () => {
 
                     {/* Activity Details */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-lg">{activityText.title}</p>
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="font-bold text-sm sm:text-lg">{activityText.title}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {activityText.description}
                       </p>
                       {activity.from_address && activity.to_address && (
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mt-1 text-[10px] sm:text-xs text-muted-foreground">
                           <span>{formatAddress(activity.from_address)}</span>
-                          <ArrowRight className="w-3 h-3" />
+                          <ArrowRight className="w-3 h-3 shrink-0" />
                           <span>{formatAddress(activity.to_address)}</span>
                         </div>
                       )}
+                      {/* Price inline on mobile */}
+                      <div className="flex items-center gap-2 mt-1 sm:hidden">
+                        {activity.price && (
+                          <span className="font-bold gradient-text text-sm">{activity.price} NEX</span>
+                        )}
+                        <span className="text-[10px] text-muted-foreground">{formatTime(activity.created_at)}</span>
+                      </div>
                     </div>
 
-                    {/* Price & Time */}
-                    <div className="text-right">
+                    {/* Price & Time - desktop */}
+                    <div className="text-right hidden sm:block shrink-0">
                       {activity.price && (
                         <p className="font-bold gradient-text text-lg mb-1">
                           {activity.price} NEX
