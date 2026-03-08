@@ -211,7 +211,7 @@ const Analytics = () => {
               {suffix}
             </div>
             {change !== undefined && (
-              <div className={`flex items-center gap-1 text-xs mt-1 ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              <div className={`flex items-center gap-1 text-xs mt-1 ${change >= 0 ? 'text-primary' : 'text-destructive'}`}>
                 {change >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                 {Math.abs(change).toFixed(1)}%
               </div>

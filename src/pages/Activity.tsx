@@ -191,7 +191,7 @@ const Activity = () => {
   const getActivityColor = (type: string) => {
     switch (type) {
       case 'mint':
-        return 'bg-gradient-sakura text-white';
+        return 'bg-primary text-primary-foreground';
       case 'list':
         return 'bg-accent text-accent-foreground';
       case 'sale':
@@ -218,14 +218,14 @@ const Activity = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-sakura-soft">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-sakura-soft">
+    <div className="min-h-screen bg-background">
       <SakuraFalling />
       <Navigation />
 
@@ -292,7 +292,9 @@ const Activity = () => {
         {/* Activity List */}
         {filteredActivities.length === 0 ? (
           <div className="text-center py-20">
-            <div className="text-6xl mb-4">📭</div>
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-muted-foreground" />
+            </div>
             <h3 className="text-2xl font-bold mb-2">No Activities Found</h3>
             <p className="text-muted-foreground">
               {searchQuery || filterType !== 'all' 
@@ -315,7 +317,7 @@ const Activity = () => {
 
                     {/* NFT Image */}
                     {activity.nfts && (
-                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gradient-sakura-soft">
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted">
                         <img
                           src={activity.nfts.image_url}
                           alt={activity.nfts.name}
