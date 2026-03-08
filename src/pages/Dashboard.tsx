@@ -184,7 +184,7 @@ const Dashboard = memo(function Dashboard() {
               {isLoading ? (
                 <Skeleton className="h-8 w-24 mt-3" />
               ) : (
-                <p className="text-2xl font-bold mt-3">
+                <p className="text-lg sm:text-2xl font-bold mt-2 sm:mt-3">
                   {stats.totalVolume7d > 0 
                     ? <><NumberTicker value={stats.totalVolume7d} /> NEX</>
                     : '$0.00'
