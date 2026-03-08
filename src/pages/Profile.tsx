@@ -613,15 +613,17 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Edit Button */}
-            <Button
-              onClick={() => navigate('/profile/edit')}
-              variant="outline"
-              className="md:mb-4"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Profile
-            </Button>
+            {/* Edit Button - only show on own profile */}
+            {isOwnProfile && (
+              <Button
+                onClick={() => navigate('/profile/edit')}
+                variant="outline"
+                className="md:mb-4"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Profile
+              </Button>
+            )}
           </div>
         </div>
 
