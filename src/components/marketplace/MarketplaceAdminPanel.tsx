@@ -29,6 +29,7 @@ import {
 
 const MarketplaceAdminPanel = () => {
   const [isOwner, setIsOwner] = useState(false);
+  const [ownerChecked, setOwnerChecked] = useState(false);
   const [ownerAddress, setOwnerAddress] = useState<string | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,11 +45,44 @@ const MarketplaceAdminPanel = () => {
   const [updatingFee, setUpdatingFee] = useState(false);
   const [updatingRecipient, setUpdatingRecipient] = useState(false);
 
+  // Check ownership on mount to decide visibility
+  useEffect(() => {
+    checkOwnershipSilent();
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       checkOwnership();
     }
   }, [isOpen]);
+
+  const checkOwnershipSilent = async () => {
+    try {
+      if (typeof window.ethereum === 'undefined') {
+        setOwnerChecked(true);
+        return;
+      }
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (accounts.length === 0) {
+        setOwnerChecked(true);
+        return;
+      }
+      const userAddress = accounts[0].toLowerCase();
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const code = await provider.getCode(CONTRACTS.Marketplace);
+      if (code === '0x' || code === '0x0') {
+        setOwnerChecked(true);
+        return;
+      }
+      const marketplaceContract = new ethers.Contract(CONTRACTS.Marketplace, MARKETPLACE_ABI, provider);
+      const owner = await marketplaceContract.owner();
+      setIsOwner(userAddress === owner.toLowerCase());
+    } catch {
+      // silently fail
+    } finally {
+      setOwnerChecked(true);
+    }
+  };
 
   const checkOwnership = async () => {
     setLoading(true);
