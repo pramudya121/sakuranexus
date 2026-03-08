@@ -95,7 +95,7 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
           </div>
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in-up stagger-3">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in-up stagger-3 px-2">
             The premier NFT marketplace and decentralized exchange on Nexus blockchain.
             Experience the beauty of{" "}
             <span className="text-primary font-medium">Sakura</span> while trading.
