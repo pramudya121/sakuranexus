@@ -481,13 +481,15 @@ const Profile = () => {
 
   if (!viewingAddress && !account) {
     return (
-      <div className="min-h-screen bg-gradient-sakura-soft">
+      <div className="min-h-screen bg-background">
         <SakuraFalling />
         <Navigation />
         
         <div className="container mx-auto px-4 pt-24 pb-12">
           <div className="text-center py-20">
-            <div className="text-6xl mb-4">🔒</div>
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Wallet className="w-10 h-10 text-primary" />
+            </div>
             <h3 className="text-2xl font-bold mb-2">Connect Your Wallet</h3>
             <p className="text-muted-foreground">
               Please connect your wallet to view your profile
