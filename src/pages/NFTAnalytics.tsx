@@ -434,7 +434,7 @@ const NFTAnalytics = () => {
                           <td className="p-4">
                             {idx < 3 ? (
                               <Badge variant={idx === 0 ? 'default' : 'secondary'} className={
-                                idx === 0 ? 'bg-yellow-500' : idx === 1 ? 'bg-gray-400' : 'bg-amber-600'
+                                idx === 0 ? 'bg-primary text-primary-foreground' : idx === 1 ? 'bg-muted-foreground text-background' : 'bg-accent text-accent-foreground'
                               }>
                                 #{idx + 1}
                               </Badge>
