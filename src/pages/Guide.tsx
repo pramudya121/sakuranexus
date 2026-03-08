@@ -248,32 +248,32 @@ const Guide = () => {
         </section>
 
         {/* Feature Guides */}
-        <section className="mb-16 animate-fade-in-up stagger-2">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary" />
+        <section className="mb-10 sm:mb-16 animate-fade-in-up stagger-2">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-5 sm:mb-8">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <h2 className="text-3xl font-bold">Panduan Fitur</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">Panduan Fitur</h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {guides.map((guide, idx) => (
               <Card
                 key={idx}
                 className="group border border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/30 transition-all duration-300 overflow-hidden"
               >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-5">
-                    <h3 className="text-xl font-bold">{guide.title}</h3>
-                    <Badge variant="secondary" className="text-xs">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between mb-3 sm:mb-5">
+                    <h3 className="text-base sm:text-xl font-bold">{guide.title}</h3>
+                    <Badge variant="secondary" className="text-[10px] sm:text-xs">
                       {guide.steps.length} langkah
                     </Badge>
                   </div>
 
-                  <ol className="space-y-3 mb-6">
+                  <ol className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                     {guide.steps.map((step, i) => (
-                      <li key={i} className="flex gap-3 items-start text-sm">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+                      <li key={i} className="flex gap-2 sm:gap-3 items-start text-xs sm:text-sm">
+                        <span className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold flex items-center justify-center mt-0.5">
                           {i + 1}
                         </span>
                         <span className="text-muted-foreground leading-relaxed">{step}</span>
@@ -283,7 +283,7 @@ const Guide = () => {
 
                   <Button
                     onClick={() => navigate(guide.cta.path)}
-                    className="w-full btn-hero gap-2"
+                    className="w-full btn-hero gap-2 h-9 sm:h-10 text-sm"
                   >
                     {guide.cta.label}
                     <ChevronRight className="w-4 h-4" />
