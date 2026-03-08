@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { getSakuraNFTContract, getSakuraMarketplaceContract, getOfferContract, parsePrice, formatPrice } from './wallet';
+import { getSakuraNFTContract, getSakuraMarketplaceContract, getOfferContract, parsePrice, formatPrice, withRetry } from './wallet';
 import { supabase } from '@/integrations/supabase/client';
 import { CONTRACTS } from './config';
 
@@ -51,14 +51,19 @@ export const mintNFT = async (
     // 2. Create metadata (simple metadata with just the image URL)
     const metadataUri = imageUrl;
 
-    // 3. Get contract and mint
+    // 3. Get contract and mint with retry logic for RPC rate limits
     const contract = await getSakuraNFTContract();
     if (!contract) {
-      return { success: false, error: 'Failed to connect to contract' };
+      return { success: false, error: 'Failed to connect to contract. Make sure your wallet is connected.' };
     }
 
-    const tx = await contract.mintNFT(ownerAddress, metadataUri);
-    const receipt = await tx.wait();
+    const tx = await withRetry(async () => {
+      return await contract.mintNFT(ownerAddress, metadataUri);
+    }, 3, 3000);
+    
+    const receipt = await withRetry(async () => {
+      return await tx.wait();
+    }, 2, 5000);
 
     // Get tokenId from event
     const mintedEvent = receipt.logs.find((log: any) => {

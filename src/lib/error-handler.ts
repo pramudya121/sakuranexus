@@ -57,6 +57,18 @@ const WEB3_ERRORS: Record<string, ParsedError> = {
     code: 'NETWORK_ERROR',
     recoverable: true,
   },
+  'too many errors': {
+    title: 'RPC Rate Limited',
+    message: 'The blockchain node is busy. Please wait a moment and try again',
+    code: 'RPC_RATE_LIMIT',
+    recoverable: true,
+  },
+  'too many requests': {
+    title: 'Too Many Requests',
+    message: 'Please slow down and try again in a few seconds',
+    code: 'RATE_LIMIT',
+    recoverable: true,
+  },
   'timeout': {
     title: 'Request Timeout',
     message: 'The request took too long. Please try again',

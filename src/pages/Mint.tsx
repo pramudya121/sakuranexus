@@ -120,16 +120,24 @@ const Mint = () => {
           navigate('/profile');
         }, 2000);
       } else {
+        const errorMsg = result.error || 'Failed to mint NFT';
+        const isRateLimit = errorMsg.toLowerCase().includes('too many') || errorMsg.toLowerCase().includes('rate');
         toast({
-          title: 'Minting Failed',
-          description: result.error || 'Failed to mint NFT',
+          title: isRateLimit ? 'RPC Rate Limited' : 'Minting Failed',
+          description: isRateLimit 
+            ? 'The blockchain node is busy. Please wait 30 seconds and try again.' 
+            : errorMsg,
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      const errorMsg = (error?.message || '').toLowerCase();
+      const isRateLimit = errorMsg.includes('too many') || errorMsg.includes('rate');
       toast({
-        title: 'Error',
-        description: 'An error occurred during minting',
+        title: isRateLimit ? 'RPC Overloaded' : 'Error',
+        description: isRateLimit
+          ? 'The RPC endpoint is rate-limiting requests. Please wait 30 seconds and try again.'
+          : 'An error occurred during minting',
         variant: 'destructive',
       });
     } finally {
