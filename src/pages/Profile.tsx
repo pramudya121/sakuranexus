@@ -650,7 +650,7 @@ const Profile = () => {
                   <p className="text-xs sm:text-sm text-muted-foreground mb-1">Created</p>
                   <p className="text-xl sm:text-2xl font-bold">{stats.totalCreated}</p>
                 </div>
-                <Eye className="w-8 h-8 text-accent/50" />
+                <Eye className="w-6 h-6 sm:w-8 sm:h-8 text-accent/50" />
               </div>
             </CardContent>
           </Card>
