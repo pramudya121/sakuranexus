@@ -214,32 +214,32 @@ const Guide = () => {
       <SakuraFalling />
       <Navigation />
 
-      <div className="container mx-auto px-4 pt-24 pb-16 relative z-10">
+      <div className="container mx-auto px-4 pt-20 sm:pt-24 pb-12 sm:pb-16 relative z-10">
         {/* Hero */}
-        <div className="text-center mb-16 animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-6">
-            <BookOpen className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Panduan Pengguna</span>
+        <div className="text-center mb-10 sm:mb-16 animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-4 sm:mb-6">
+            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+            <span className="text-xs sm:text-sm font-medium text-primary">Panduan Pengguna</span>
           </div>
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6">
             <span className="gradient-text">Panduan & FAQ</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Pelajari cara menggunakan NexusLabs NFT Marketplace dari awal hingga mahir
           </p>
         </div>
 
         {/* Getting Started */}
-        <section className="mb-16 animate-fade-in-up stagger-1">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Rocket className="w-5 h-5 text-primary" />
+        <section className="mb-10 sm:mb-16 animate-fade-in-up stagger-1">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-5 sm:mb-8">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+              <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <h2 className="text-3xl font-bold">Mulai Dari Sini</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">Mulai Dari Sini</h2>
           </div>
 
           <Card className="border border-primary/10 bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-8 space-y-8">
+            <CardContent className="p-4 sm:p-8 space-y-5 sm:space-y-8">
               {gettingStartedSteps.map((step) => (
                 <Step key={step.number} {...step} />
               ))}
