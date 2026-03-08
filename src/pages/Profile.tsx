@@ -644,11 +644,11 @@ const Profile = () => {
           </Card>
 
           <Card className="card-hover">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Created</p>
-                  <p className="text-2xl font-bold">{stats.totalCreated}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Created</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.totalCreated}</p>
                 </div>
                 <Eye className="w-8 h-8 text-accent/50" />
               </div>
