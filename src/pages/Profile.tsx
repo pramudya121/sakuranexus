@@ -514,7 +514,7 @@ const Profile = () => {
       <Navigation />
       
       {/* Banner Section */}
-      <div className="relative h-64 bg-gradient-hero overflow-hidden">
+      <div className="relative h-56 sm:h-64 overflow-hidden">
         {userProfile?.banner_url ? (
           <img 
             src={userProfile.banner_url} 
