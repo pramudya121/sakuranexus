@@ -355,14 +355,14 @@ const Analytics = () => {
                     Sales & Mints
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="px-2 sm:px-6 pb-4">
+                  <ResponsiveContainer width="100%" height={250}>
                     <ComposedChart data={analyticsData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} width={40} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
+                      <Legend wrapperStyle={{ fontSize: '11px' }} />
                       <Bar dataKey="sales" fill="hsl(328, 85%, 55%)" name="Sales" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="mints" fill="hsl(260, 70%, 60%)" name="Mints" radius={[4, 4, 0, 0]} />
                       <Line type="monotone" dataKey="avgPrice" stroke="hsl(140, 60%, 50%)" strokeWidth={2} name="Avg Price" dot={false} />
