@@ -191,7 +191,7 @@ const Activity = () => {
   const getActivityColor = (type: string) => {
     switch (type) {
       case 'mint':
-        return 'bg-gradient-sakura text-white';
+        return 'bg-primary text-primary-foreground';
       case 'list':
         return 'bg-accent text-accent-foreground';
       case 'sale':
