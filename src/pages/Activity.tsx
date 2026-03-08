@@ -317,7 +317,7 @@ const Activity = () => {
 
                     {/* NFT Image */}
                     {activity.nfts && (
-                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gradient-sakura-soft">
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted">
                         <img
                           src={activity.nfts.image_url}
                           alt={activity.nfts.name}

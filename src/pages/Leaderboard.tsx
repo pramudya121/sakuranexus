@@ -155,7 +155,7 @@ const Leaderboard = () => {
 
           <TabsContent value="valuable" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {valuableNFTs.map((listing, index) => (
-              <Card key={listing.id} className="overflow-hidden glass hover:shadow-sakura transition-all">
+              <Card key={listing.id} className="overflow-hidden border-border/50 hover:shadow-md transition-all">
                 <div className="relative">
                   <div className="absolute top-2 left-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold">
                     #{index + 1}
