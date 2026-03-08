@@ -37,6 +37,7 @@ const AuctionDetail = lazy(() => import("./pages/AuctionDetail"));
 const MyAuctions = lazy(() => import("./pages/MyAuctions"));
 const Watchlist = lazy(() => import("./pages/Watchlist"));
 const AIFeatures = lazy(() => import("./pages/AIFeatures"));
+const Guide = lazy(() => import("./pages/Guide"));
 // Optimized QueryClient with aggressive caching
 const queryClient = new QueryClient({
   defaultOptions: {
