@@ -245,23 +245,23 @@ const Analytics = () => {
       <SakuraFalling />
       <Navigation />
       
-      <div className="container mx-auto px-4 pt-24 pb-12">
-        {/* Hero Section with Glowing Stars */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <BarChart3 className="w-4 h-4" />
+      <div className="container mx-auto px-4 pt-20 sm:pt-24 pb-12">
+        {/* Hero Section */}
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-3 sm:mb-4">
+            <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             ANALYTICS
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-3">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 sm:mb-3">
             <span className="gradient-text">Platform Analytics</span>
           </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
             Comprehensive insights for NFT marketplace and DEX performance
           </p>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="flex items-center bg-muted rounded-lg p-1">
             {(['7d', '30d', '90d'] as const).map((range) => (
               <Button
@@ -269,9 +269,9 @@ const Analytics = () => {
                 variant={timeRange === range ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setTimeRange(range)}
-                className="rounded-md"
+                className="rounded-md text-xs sm:text-sm px-3 sm:px-4"
               >
-                {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
+                {range === '7d' ? '7D' : range === '30d' ? '30D' : '90D'}
               </Button>
             ))}
           </div>
@@ -287,8 +287,8 @@ const Analytics = () => {
           </Button>
         </div>
 
-        {/* Stats Grid with BorderBeam */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <StatCard icon={ShoppingCart} title="Sales" value={stats.totalSales} change={stats.salesChange} showBeam />
           <StatCard icon={TrendingUp} title="Volume" value={stats.totalVolume} suffix=" NEX" change={stats.volumeChange} showBeam />
           <StatCard icon={Package} title="Mints" value={stats.totalMints} showBeam />
