@@ -231,9 +231,9 @@ const Activity = () => {
 
       <div className="container mx-auto px-4 pt-24 pb-12">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold gradient-text mb-4">Activity Feed</h1>
-          <p className="text-muted-foreground text-lg">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-5xl font-bold gradient-text mb-2 sm:mb-4">Activity Feed</h1>
+          <p className="text-muted-foreground text-sm sm:text-lg">
             Real-time activity across the marketplace
           </p>
         </div>
