@@ -177,7 +177,7 @@ const Dashboard = memo(function Dashboard() {
                 <div className="p-2 rounded-lg bg-primary/10">
                   <DollarSign className="w-5 h-5 text-primary" />
                 </div>
-                <Badge variant="outline" className="text-green-500 border-green-500/30 bg-green-500/10">
+                <Badge variant="outline" className="text-primary border-primary/30 bg-primary/10">
                   7D
                 </Badge>
               </div>
