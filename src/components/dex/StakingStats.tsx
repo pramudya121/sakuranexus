@@ -141,8 +141,8 @@ const StakingStats = ({ refreshTrigger }: StakingStatsProps = {}) => {
       label: 'Active Pools',
       value: `${stats.activePools}/${stats.totalPools}`,
       icon: Coins,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
     },
     {
       label: 'Highest APR',
@@ -155,8 +155,8 @@ const StakingStats = ({ refreshTrigger }: StakingStatsProps = {}) => {
       label: 'Total Tokens',
       value: DEFAULT_TOKENS.length.toString(),
       icon: BarChart3,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-500/10',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
     },
   ];
 
