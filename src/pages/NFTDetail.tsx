@@ -498,7 +498,7 @@ const NFTDetail = () => {
         {/* Tabs */}
         <div className="mt-8">
           <Tabs defaultValue="activity" className="w-full">
-            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-6">
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-4 sm:mb-6 h-auto">
               <TabsTrigger value="activity" className="gap-1.5">
                 <Activity className="w-4 h-4" />
                 <span className="hidden sm:inline">Activity</span>
