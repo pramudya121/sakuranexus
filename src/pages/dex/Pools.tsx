@@ -179,7 +179,7 @@ const Pools = memo(() => {
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[150px] animate-pulse-soft" />
-        <div className="absolute bottom-20 right-10 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[120px] animate-pulse-soft" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-20 right-10 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[120px] animate-pulse-soft" style={{ animationDelay: '2s' }} />
       </div>
 
       <SakuraFalling />
@@ -226,24 +226,24 @@ const Pools = memo(() => {
 
         {/* Large Stats Cards */}
         <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardContent className="p-5">
               <div className="text-sm text-muted-foreground mb-1">Total Value Locked</div>
-              <div className="text-3xl md:text-4xl font-bold text-green-400">{formatLargeNumber(totalTVL)}</div>
+              <div className="text-3xl md:text-4xl font-bold text-primary">{formatLargeNumber(totalTVL)}</div>
               <div className="text-xs text-muted-foreground mt-1">From all active reserves</div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+          <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20">
             <CardContent className="p-5">
               <div className="text-sm text-muted-foreground mb-1">24h Volume</div>
-              <div className="text-3xl md:text-4xl font-bold text-blue-400">{formatLargeNumber(totalVolume)}</div>
+              <div className="text-3xl md:text-4xl font-bold text-accent">{formatLargeNumber(totalVolume)}</div>
               <div className="text-xs text-muted-foreground mt-1">Estimated from TVL</div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+          <Card className="bg-gradient-to-br from-secondary to-secondary/50 border-border">
             <CardContent className="p-5">
               <div className="text-sm text-muted-foreground mb-1">Average APY</div>
-              <div className="text-3xl md:text-4xl font-bold text-purple-400">{avgAPR.toFixed(2)}%</div>
+              <div className="text-3xl md:text-4xl font-bold text-foreground">{avgAPR.toFixed(2)}%</div>
               <div className="text-xs text-muted-foreground mt-1">Based on trading fees</div>
             </CardContent>
           </Card>
