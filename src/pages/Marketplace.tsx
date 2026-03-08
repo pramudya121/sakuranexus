@@ -384,9 +384,9 @@ const Marketplace = memo(function Marketplace() {
           <div className="lg:col-span-9 order-1 lg:order-2">
             {/* Search and Filters - Redesigned */}
             <div className="mb-8 space-y-4">
-              <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                 {/* Search Input */}
-                <div className="relative flex-1 min-w-[280px]">
+                <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     placeholder="Search NFTs by name or ID..."
