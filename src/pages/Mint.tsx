@@ -231,10 +231,10 @@ const Mint = () => {
 
             {/* Details Section */}
             <Card className="border-border/50 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xl">
-                    <FileText className="w-5 h-5 text-primary" />
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-base sm:text-xl">
+                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     NFT Details
                   </div>
                   {preview && (
