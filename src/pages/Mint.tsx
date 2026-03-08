@@ -184,11 +184,11 @@ const Mint = () => {
                   <AIArtGenerator onImageGenerated={handleAIImageGenerated} />
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
                 {!preview ? (
-                  <label className="flex flex-col items-center justify-center h-80 sm:h-96 border-2 border-dashed border-border rounded-2xl cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all group">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                      <Upload className="w-8 h-8 text-primary" />
+                  <label className="flex flex-col items-center justify-center h-56 sm:h-80 md:h-96 border-2 border-dashed border-border rounded-2xl cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all group">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                      <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                     </div>
                     <span className="text-lg font-medium mb-1">Click to upload</span>
                     <span className="text-sm text-muted-foreground">PNG, JPG, GIF (Max 10MB)</span>
