@@ -4,7 +4,6 @@ import SakuraFalling from '@/components/SakuraFalling';
 import SwapBox from '@/components/dex/SwapBox';
 import DEXNavigation from '@/components/dex/DEXNavigation';
 import TradingChart from '@/components/dex/TradingChart';
-import RealTimePriceBar from '@/components/dex/RealTimePriceBar';
 import GasEstimator from '@/components/dex/GasEstimator';
 import { useTokenPrice } from '@/hooks/usePriceWebSocket';
 import { 
