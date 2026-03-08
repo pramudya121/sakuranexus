@@ -199,10 +199,10 @@ const Dashboard = memo(function Dashboard() {
             <BorderBeam size={80} duration={10} delay={2} />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Activity className="w-5 h-5 text-blue-500" />
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <Activity className="w-5 h-5 text-accent" />
                 </div>
-                <Badge variant="outline" className="text-blue-500 border-blue-500/30 bg-blue-500/10">
+                <Badge variant="outline" className="text-accent border-accent/30 bg-accent/10">
                   Total
                 </Badge>
               </div>
