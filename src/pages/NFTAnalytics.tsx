@@ -192,7 +192,7 @@ const NFTAnalytics = () => {
           </div>
         </div>
         {change !== undefined && !isLoading && (
-          <div className={`flex items-center gap-1 mt-2 text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+          <div className={`flex items-center gap-1 mt-2 text-sm ${change >= 0 ? 'text-primary' : 'text-destructive'}`}>
             {change >= 0 ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             <span>{Math.abs(change).toFixed(1)}%</span>
             <span className="text-muted-foreground">vs last period</span>
@@ -434,7 +434,7 @@ const NFTAnalytics = () => {
                           <td className="p-4">
                             {idx < 3 ? (
                               <Badge variant={idx === 0 ? 'default' : 'secondary'} className={
-                                idx === 0 ? 'bg-yellow-500' : idx === 1 ? 'bg-gray-400' : 'bg-amber-600'
+                                idx === 0 ? 'bg-primary text-primary-foreground' : idx === 1 ? 'bg-muted-foreground text-background' : 'bg-accent text-accent-foreground'
                               }>
                                 #{idx + 1}
                               </Badge>
@@ -478,7 +478,7 @@ const NFTAnalytics = () => {
                           <td className="p-4">
                             {idx < 3 ? (
                               <Badge variant={idx === 0 ? 'default' : 'secondary'} className={
-                                idx === 0 ? 'bg-yellow-500' : idx === 1 ? 'bg-gray-400' : 'bg-amber-600'
+                                idx === 0 ? 'bg-primary text-primary-foreground' : idx === 1 ? 'bg-muted-foreground text-background' : 'bg-accent text-accent-foreground'
                               }>
                                 #{idx + 1}
                               </Badge>
@@ -524,7 +524,7 @@ const NFTAnalytics = () => {
                           <td className="p-4 text-right">{collection.floor} NEX</td>
                           <td className="p-4 text-right font-semibold">{collection.volume24h} NEX</td>
                           <td className="p-4 text-right">
-                            <span className={collection.change >= 0 ? 'text-green-500' : 'text-red-500'}>
+                            <span className={collection.change >= 0 ? 'text-primary' : 'text-destructive'}>
                               {collection.change >= 0 ? '+' : ''}{collection.change}%
                             </span>
                           </td>
