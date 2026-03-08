@@ -309,13 +309,13 @@ const NFTDetail = () => {
           </div>
 
           {/* Details Section - 2 cols */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Main Info Card */}
             <Card className="border-border/50">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
                   <div className="flex-1 min-w-0">
-                    <h1 className="text-3xl font-bold mb-1 truncate">{nft.name}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-1 truncate">{nft.name}</h1>
                     <p className="text-sm text-muted-foreground font-mono">Token #{nft.token_id}</p>
                   </div>
                   <SocialShareMenu
