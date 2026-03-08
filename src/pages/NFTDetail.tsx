@@ -585,11 +585,12 @@ const NFTDetail = () => {
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={priceHistory}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
                             <YAxis 
                               stroke="hsl(var(--muted-foreground))" 
-                              fontSize={12}
-                              label={{ value: 'Price (NEX)', angle: -90, position: 'insideLeft' }}
+                              fontSize={10}
+                              width={45}
+                              label={{ value: 'NEX', angle: -90, position: 'insideLeft', style: { fontSize: 10 } }}
                             />
                             <Tooltip 
                               contentStyle={{ 
