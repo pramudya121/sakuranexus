@@ -191,28 +191,28 @@ const Analytics = () => {
     <Card className="relative overflow-hidden group hover:shadow-elegant transition-all duration-300 border-border/50">
       {showBeam && <BorderBeam size={100} duration={12} delay={0} />}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Icon className="w-4 h-4 text-primary" />
+      <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+        <CardTitle className="text-[11px] sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
+          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
           </div>
-          {title}
+          <span className="truncate">{title}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
         <div className="flex items-end justify-between">
-          <div>
-            <div className="text-2xl font-bold">
+          <div className="min-w-0">
+            <div className="text-lg sm:text-2xl font-bold truncate">
               {typeof value === 'number' ? (
                 <NumberTicker value={value} duration={1500} />
               ) : (
                 value
               )}
-              {suffix}
+              {suffix && <span className="text-xs sm:text-sm text-muted-foreground ml-0.5">{suffix}</span>}
             </div>
             {change !== undefined && (
-              <div className={`flex items-center gap-1 text-xs mt-1 ${change >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                {change >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+              <div className={`flex items-center gap-1 text-[10px] sm:text-xs mt-0.5 sm:mt-1 ${change >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                {change >= 0 ? <ArrowUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <ArrowDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
                 {Math.abs(change).toFixed(1)}%
               </div>
             )}
