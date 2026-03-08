@@ -211,8 +211,8 @@ const EditProfile = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Avatar Upload */}
-              <div className="flex items-center gap-5">
-                <Avatar className="w-20 h-20 border-2 border-border">
+              <div className="flex items-center gap-3 sm:gap-5">
+                <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-border">
                   <AvatarImage src={avatarPreview} />
                   <AvatarFallback className="bg-primary/10 text-primary text-xl">
                     <User className="w-8 h-8" />
