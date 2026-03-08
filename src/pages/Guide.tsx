@@ -38,16 +38,16 @@ interface StepProps {
 }
 
 const Step = ({ number, title, description, icon }: StepProps) => (
-  <div className="flex gap-4 items-start group">
-    <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+  <div className="flex gap-3 sm:gap-4 items-start group">
+    <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-base sm:text-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
       {number}
     </div>
     <div className="flex-1 min-w-0">
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
         <span className="text-primary/70">{icon}</span>
-        <h4 className="font-semibold text-lg">{title}</h4>
+        <h4 className="font-semibold text-base sm:text-lg">{title}</h4>
       </div>
-      <p className="text-muted-foreground leading-relaxed">{description}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </div>
   </div>
 );
