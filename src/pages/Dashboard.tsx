@@ -197,7 +197,7 @@ const Dashboard = memo(function Dashboard() {
 
           <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
             <BorderBeam size={80} duration={10} delay={2} />
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-accent/10">
                   <Activity className="w-5 h-5 text-accent" />
