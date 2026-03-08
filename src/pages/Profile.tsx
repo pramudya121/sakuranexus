@@ -727,7 +727,7 @@ const Profile = () => {
                 <p className="text-muted-foreground">Start collecting NFTs!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {nfts.map((nft) => (
                   <NFTCard
                     key={nft.id}
