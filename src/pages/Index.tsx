@@ -185,7 +185,7 @@ const Index = memo(function Index() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {[
               { step: '01', title: 'Connect Wallet', desc: 'Connect your MetaMask or any Web3 wallet to the Nexus Testnet', icon: Wallet },
               { step: '02', title: 'Explore & Trade', desc: 'Browse NFTs, swap tokens, provide liquidity, or stake for rewards', icon: ArrowLeftRight },
