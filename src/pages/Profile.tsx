@@ -541,8 +541,8 @@ const Profile = () => {
 
             {/* Profile Info */}
             <div className="flex-1 md:mb-4">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-bold">
                   {userProfile?.username || 'Unnamed User'}
                 </h1>
                 <UserBadges walletAddress={viewingAddress || account} />
