@@ -236,9 +236,12 @@ const NFTCard = memo(({
         </h3>
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Owner</span>
-          <span className="font-medium text-foreground font-mono text-xs bg-muted/50 px-2 py-0.5 rounded">
+          <button 
+            onClick={(e) => { e.stopPropagation(); navigate(`/profile/${owner}`); }}
+            className="font-medium text-foreground font-mono text-xs bg-muted/50 px-2 py-0.5 rounded hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+          >
             {formatAddress(owner)}
-          </span>
+          </button>
         </div>
         
         {/* Price Display with Live Updates */}
