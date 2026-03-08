@@ -413,7 +413,7 @@ const Marketplace = memo(function Marketplace() {
                 <Button 
                   variant={showFilters ? "default" : "outline"} 
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`gap-2 h-12 px-5 rounded-xl transition-all ${showFilters ? 'btn-hero' : 'border-2 hover:border-primary/50'}`}
+                  className={`gap-2 h-10 sm:h-12 px-4 sm:px-5 rounded-xl transition-all text-sm ${showFilters ? 'btn-hero' : 'border-2 hover:border-primary/50'}`}
                 >
                   <SlidersHorizontal className="w-4 h-4" />
                   Filters
