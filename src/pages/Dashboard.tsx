@@ -221,10 +221,10 @@ const Dashboard = memo(function Dashboard() {
             <BorderBeam size={80} duration={10} delay={4} />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <Percent className="w-5 h-5 text-purple-500" />
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Percent className="w-5 h-5 text-primary" />
                 </div>
-                <Badge variant="outline" className="text-purple-500 border-purple-500/30 bg-purple-500/10">
+                <Badge variant="outline" className="text-primary border-primary/30 bg-primary/10">
                   APR
                 </Badge>
               </div>
