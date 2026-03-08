@@ -1005,7 +1005,7 @@ const Profile = () => {
             <Button
               onClick={confirmTransferNFT}
               disabled={!transferAddress || isProcessing}
-              className="bg-gradient-sakura hover:shadow-sakura"
+              className="btn-hero"
             >
               {isProcessing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Transfer
