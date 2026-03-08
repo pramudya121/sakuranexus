@@ -333,22 +333,22 @@ const Guide = () => {
 
         {/* FAQ */}
         <section className="animate-fade-in-up stagger-4">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-primary" />
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-5 sm:mb-8">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+              <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <h2 className="text-3xl font-bold">Pertanyaan Umum (FAQ)</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">FAQ</h2>
           </div>
 
           <Card className="border border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
               <Accordion type="single" collapsible className="w-full">
                 {faqs.map((faq, i) => (
                   <AccordionItem key={i} value={`faq-${i}`}>
-                    <AccordionTrigger className="text-left font-medium hover:text-primary transition-colors">
+                    <AccordionTrigger className="text-left font-medium hover:text-primary transition-colors text-sm sm:text-base py-3 sm:py-4">
                       {faq.q}
                     </AccordionTrigger>
-                    <AccordionContent className="text-muted-foreground leading-relaxed">
+                    <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                       {faq.a}
                     </AccordionContent>
                   </AccordionItem>
@@ -359,14 +359,14 @@ const Guide = () => {
         </section>
 
         {/* CTA */}
-        <div className="text-center mt-16 animate-fade-in-up">
-          <Card className="inline-block border border-primary/20 bg-primary/5">
-            <CardContent className="p-8">
-              <h3 className="text-2xl font-bold mb-3">Siap Memulai?</h3>
-              <p className="text-muted-foreground mb-6">
-                Hubungkan wallet Anda dan mulai jelajahi dunia NFT di NexusLabs!
+        <div className="text-center mt-10 sm:mt-16 animate-fade-in-up">
+          <Card className="inline-block border border-primary/20 bg-primary/5 max-w-md w-full">
+            <CardContent className="p-5 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3">Siap Memulai?</h3>
+              <p className="text-sm text-muted-foreground mb-4 sm:mb-6">
+                Hubungkan wallet dan mulai jelajahi dunia NFT!
               </p>
-              <div className="flex flex-wrap gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
                 <Button onClick={() => navigate('/marketplace')} className="btn-hero gap-2">
                   <Store className="w-4 h-4" />
                   Jelajahi Marketplace
