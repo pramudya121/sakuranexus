@@ -30,8 +30,6 @@ const PoolDetail = lazy(() => import("./pages/dex/PoolDetail"));
 const TokenAnalytics = lazy(() => import("./pages/dex/TokenAnalytics"));
 const Staking = lazy(() => import("./pages/dex/Staking"));
 const TransactionHistoryPage = lazy(() => import("./pages/dex/TransactionHistoryPage"));
-const NFTAnalytics = lazy(() => import("./pages/NFTAnalytics"));
-const TokenDetail = lazy(() => import("./pages/TokenDetail"));
 const Auctions = lazy(() => import("./pages/Auctions"));
 const AuctionDetail = lazy(() => import("./pages/AuctionDetail"));
 const MyAuctions = lazy(() => import("./pages/MyAuctions"));
@@ -70,7 +68,7 @@ const App = () => (
               <Route path="/nft/:tokenId" element={<NFTDetail />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/analytics" element={<Analytics />} />
-              <Route path="/nft-analytics" element={<NFTAnalytics />} />
+              
               <Route path="/auctions" element={<Auctions />} />
               <Route path="/auction/:auctionId" element={<AuctionDetail />} />
               <Route path="/my-auctions" element={<MyAuctions />} />
@@ -87,7 +85,7 @@ const App = () => (
               <Route path="/dex/history" element={<TransactionHistoryPage />} />
               <Route path="/dex/pool/:pairAddress" element={<PoolDetail />} />
               <Route path="/dex/token/:tokenAddress" element={<TokenAnalytics />} />
-              <Route path="/token/:address" element={<TokenDetail />} />
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

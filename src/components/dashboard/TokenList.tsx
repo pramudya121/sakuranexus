@@ -276,7 +276,7 @@ const TokenRow = memo(function TokenRow({
         </div>
         
         {/* Navigate to token detail */}
-        <Link to={`/token/${token.address}`}>
+        <Link to={`/dex/token/${token.address}`}>
           <Button 
             variant="ghost" 
             size="icon" 
