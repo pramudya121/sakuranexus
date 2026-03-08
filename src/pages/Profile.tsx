@@ -632,11 +632,11 @@ const Profile = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Card className="card-hover">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Owned</p>
-                  <p className="text-2xl font-bold">{stats.totalOwned}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Owned</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.totalOwned}</p>
                 </div>
                 <Package className="w-8 h-8 text-primary/50" />
               </div>
