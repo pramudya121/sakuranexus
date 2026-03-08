@@ -208,17 +208,17 @@ const Pools = memo(() => {
           <div className="flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-green-500" />
             <span className="text-muted-foreground">Total TVL</span>
-            <Badge variant="secondary" className="font-bold text-green-400">{formatLargeNumber(totalTVL)}</Badge>
+            <Badge variant="secondary" className="font-bold text-green-500">{formatLargeNumber(totalTVL)}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-blue-500" />
+            <BarChart3 className="w-4 h-4 text-primary" />
             <span className="text-muted-foreground">24h Volume</span>
             <Badge variant="secondary" className="font-bold">{formatLargeNumber(totalVolume)}</Badge>
           </div>
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-primary" />
             <span className="text-muted-foreground">NEX Price</span>
-            <Badge variant="secondary" className={`font-bold ${nexPriceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <Badge variant="secondary" className={`font-bold ${nexPriceChange >= 0 ? 'text-green-500' : 'text-destructive'}`}>
               {nexPriceChange >= 0 ? '+' : ''}{nexPriceChange}%
             </Badge>
           </div>

@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navigation from '@/components/Navigation';
+import SakuraFalling from '@/components/SakuraFalling';
+import DEXNavigation from '@/components/dex/DEXNavigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, ArrowUpDown, Search, ExternalLink, Filter, Download, RefreshCw } from 'lucide-react';
-import { ethers } from 'ethers';
+import { ArrowUpDown, Search, ExternalLink, Filter, Download, RefreshCw, History } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import DEXNavigation from '@/components/dex/DEXNavigation';
 import { DEFAULT_TOKENS } from '@/lib/web3/dex-config';
 
 interface Transaction {
@@ -27,7 +27,6 @@ interface Transaction {
   gasFee?: string;
 }
 
-// Mock transaction data - in production, this would come from blockchain indexer or backend
 const generateMockTransactions = (): Transaction[] => {
   const types: Transaction['type'][] = ['swap', 'add_liquidity', 'remove_liquidity', 'stake', 'unstake', 'claim'];
   const tokens = DEFAULT_TOKENS.map(t => t.symbol);
@@ -72,7 +71,6 @@ const TransactionHistoryPage = () => {
   const loadTransactions = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       const mockData = generateMockTransactions();
       setTransactions(mockData);
@@ -99,21 +97,18 @@ const TransactionHistoryPage = () => {
   useEffect(() => {
     let filtered = [...transactions];
 
-    // Filter by search
     if (searchQuery) {
-      filtered = filtered.filter(tx => 
+      filtered = filtered.filter(tx =>
         tx.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
         tx.tokenIn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         tx.tokenOut?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Filter by type
     if (typeFilter !== 'all') {
       filtered = filtered.filter(tx => tx.type === typeFilter);
     }
 
-    // Filter by status
     if (statusFilter !== 'all') {
       filtered = filtered.filter(tx => tx.status === statusFilter);
     }
@@ -135,21 +130,21 @@ const TransactionHistoryPage = () => {
 
   const getTypeColor = (type: Transaction['type']) => {
     const colors: Record<Transaction['type'], string> = {
-      swap: 'bg-blue-500/20 text-blue-400',
-      add_liquidity: 'bg-green-500/20 text-green-400',
-      remove_liquidity: 'bg-orange-500/20 text-orange-400',
-      stake: 'bg-purple-500/20 text-purple-400',
-      unstake: 'bg-pink-500/20 text-pink-400',
-      claim: 'bg-yellow-500/20 text-yellow-400'
+      swap: 'bg-primary/20 text-primary',
+      add_liquidity: 'bg-green-500/20 text-green-500',
+      remove_liquidity: 'bg-orange-500/20 text-orange-500',
+      stake: 'bg-accent/20 text-accent-foreground',
+      unstake: 'bg-destructive/20 text-destructive',
+      claim: 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400'
     };
     return colors[type];
   };
 
   const getStatusBadge = (status: Transaction['status']) => {
     const styles: Record<Transaction['status'], string> = {
-      success: 'bg-green-500/20 text-green-400',
-      pending: 'bg-yellow-500/20 text-yellow-400',
-      failed: 'bg-red-500/20 text-red-400'
+      success: 'bg-green-500/20 text-green-500',
+      pending: 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400',
+      failed: 'bg-destructive/20 text-destructive'
     };
     return <Badge className={styles[status]}>{status}</Badge>;
   };
@@ -183,91 +178,92 @@ const TransactionHistoryPage = () => {
     toast.success('Transactions exported');
   };
 
-  // Stats
   const totalSwaps = transactions.filter(t => t.type === 'swap').length;
   const totalLiquidity = transactions.filter(t => t.type === 'add_liquidity' || t.type === 'remove_liquidity').length;
   const totalStaking = transactions.filter(t => t.type === 'stake' || t.type === 'unstake' || t.type === 'claim').length;
 
   return (
     <div className="min-h-screen bg-background">
-      <DEXNavigation />
-      
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => navigate(-1)}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Transaction History</h1>
-              <p className="text-muted-foreground">View all your DEX transactions</p>
-            </div>
+      <SakuraFalling />
+      <Navigation />
+
+      <main className="container mx-auto px-4 pt-24 pb-12">
+        <DEXNavigation />
+
+        {/* Hero */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <History className="w-4 h-4" />
+            TRANSACTION HISTORY
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportTransactions}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export CSV
-            </Button>
-          </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">
+            <span className="gradient-text">Your Activity</span>
+          </h1>
+          <p className="text-muted-foreground max-w-lg mx-auto">
+            View and export all your DEX transactions
+          </p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="bg-blue-500/10 border-blue-500/20">
-            <CardContent className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+            <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Swaps</p>
-                  <p className="text-2xl font-bold text-blue-400">{totalSwaps}</p>
+                  <p className="text-3xl font-bold text-primary">{totalSwaps}</p>
                 </div>
-                <ArrowUpDown className="w-8 h-8 text-blue-400 opacity-50" />
+                <ArrowUpDown className="w-8 h-8 text-primary opacity-40" />
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-green-500/10 border-green-500/20">
-            <CardContent className="p-4">
+          <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20">
+            <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Liquidity Txns</p>
-                  <p className="text-2xl font-bold text-green-400">{totalLiquidity}</p>
+                  <p className="text-3xl font-bold text-accent-foreground">{totalLiquidity}</p>
                 </div>
-                <Filter className="w-8 h-8 text-green-400 opacity-50" />
+                <Filter className="w-8 h-8 text-accent-foreground opacity-40" />
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-purple-500/10 border-purple-500/20">
-            <CardContent className="p-4">
+          <Card className="bg-gradient-to-br from-secondary to-secondary/50 border-border">
+            <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Staking Txns</p>
-                  <p className="text-2xl font-bold text-purple-400">{totalStaking}</p>
+                  <p className="text-3xl font-bold text-foreground">{totalStaking}</p>
                 </div>
-                <Filter className="w-8 h-8 text-purple-400 opacity-50" />
+                <Filter className="w-8 h-8 text-muted-foreground opacity-40" />
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Actions Bar */}
+        <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportTransactions}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
+
         {/* Filters */}
-        <Card className="mb-6">
+        <Card className="mb-6 border-border/50">
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
@@ -309,7 +305,7 @@ const TransactionHistoryPage = () => {
         </Card>
 
         {/* Transaction List */}
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Transactions</span>
@@ -333,14 +329,15 @@ const TransactionHistoryPage = () => {
               </div>
             ) : filteredTransactions.length === 0 ? (
               <div className="text-center py-12">
+                <History className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
                 <p className="text-muted-foreground">No transactions found</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {filteredTransactions.map((tx) => (
-                  <div 
+                  <div
                     key={tx.id}
-                    className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors gap-4"
+                    className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors gap-4 border border-border/30"
                   >
                     <div className="flex items-center gap-4">
                       <Badge className={getTypeColor(tx.type)}>
@@ -349,8 +346,8 @@ const TransactionHistoryPage = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-sm">{tx.hash}</span>
-                          <a 
-                            href={`https://sepolia.etherscan.io/tx/${tx.hash}`}
+                          <a
+                            href={`https://nexus.testnet.blockscout.com/tx/${tx.hash}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary hover:text-primary/80"
@@ -366,26 +363,26 @@ const TransactionHistoryPage = () => {
 
                     {tx.type === 'swap' && (
                       <div className="flex items-center gap-2 text-sm">
-                        <span className="text-red-400">-{tx.amountIn} {tx.tokenIn}</span>
+                        <span className="text-destructive">-{tx.amountIn} {tx.tokenIn}</span>
                         <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-green-400">+{tx.amountOut} {tx.tokenOut}</span>
+                        <span className="text-green-500">+{tx.amountOut} {tx.tokenOut}</span>
                       </div>
                     )}
 
                     {(tx.type === 'add_liquidity' || tx.type === 'stake') && (
-                      <div className="text-sm text-green-400">
+                      <div className="text-sm text-green-500">
                         +{tx.amountIn} {tx.tokenIn}
                       </div>
                     )}
 
                     {(tx.type === 'remove_liquidity' || tx.type === 'unstake') && (
-                      <div className="text-sm text-orange-400">
+                      <div className="text-sm text-destructive">
                         -{tx.amountIn} {tx.tokenIn}
                       </div>
                     )}
 
                     {tx.type === 'claim' && (
-                      <div className="text-sm text-yellow-400">
+                      <div className="text-sm text-primary">
                         +{tx.amountOut} Rewards
                       </div>
                     )}
@@ -393,7 +390,7 @@ const TransactionHistoryPage = () => {
                     <div className="flex items-center gap-3">
                       {tx.gasFee && (
                         <span className="text-xs text-muted-foreground">
-                          Gas: {tx.gasFee} ETH
+                          Gas: {tx.gasFee} NEX
                         </span>
                       )}
                       {getStatusBadge(tx.status)}
@@ -404,7 +401,7 @@ const TransactionHistoryPage = () => {
             )}
           </CardContent>
         </Card>
-      </div>
+      </main>
     </div>
   );
 };

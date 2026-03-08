@@ -54,7 +54,12 @@ const Swap = memo(() => {
           </p>
         </div>
 
-        {/* Market Overview - Compact */}
+        {/* Swap Box - Primary Focus */}
+        <div className="max-w-lg mx-auto mb-6">
+          <SwapBox />
+        </div>
+
+        {/* Market Overview - Below Swap */}
         <div className="max-w-lg mx-auto mb-6">
           <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
             <CardContent className="p-3">
@@ -75,10 +80,10 @@ const Swap = memo(() => {
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="font-mono">${tokenInPrice.price.toFixed(4)}</span>
-                      <span className={tokenInPrice.change24h >= 0 ? 'text-green-500' : 'text-red-500'}>
+                      <span className={tokenInPrice.change24h >= 0 ? 'text-green-500' : 'text-destructive'}>
                         {tokenInPrice.change24h >= 0 ? '+' : ''}{tokenInPrice.change24h.toFixed(2)}%
                       </span>
-                      <span>Rate: 1 {chartTokenIn.symbol} = {exchangeRate} {chartTokenOut.symbol}</span>
+                      <span className="hidden sm:inline">Rate: 1 {chartTokenIn.symbol} = {exchangeRate} {chartTokenOut.symbol}</span>
                     </div>
                   </div>
                 </div>
