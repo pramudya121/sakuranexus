@@ -31,12 +31,8 @@ const Swap = memo(() => {
       <SakuraFalling />
       <Navigation />
       
-      {/* Price Ticker - sticky below nav */}
-      <div className="sticky top-16 z-40">
-        <RealTimePriceBar />
-      </div>
       
-      <main className="container mx-auto px-4 pt-6 pb-12">
+      <main className="container mx-auto px-4 pt-24 pb-12">
         <DEXNavigation />
         
         {/* Hero */}
