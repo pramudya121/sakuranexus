@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { PageTransition } from "@/components/PageTransition";
 import AIChat from "@/components/AIChat";
 import { AppWrapper } from "@/components/AppWrapper";
 import { PageLoadingSkeleton } from "@/components/ui/loading-skeleton";
