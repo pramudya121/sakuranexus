@@ -247,7 +247,7 @@ const Dashboard = memo(function Dashboard() {
               {isLoading ? (
                 <Skeleton className="h-8 w-12 mt-3" />
               ) : (
-                <p className="text-2xl font-bold mt-3"><NumberTicker value={stats.nftsOwned} /></p>
+                <p className="text-lg sm:text-2xl font-bold mt-2 sm:mt-3"><NumberTicker value={stats.nftsOwned} /></p>
               )}
               <p className="text-sm text-muted-foreground">NFTs Owned</p>
             </CardContent>

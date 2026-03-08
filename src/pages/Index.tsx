@@ -340,7 +340,7 @@ const Index = memo(function Index() {
 
           <Marquee className="[--duration:40s]" pauseOnHover>
             {testimonials.map((t, i) => (
-              <div key={i} className="mx-4 w-80">
+              <div key={i} className="mx-2 sm:mx-4 w-64 sm:w-80">
                 <div className="glass rounded-2xl p-6 border border-primary/10 hover:border-primary/30 transition-colors h-full">
                   <p className="text-sm text-muted-foreground mb-4 leading-relaxed italic">"{t.text}"</p>
                   <div className="flex items-center gap-3">
