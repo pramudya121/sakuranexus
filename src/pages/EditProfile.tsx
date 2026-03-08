@@ -206,8 +206,8 @@ const EditProfile = () => {
             <Input id="banner-upload" type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
           </div>
 
-          <div className="p-6 sm:p-8">
-            <h1 className="text-2xl font-bold mb-6 gradient-text">Edit Profile</h1>
+          <div className="p-4 sm:p-6 md:p-8">
+            <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 gradient-text">Edit Profile</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Avatar Upload */}
