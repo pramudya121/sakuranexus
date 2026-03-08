@@ -2,7 +2,6 @@ import { ethers } from 'ethers';
 import { getSakuraNFTContract, getSakuraMarketplaceContract, getOfferContract, parsePrice, formatPrice, withRetry } from './wallet';
 import { supabase } from '@/integrations/supabase/client';
 import { CONTRACTS } from './config';
-import { CONTRACTS } from './config';
 
 // Upload image to Supabase Storage
 export const uploadImage = async (file: File): Promise<string | null> => {
