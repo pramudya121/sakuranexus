@@ -542,11 +542,11 @@ const Profile = () => {
                 <h1 className="text-3xl font-bold">
                   {userProfile?.username || 'Unnamed User'}
                 </h1>
-                <UserBadges walletAddress={account} />
+                <UserBadges walletAddress={viewingAddress || account} />
               </div>
               
               <div className="flex items-center gap-2 text-muted-foreground mb-3">
-                <span className="font-mono text-sm">{formatAddress(account)}</span>
+                <span className="font-mono text-sm">{formatAddress(viewingAddress || account || '')}</span>
                 <Button
                   variant="ghost"
                   size="sm"
