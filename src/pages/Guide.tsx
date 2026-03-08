@@ -38,16 +38,16 @@ interface StepProps {
 }
 
 const Step = ({ number, title, description, icon }: StepProps) => (
-  <div className="flex gap-4 items-start group">
-    <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+  <div className="flex gap-3 sm:gap-4 items-start group">
+    <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-base sm:text-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
       {number}
     </div>
     <div className="flex-1 min-w-0">
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
         <span className="text-primary/70">{icon}</span>
-        <h4 className="font-semibold text-lg">{title}</h4>
+        <h4 className="font-semibold text-base sm:text-lg">{title}</h4>
       </div>
-      <p className="text-muted-foreground leading-relaxed">{description}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </div>
   </div>
 );
@@ -214,32 +214,32 @@ const Guide = () => {
       <SakuraFalling />
       <Navigation />
 
-      <div className="container mx-auto px-4 pt-24 pb-16 relative z-10">
+      <div className="container mx-auto px-4 pt-20 sm:pt-24 pb-12 sm:pb-16 relative z-10">
         {/* Hero */}
-        <div className="text-center mb-16 animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-6">
-            <BookOpen className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Panduan Pengguna</span>
+        <div className="text-center mb-10 sm:mb-16 animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-sm mb-4 sm:mb-6">
+            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+            <span className="text-xs sm:text-sm font-medium text-primary">Panduan Pengguna</span>
           </div>
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6">
             <span className="gradient-text">Panduan & FAQ</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Pelajari cara menggunakan NexusLabs NFT Marketplace dari awal hingga mahir
           </p>
         </div>
 
         {/* Getting Started */}
-        <section className="mb-16 animate-fade-in-up stagger-1">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Rocket className="w-5 h-5 text-primary" />
+        <section className="mb-10 sm:mb-16 animate-fade-in-up stagger-1">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-5 sm:mb-8">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+              <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <h2 className="text-3xl font-bold">Mulai Dari Sini</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">Mulai Dari Sini</h2>
           </div>
 
           <Card className="border border-primary/10 bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-8 space-y-8">
+            <CardContent className="p-4 sm:p-8 space-y-5 sm:space-y-8">
               {gettingStartedSteps.map((step) => (
                 <Step key={step.number} {...step} />
               ))}
@@ -248,32 +248,32 @@ const Guide = () => {
         </section>
 
         {/* Feature Guides */}
-        <section className="mb-16 animate-fade-in-up stagger-2">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary" />
+        <section className="mb-10 sm:mb-16 animate-fade-in-up stagger-2">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-5 sm:mb-8">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <h2 className="text-3xl font-bold">Panduan Fitur</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">Panduan Fitur</h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {guides.map((guide, idx) => (
               <Card
                 key={idx}
                 className="group border border-border/50 bg-card/80 backdrop-blur-sm hover:border-primary/30 transition-all duration-300 overflow-hidden"
               >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-5">
-                    <h3 className="text-xl font-bold">{guide.title}</h3>
-                    <Badge variant="secondary" className="text-xs">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between mb-3 sm:mb-5">
+                    <h3 className="text-base sm:text-xl font-bold">{guide.title}</h3>
+                    <Badge variant="secondary" className="text-[10px] sm:text-xs">
                       {guide.steps.length} langkah
                     </Badge>
                   </div>
 
-                  <ol className="space-y-3 mb-6">
+                  <ol className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                     {guide.steps.map((step, i) => (
-                      <li key={i} className="flex gap-3 items-start text-sm">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+                      <li key={i} className="flex gap-2 sm:gap-3 items-start text-xs sm:text-sm">
+                        <span className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold flex items-center justify-center mt-0.5">
                           {i + 1}
                         </span>
                         <span className="text-muted-foreground leading-relaxed">{step}</span>
@@ -283,7 +283,7 @@ const Guide = () => {
 
                   <Button
                     onClick={() => navigate(guide.cta.path)}
-                    className="w-full btn-hero gap-2"
+                    className="w-full btn-hero gap-2 h-9 sm:h-10 text-sm"
                   >
                     {guide.cta.label}
                     <ChevronRight className="w-4 h-4" />
@@ -295,36 +295,36 @@ const Guide = () => {
         </section>
 
         {/* Security Tips */}
-        <section className="mb-16 animate-fade-in-up stagger-3">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-primary" />
+        <section className="mb-10 sm:mb-16 animate-fade-in-up stagger-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-5 sm:mb-8">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <h2 className="text-3xl font-bold">Tips Keamanan</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">Tips Keamanan</h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {[
               {
                 title: 'Jangan Bagikan Private Key',
-                desc: 'Jangan pernah membagikan private key atau seed phrase wallet Anda kepada siapapun. NexusLabs tidak akan pernah meminta informasi ini.',
+                desc: 'Jangan pernah membagikan private key atau seed phrase wallet Anda kepada siapapun.',
               },
               {
                 title: 'Verifikasi Contract Address',
-                desc: 'Selalu pastikan Anda berinteraksi dengan contract address yang benar. Periksa alamat di explorer sebelum konfirmasi transaksi besar.',
+                desc: 'Selalu pastikan Anda berinteraksi dengan contract address yang benar.',
               },
               {
                 title: 'Hati-hati Phishing',
-                desc: 'Pastikan URL website benar (sakuranexus.lovable.app). Jangan klik link mencurigakan yang meminta koneksi wallet.',
+                desc: 'Pastikan URL website benar. Jangan klik link mencurigakan yang meminta koneksi wallet.',
               },
             ].map((tip, i) => (
               <Card key={i} className="border border-warning/20 bg-warning/5">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Shield className="w-5 h-5 text-warning" />
-                    <h4 className="font-semibold">{tip.title}</h4>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-warning flex-shrink-0" />
+                    <h4 className="font-semibold text-sm sm:text-base">{tip.title}</h4>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{tip.desc}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{tip.desc}</p>
                 </CardContent>
               </Card>
             ))}
@@ -333,22 +333,22 @@ const Guide = () => {
 
         {/* FAQ */}
         <section className="animate-fade-in-up stagger-4">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-primary" />
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-5 sm:mb-8">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+              <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <h2 className="text-3xl font-bold">Pertanyaan Umum (FAQ)</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">FAQ</h2>
           </div>
 
           <Card className="border border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
               <Accordion type="single" collapsible className="w-full">
                 {faqs.map((faq, i) => (
                   <AccordionItem key={i} value={`faq-${i}`}>
-                    <AccordionTrigger className="text-left font-medium hover:text-primary transition-colors">
+                    <AccordionTrigger className="text-left font-medium hover:text-primary transition-colors text-sm sm:text-base py-3 sm:py-4">
                       {faq.q}
                     </AccordionTrigger>
-                    <AccordionContent className="text-muted-foreground leading-relaxed">
+                    <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                       {faq.a}
                     </AccordionContent>
                   </AccordionItem>
@@ -359,14 +359,14 @@ const Guide = () => {
         </section>
 
         {/* CTA */}
-        <div className="text-center mt-16 animate-fade-in-up">
-          <Card className="inline-block border border-primary/20 bg-primary/5">
-            <CardContent className="p-8">
-              <h3 className="text-2xl font-bold mb-3">Siap Memulai?</h3>
-              <p className="text-muted-foreground mb-6">
-                Hubungkan wallet Anda dan mulai jelajahi dunia NFT di NexusLabs!
+        <div className="text-center mt-10 sm:mt-16 animate-fade-in-up">
+          <Card className="inline-block border border-primary/20 bg-primary/5 max-w-md w-full">
+            <CardContent className="p-5 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3">Siap Memulai?</h3>
+              <p className="text-sm text-muted-foreground mb-4 sm:mb-6">
+                Hubungkan wallet dan mulai jelajahi dunia NFT!
               </p>
-              <div className="flex flex-wrap gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
                 <Button onClick={() => navigate('/marketplace')} className="btn-hero gap-2">
                   <Store className="w-4 h-4" />
                   Jelajahi Marketplace

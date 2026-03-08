@@ -191,28 +191,28 @@ const Analytics = () => {
     <Card className="relative overflow-hidden group hover:shadow-elegant transition-all duration-300 border-border/50">
       {showBeam && <BorderBeam size={100} duration={12} delay={0} />}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Icon className="w-4 h-4 text-primary" />
+      <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+        <CardTitle className="text-[11px] sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
+          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
           </div>
-          {title}
+          <span className="truncate">{title}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
         <div className="flex items-end justify-between">
-          <div>
-            <div className="text-2xl font-bold">
+          <div className="min-w-0">
+            <div className="text-lg sm:text-2xl font-bold truncate">
               {typeof value === 'number' ? (
                 <NumberTicker value={value} duration={1500} />
               ) : (
                 value
               )}
-              {suffix}
+              {suffix && <span className="text-xs sm:text-sm text-muted-foreground ml-0.5">{suffix}</span>}
             </div>
             {change !== undefined && (
-              <div className={`flex items-center gap-1 text-xs mt-1 ${change >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                {change >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+              <div className={`flex items-center gap-1 text-[10px] sm:text-xs mt-0.5 sm:mt-1 ${change >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                {change >= 0 ? <ArrowUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <ArrowDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
                 {Math.abs(change).toFixed(1)}%
               </div>
             )}
@@ -245,23 +245,23 @@ const Analytics = () => {
       <SakuraFalling />
       <Navigation />
       
-      <div className="container mx-auto px-4 pt-24 pb-12">
-        {/* Hero Section with Glowing Stars */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <BarChart3 className="w-4 h-4" />
+      <div className="container mx-auto px-4 pt-20 sm:pt-24 pb-12">
+        {/* Hero Section */}
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-3 sm:mb-4">
+            <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             ANALYTICS
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-3">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 sm:mb-3">
             <span className="gradient-text">Platform Analytics</span>
           </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
             Comprehensive insights for NFT marketplace and DEX performance
           </p>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="flex items-center bg-muted rounded-lg p-1">
             {(['7d', '30d', '90d'] as const).map((range) => (
               <Button
@@ -269,9 +269,9 @@ const Analytics = () => {
                 variant={timeRange === range ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setTimeRange(range)}
-                className="rounded-md"
+                className="rounded-md text-xs sm:text-sm px-3 sm:px-4"
               >
-                {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
+                {range === '7d' ? '7D' : range === '30d' ? '30D' : '90D'}
               </Button>
             ))}
           </div>
@@ -287,8 +287,8 @@ const Analytics = () => {
           </Button>
         </div>
 
-        {/* Stats Grid with BorderBeam */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <StatCard icon={ShoppingCart} title="Sales" value={stats.totalSales} change={stats.salesChange} showBeam />
           <StatCard icon={TrendingUp} title="Volume" value={stats.totalVolume} suffix=" NEX" change={stats.volumeChange} showBeam />
           <StatCard icon={Package} title="Mints" value={stats.totalMints} showBeam />
@@ -298,21 +298,21 @@ const Analytics = () => {
         </div>
 
         {/* Main Tabs */}
-        <Tabs defaultValue="nft" className="space-y-6">
-          <TabsList className="w-full max-w-md mx-auto grid grid-cols-2">
-            <TabsTrigger value="nft" className="gap-2">
-              <Layers className="w-4 h-4" />
-              NFT Marketplace
+        <Tabs defaultValue="nft" className="space-y-4 sm:space-y-6">
+          <TabsList className="w-full max-w-sm sm:max-w-md mx-auto grid grid-cols-2">
+            <TabsTrigger value="nft" className="gap-1.5 text-xs sm:text-sm">
+              <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              NFT
             </TabsTrigger>
-            <TabsTrigger value="dex" className="gap-2">
-              <Wallet className="w-4 h-4" />
+            <TabsTrigger value="dex" className="gap-1.5 text-xs sm:text-sm">
+              <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               DEX
             </TabsTrigger>
           </TabsList>
 
           {/* NFT Tab */}
-          <TabsContent value="nft" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="nft" className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Volume Area Chart */}
               <Card className="border-border/50">
                 <CardHeader className="pb-2">
@@ -321,8 +321,8 @@ const Analytics = () => {
                     Sales Volume
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="px-2 sm:px-6 pb-4">
+                  <ResponsiveContainer width="100%" height={250}>
                     <AreaChart data={analyticsData}>
                       <defs>
                         <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -331,8 +331,8 @@ const Analytics = () => {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} width={40} />
                       <Tooltip content={<CustomTooltip />} />
                       <Area 
                         type="monotone" 
@@ -355,14 +355,14 @@ const Analytics = () => {
                     Sales & Mints
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="px-2 sm:px-6 pb-4">
+                  <ResponsiveContainer width="100%" height={250}>
                     <ComposedChart data={analyticsData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} width={40} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
+                      <Legend wrapperStyle={{ fontSize: '11px' }} />
                       <Bar dataKey="sales" fill="hsl(328, 85%, 55%)" name="Sales" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="mints" fill="hsl(260, 70%, 60%)" name="Mints" radius={[4, 4, 0, 0]} />
                       <Line type="monotone" dataKey="avgPrice" stroke="hsl(140, 60%, 50%)" strokeWidth={2} name="Avg Price" dot={false} />
@@ -381,9 +381,9 @@ const Analytics = () => {
                     Activity Breakdown
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-8 items-center">
-                    <ResponsiveContainer width="100%" height={280}>
+                <CardContent className="px-3 sm:px-6 pb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 items-center">
+                    <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
                         <Pie
                           data={activityBreakdown}
@@ -424,7 +424,7 @@ const Analytics = () => {
           {/* DEX Tab */}
           <TabsContent value="dex" className="space-y-6">
             {/* DEX Stats with GlowingStars */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
               <GlowingStarsBackgroundCard className="p-4">
                 <div className="relative z-20">
                   <div className="text-xs text-muted-foreground uppercase mb-1 flex items-center gap-2">
@@ -473,17 +473,17 @@ const Analytics = () => {
               </GlowingStarsBackgroundCard>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* TVL Chart */}
               <Card className="border-border/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-primary" />
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     Total Value Locked (TVL)
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="px-2 sm:px-6 pb-4">
+                  <ResponsiveContainer width="100%" height={250}>
                     <AreaChart data={dexData}>
                       <defs>
                         <linearGradient id="tvlGradient" x1="0" y1="0" x2="0" y2="1">
@@ -492,8 +492,8 @@ const Analytics = () => {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} width={40} />
                       <Tooltip content={<CustomTooltip />} />
                       <Area 
                         type="monotone" 
@@ -511,20 +511,20 @@ const Analytics = () => {
               {/* Volume Chart */}
               <Card className="border-border/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-primary" />
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                    <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     Swap Volume & Trades
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="px-2 sm:px-6 pb-4">
+                  <ResponsiveContainer width="100%" height={250}>
                     <ComposedChart data={dexData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
+                      <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={10} width={40} />
+                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={10} width={35} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
+                      <Legend wrapperStyle={{ fontSize: '11px' }} />
                       <Bar yAxisId="left" dataKey="swapVolume" fill="hsl(328, 85%, 55%)" name="Volume" radius={[4, 4, 0, 0]} />
                       <Line yAxisId="right" type="monotone" dataKey="trades" stroke="hsl(200, 80%, 55%)" strokeWidth={2} name="Trades" dot={false} />
                     </ComposedChart>
