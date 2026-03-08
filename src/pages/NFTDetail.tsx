@@ -262,9 +262,9 @@ const NFTDetail = () => {
           Back
         </Button>
 
-        <div className="grid lg:grid-cols-5 gap-8">
+        <div className="grid lg:grid-cols-5 gap-4 sm:gap-8">
           {/* Image Section - 3 cols */}
-          <div className="lg:col-span-3 space-y-4">
+          <div className="lg:col-span-3 space-y-3 sm:space-y-4">
             <Card className="overflow-hidden border-border/50">
               <CardContent className="p-0">
                 <div className="aspect-square bg-muted/30 relative">
@@ -274,7 +274,7 @@ const NFTDetail = () => {
                     className="w-full h-full object-cover"
                   />
                   {listing && (
-                    <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground border-0 shadow-lg text-sm px-3 py-1">
+                    <Badge className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-primary text-primary-foreground border-0 shadow-lg text-xs sm:text-sm px-2 sm:px-3 py-1">
                       For Sale
                     </Badge>
                   )}
@@ -283,26 +283,26 @@ const NFTDetail = () => {
             </Card>
 
             {/* Quick Info Cards */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <Card className="border-border/50">
-                <CardContent className="p-4 text-center">
-                  <Hash className="w-5 h-5 mx-auto text-primary mb-1" />
-                  <p className="text-xs text-muted-foreground">Token ID</p>
-                  <p className="font-bold text-lg">#{nft.token_id}</p>
+                <CardContent className="p-2.5 sm:p-4 text-center">
+                  <Hash className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-primary mb-1" />
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Token ID</p>
+                  <p className="font-bold text-sm sm:text-lg">#{nft.token_id}</p>
                 </CardContent>
               </Card>
               <Card className="border-border/50">
-                <CardContent className="p-4 text-center">
-                  <Tag className="w-5 h-5 mx-auto text-primary mb-1" />
-                  <p className="text-xs text-muted-foreground">Offers</p>
-                  <p className="font-bold text-lg">{offers.length}</p>
+                <CardContent className="p-2.5 sm:p-4 text-center">
+                  <Tag className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-primary mb-1" />
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Offers</p>
+                  <p className="font-bold text-sm sm:text-lg">{offers.length}</p>
                 </CardContent>
               </Card>
               <Card className="border-border/50">
-                <CardContent className="p-4 text-center">
-                  <Activity className="w-5 h-5 mx-auto text-primary mb-1" />
-                  <p className="text-xs text-muted-foreground">Trades</p>
-                  <p className="font-bold text-lg">{activities.length}</p>
+                <CardContent className="p-2.5 sm:p-4 text-center">
+                  <Activity className="w-4 h-4 sm:w-5 sm:h-5 mx-auto text-primary mb-1" />
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Trades</p>
+                  <p className="font-bold text-sm sm:text-lg">{activities.length}</p>
                 </CardContent>
               </Card>
             </div>
