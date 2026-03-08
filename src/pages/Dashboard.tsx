@@ -140,7 +140,7 @@ const Dashboard = memo(function Dashboard() {
           
           <div className="flex items-center gap-3">
             <Badge variant={isConnected ? 'default' : 'secondary'} className="gap-1.5 px-3 py-1.5">
-              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-muted-foreground'}`} />
+              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-primary animate-pulse' : 'bg-muted-foreground'}`} />
               {isConnected ? 'Live Data' : 'Offline'}
             </Badge>
             <Button
@@ -158,10 +158,10 @@ const Dashboard = memo(function Dashboard() {
 
         {/* No Wallet Warning */}
         {!walletAddress && (
-          <Card className="mb-6 border-orange-500/30 bg-orange-500/5">
+          <Card className="mb-6 border-destructive/30 bg-destructive/5">
             <CardContent className="flex items-center gap-3 p-4">
-              <AlertCircle className="w-5 h-5 text-orange-500" />
-              <p className="text-sm text-orange-600 dark:text-orange-400">
+              <AlertCircle className="w-5 h-5 text-destructive" />
+              <p className="text-sm text-destructive">
                 Hubungkan wallet Anda untuk melihat data portfolio real-time
               </p>
             </CardContent>
@@ -177,7 +177,7 @@ const Dashboard = memo(function Dashboard() {
                 <div className="p-2 rounded-lg bg-primary/10">
                   <DollarSign className="w-5 h-5 text-primary" />
                 </div>
-                <Badge variant="outline" className="text-green-500 border-green-500/30 bg-green-500/10">
+                <Badge variant="outline" className="text-primary border-primary/30 bg-primary/10">
                   7D
                 </Badge>
               </div>
@@ -199,10 +199,10 @@ const Dashboard = memo(function Dashboard() {
             <BorderBeam size={80} duration={10} delay={2} />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Activity className="w-5 h-5 text-blue-500" />
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <Activity className="w-5 h-5 text-accent" />
                 </div>
-                <Badge variant="outline" className="text-blue-500 border-blue-500/30 bg-blue-500/10">
+                <Badge variant="outline" className="text-accent border-accent/30 bg-accent/10">
                   Total
                 </Badge>
               </div>
@@ -221,10 +221,10 @@ const Dashboard = memo(function Dashboard() {
             <BorderBeam size={80} duration={10} delay={4} />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <Percent className="w-5 h-5 text-purple-500" />
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Percent className="w-5 h-5 text-primary" />
                 </div>
-                <Badge variant="outline" className="text-purple-500 border-purple-500/30 bg-purple-500/10">
+                <Badge variant="outline" className="text-primary border-primary/30 bg-primary/10">
                   APR
                 </Badge>
               </div>
@@ -237,10 +237,10 @@ const Dashboard = memo(function Dashboard() {
             <BorderBeam size={80} duration={10} delay={6} />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-orange-500/10">
-                  <Image className="w-5 h-5 text-orange-500" />
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <Image className="w-5 h-5 text-accent" />
                 </div>
-                <Badge variant="outline" className="text-orange-500 border-orange-500/30 bg-orange-500/10">
+                <Badge variant="outline" className="text-accent border-accent/30 bg-accent/10">
                   NFTs
                 </Badge>
               </div>
@@ -384,9 +384,9 @@ const Dashboard = memo(function Dashboard() {
                           <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-lg ${
                               activity.type === 'swap' ? 'bg-primary/10 text-primary' :
-                              activity.type === 'mint' ? 'bg-green-500/10 text-green-500' :
-                              activity.type === 'offer' ? 'bg-blue-500/10 text-blue-500' :
-                              'bg-purple-500/10 text-purple-500'
+                              activity.type === 'mint' ? 'bg-primary/10 text-primary' :
+                              activity.type === 'offer' ? 'bg-accent/10 text-accent' :
+                              'bg-muted text-muted-foreground'
                             }`}>
                               {getTradeIcon(activity.type)}
                             </div>
@@ -416,7 +416,7 @@ const Dashboard = memo(function Dashboard() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Flame className="w-5 h-5 text-orange-500" />
+                    <Flame className="w-5 h-5 text-accent" />
                     Market Insights
                   </CardTitle>
                   <Link to="/dex/swap">
@@ -452,7 +452,7 @@ const Dashboard = memo(function Dashboard() {
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{token.name}</p>
                             {token.trending && (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-orange-500/10 border-orange-500/30 text-orange-500">
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-accent/10 border-accent/30 text-accent">
                                 🔥 Hot
                               </Badge>
                             )}
@@ -487,7 +487,7 @@ const Dashboard = memo(function Dashboard() {
             <Card className="glass border-border/50">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Zap className="w-5 h-5 text-yellow-500" />
+                  <Zap className="w-5 h-5 text-primary" />
                   Quick Actions
                 </CardTitle>
               </CardHeader>
