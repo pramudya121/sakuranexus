@@ -68,7 +68,7 @@ const App = () => (
               <Route path="/nft/:tokenId" element={<NFTDetail />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/analytics" element={<Analytics />} />
-              <Route path="/nft-analytics" element={<NFTAnalytics />} />
+              
               <Route path="/auctions" element={<Auctions />} />
               <Route path="/auction/:auctionId" element={<AuctionDetail />} />
               <Route path="/my-auctions" element={<MyAuctions />} />
