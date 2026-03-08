@@ -228,7 +228,7 @@ const Dashboard = memo(function Dashboard() {
                   APR
                 </Badge>
               </div>
-              <p className="text-2xl font-bold mt-3"><NumberTicker value={stats.stakingAPR} />%</p>
+              <p className="text-lg sm:text-2xl font-bold mt-2 sm:mt-3"><NumberTicker value={stats.stakingAPR} />%</p>
               <p className="text-sm text-muted-foreground">Avg Staking APR</p>
             </CardContent>
           </Card>
