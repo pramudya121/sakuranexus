@@ -237,10 +237,10 @@ const Dashboard = memo(function Dashboard() {
             <BorderBeam size={80} duration={10} delay={6} />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-orange-500/10">
-                  <Image className="w-5 h-5 text-orange-500" />
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <Image className="w-5 h-5 text-accent" />
                 </div>
-                <Badge variant="outline" className="text-orange-500 border-orange-500/30 bg-orange-500/10">
+                <Badge variant="outline" className="text-accent border-accent/30 bg-accent/10">
                   NFTs
                 </Badge>
               </div>
