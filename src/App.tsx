@@ -76,6 +76,7 @@ const App = () => (
               <Route path="/watchlist" element={<Watchlist />} />
               <Route path="/ai-features" element={<AIFeatures />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:walletAddress" element={<Profile />} />
               <Route path="/profile/edit" element={<EditProfile />} />
               <Route path="/dex/swap" element={<Swap />} />
               <Route path="/dex/liquidity" element={<Liquidity />} />

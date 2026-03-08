@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import NFTCard from '@/components/NFTCard';
