@@ -478,7 +478,7 @@ const Profile = () => {
     return `${Math.floor(diffMins / 1440)}d ago`;
   };
 
-  if (!account) {
+  if (!viewingAddress && !account) {
     return (
       <div className="min-h-screen bg-gradient-sakura-soft">
         <SakuraFalling />
