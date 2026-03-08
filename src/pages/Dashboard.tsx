@@ -384,9 +384,9 @@ const Dashboard = memo(function Dashboard() {
                           <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-lg ${
                               activity.type === 'swap' ? 'bg-primary/10 text-primary' :
-                              activity.type === 'mint' ? 'bg-green-500/10 text-green-500' :
-                              activity.type === 'offer' ? 'bg-blue-500/10 text-blue-500' :
-                              'bg-purple-500/10 text-purple-500'
+                              activity.type === 'mint' ? 'bg-primary/10 text-primary' :
+                              activity.type === 'offer' ? 'bg-accent/10 text-accent' :
+                              'bg-muted text-muted-foreground'
                             }`}>
                               {getTradeIcon(activity.type)}
                             </div>
