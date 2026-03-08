@@ -159,15 +159,15 @@ const Mint = () => {
       <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 px-4 py-1.5">
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+          <div className="text-center mb-8 sm:mb-12">
+            <Badge className="mb-3 sm:mb-4 bg-primary/10 text-primary border-primary/20 px-3 sm:px-4 py-1 sm:py-1.5">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5" />
               Create NFT
             </Badge>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-2 sm:mb-4">
               <span className="gradient-text">Mint Your NFT</span>
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
               Transform your digital art into a unique NFT on NEXUSLABS Testnet
             </p>
           </div>
