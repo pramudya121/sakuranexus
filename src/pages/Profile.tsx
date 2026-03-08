@@ -676,7 +676,7 @@ const Profile = () => {
                   <p className="text-xl sm:text-2xl font-bold">{stats.floorPrice}</p>
                   <p className="text-xs text-muted-foreground">NEX</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-accent/50" />
+                <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-accent/50" />
               </div>
             </CardContent>
           </Card>
