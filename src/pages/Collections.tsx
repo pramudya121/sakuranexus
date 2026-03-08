@@ -131,7 +131,7 @@ const CollectionCard = memo(({ collection, onClick }: { collection: Collection; 
         <div>
           <p className="text-xs text-muted-foreground mb-0.5 sm:mb-1">Volume</p>
           <p className="text-base sm:text-xl font-bold flex items-center gap-1">
-            <TrendingUp className="w-3 sm:w-4 h-3 sm:h-4 text-green-500" />
+            <TrendingUp className="w-3 sm:w-4 h-3 sm:h-4 text-primary" />
             {collection.total_volume}
           </p>
         </div>
