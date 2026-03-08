@@ -532,9 +532,9 @@ const Profile = () => {
         <div className="relative -mt-20 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
             {/* Avatar */}
-            <Avatar className="w-32 h-32 border-4 border-background shadow-sakura-strong">
+            <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-background shadow-lg">
               <AvatarImage src={userProfile?.avatar_url} />
-              <AvatarFallback className="bg-gradient-sakura text-white text-4xl">
+              <AvatarFallback className="bg-primary/10 text-primary text-4xl">
                 {userProfile?.username?.[0]?.toUpperCase() || '🌸'}
               </AvatarFallback>
             </Avatar>
