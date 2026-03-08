@@ -416,7 +416,7 @@ const Dashboard = memo(function Dashboard() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Flame className="w-5 h-5 text-orange-500" />
+                    <Flame className="w-5 h-5 text-accent" />
                     Market Insights
                   </CardTitle>
                   <Link to="/dex/swap">
