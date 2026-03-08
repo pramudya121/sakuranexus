@@ -358,7 +358,7 @@ const Marketplace = memo(function Marketplace() {
               NFT Marketplace
             </span>
           </div>
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up stagger-1">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 animate-fade-in-up stagger-1">
             <span className="gradient-text">Discover NFTs</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto animate-fade-in-up stagger-2">
