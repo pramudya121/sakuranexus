@@ -302,8 +302,9 @@ const Profile = () => {
   };
 
   const handleCopyAddress = () => {
-    if (account) {
-      navigator.clipboard.writeText(account);
+    const addr = viewingAddress || account;
+    if (addr) {
+      navigator.clipboard.writeText(addr);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
