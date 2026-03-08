@@ -7,6 +7,40 @@ declare global {
   }
 }
 
+// Retry wrapper for RPC calls with exponential backoff
+export const withRetry = async <T>(
+  fn: () => Promise<T>,
+  maxRetries = 3,
+  baseDelay = 2000
+): Promise<T> => {
+  let lastError: any;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      const errorMsg = (error?.message || '').toLowerCase();
+      
+      // Don't retry user rejections or insufficient funds
+      if (
+        errorMsg.includes('user rejected') ||
+        errorMsg.includes('user denied') ||
+        errorMsg.includes('insufficient funds') ||
+        errorMsg.includes('insufficient balance')
+      ) {
+        throw error;
+      }
+      
+      if (attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+        console.log(`RPC call failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${Math.round(delay)}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw lastError;
+};
+
 // Get provider from wallet
 export const getProvider = (): ethers.BrowserProvider | null => {
   if (typeof window !== 'undefined' && window.ethereum) {
