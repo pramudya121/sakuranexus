@@ -968,7 +968,7 @@ const Profile = () => {
             <Button
               onClick={confirmListNFT}
               disabled={!listPrice || isProcessing}
-              className="bg-gradient-sakura hover:shadow-sakura"
+              className="btn-hero"
             >
               {isProcessing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               List NFT
