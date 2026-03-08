@@ -177,7 +177,7 @@ const Index = memo(function Index() {
               <Wallet className="w-4 h-4" />
               Getting Started
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
               How It <span className="gradient-text">Works</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
