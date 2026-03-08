@@ -684,7 +684,7 @@ const Profile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="collected" className="space-y-4 sm:space-y-6 pb-24">
-          <TabsList className={`grid w-full max-w-3xl mx-auto ${isOwnProfile ? 'grid-cols-6' : 'grid-cols-3'}`}>
+          <TabsList className={`grid w-full max-w-3xl mx-auto ${isOwnProfile ? 'grid-cols-3 sm:grid-cols-6' : 'grid-cols-3'} h-auto`}>
             <TabsTrigger value="collected" className="gap-2">
               <Package className="w-4 h-4" />
               <span className="hidden sm:inline">Collected</span>
