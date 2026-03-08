@@ -1,5 +1,5 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
-import { Home, Store, ArrowLeftRight, Droplets, LayoutDashboard } from "lucide-react";
+import { Home, Store, ArrowLeftRight, LayoutDashboard, Coins } from "lucide-react";
 
 const dockItems = [
   {
@@ -13,19 +13,19 @@ const dockItems = [
     href: "/dashboard",
   },
   {
-    title: "Marketplace",
-    icon: <Store className="w-5 h-5" />,
-    href: "/marketplace",
-  },
-  {
     title: "Swap",
     icon: <ArrowLeftRight className="w-5 h-5" />,
     href: "/dex/swap",
   },
   {
-    title: "Liquidity",
-    icon: <Droplets className="w-5 h-5" />,
-    href: "/dex/liquidity",
+    title: "Market",
+    icon: <Store className="w-5 h-5" />,
+    href: "/marketplace",
+  },
+  {
+    title: "Staking",
+    icon: <Coins className="w-5 h-5" />,
+    href: "/dex/staking",
   },
 ];
 
