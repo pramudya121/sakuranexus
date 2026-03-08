@@ -34,29 +34,29 @@ interface NFTCardProps {
 
 const rarityConfig = {
   common: { 
-    gradient: 'from-slate-400 to-slate-500', 
+    gradient: 'from-muted-foreground/60 to-muted-foreground/80', 
     glow: '',
-    bg: 'bg-slate-500/10'
+    bg: 'bg-muted/50'
   },
   uncommon: { 
-    gradient: 'from-emerald-400 to-green-500', 
-    glow: 'hover:shadow-[0_0_30px_rgba(52,211,153,0.3)]',
-    bg: 'bg-emerald-500/10'
+    gradient: 'from-primary/70 to-primary', 
+    glow: 'hover:shadow-sakura',
+    bg: 'bg-primary/10'
   },
   rare: { 
-    gradient: 'from-blue-400 to-indigo-500', 
-    glow: 'hover:shadow-[0_0_30px_rgba(99,102,241,0.3)]',
-    bg: 'bg-blue-500/10'
+    gradient: 'from-accent/70 to-accent', 
+    glow: 'hover:shadow-sakura',
+    bg: 'bg-accent/10'
   },
   epic: { 
-    gradient: 'from-violet-400 to-purple-500', 
-    glow: 'hover:shadow-[0_0_30px_rgba(139,92,246,0.4)]',
-    bg: 'bg-purple-500/10'
+    gradient: 'from-primary to-accent', 
+    glow: 'hover:shadow-sakura-strong',
+    bg: 'bg-primary/10'
   },
   legendary: { 
-    gradient: 'from-amber-400 via-orange-500 to-rose-500', 
-    glow: 'shadow-[0_0_20px_rgba(251,191,36,0.3)] hover:shadow-[0_0_40px_rgba(251,191,36,0.5)]',
-    bg: 'bg-amber-500/10'
+    gradient: 'from-primary via-accent to-primary', 
+    glow: 'shadow-sakura hover:shadow-sakura-strong',
+    bg: 'bg-primary/15'
   },
 };
 
@@ -90,16 +90,13 @@ const NFTCard = memo(({
   const navigate = useNavigate();
   const config = rarityConfig[rarity];
 
-  // Determine display status
   const displayStatus = status || (isListed ? 'listed' : 'not_listed');
 
-  // Real-time price tracking
   const { price: livePrice, priceChangePercent, isUp, isDown, isConnected } = useSingleNFTPrice(
     nftId || `nft-${tokenId}`,
     price ? parseFloat(price) : undefined
   );
 
-  // Flash effect on price change
   const [prevLivePrice, setPrevLivePrice] = useState(livePrice);
   useEffect(() => {
     if (livePrice !== prevLivePrice && prevLivePrice > 0) {
@@ -110,7 +107,6 @@ const NFTCard = memo(({
     setPrevLivePrice(livePrice);
   }, [livePrice, prevLivePrice]);
 
-  // Generate consistent mock stats based on tokenId
   const mockViews = views || (tokenId * 17) % 500 + 50;
   const mockLikes = likes || (tokenId * 7) % 100 + 10;
 
@@ -127,7 +123,6 @@ const NFTCard = memo(({
       
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden bg-muted/30">
-        {/* Loading Skeleton */}
         {imageLoading && !imageError && (
           <div className="absolute inset-0 bg-muted animate-pulse" />
         )}
@@ -151,8 +146,7 @@ const NFTCard = memo(({
         )}
         
         {/* Hover Overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-          {/* Quick Action Button */}
+        <div className={`absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
           <div className="absolute inset-0 flex items-center justify-center">
             <Button
               onClick={() => navigate(`/nft/${tokenId}`)}
@@ -165,14 +159,13 @@ const NFTCard = memo(({
             </Button>
           </div>
           
-          {/* Stats at Bottom */}
           <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-            <div className="flex items-center gap-4 text-sm text-white/90">
-              <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-lg">
+            <div className="flex items-center gap-4 text-sm text-primary-foreground/90">
+              <span className="flex items-center gap-1.5 bg-foreground/30 backdrop-blur-sm px-2 py-1 rounded-lg">
                 <Eye className="w-4 h-4" />
                 {mockViews}
               </span>
-              <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-lg">
+              <span className="flex items-center gap-1.5 bg-foreground/30 backdrop-blur-sm px-2 py-1 rounded-lg">
                 <Heart className="w-4 h-4" />
                 {mockLikes}
               </span>
@@ -201,7 +194,7 @@ const NFTCard = memo(({
         {rarity !== 'common' && (
           <div className="absolute bottom-3 left-3 z-10">
             <Badge 
-              className={`bg-gradient-to-r ${config.gradient} text-white border-0 capitalize flex items-center gap-1.5 shadow-lg`}
+              className={`bg-gradient-to-r ${config.gradient} text-primary-foreground border-0 capitalize flex items-center gap-1.5 shadow-lg`}
             >
               <Sparkles className="w-3 h-3" />
               {rarity}
@@ -212,17 +205,17 @@ const NFTCard = memo(({
         {/* Status Badge */}
         <div className="absolute bottom-3 right-3 z-10">
           {displayStatus === 'listed' && (
-            <Badge className="bg-green-500 text-white border-0 shadow-lg animate-pulse">
+            <Badge className="bg-primary text-primary-foreground border-0 shadow-lg animate-pulse">
               For Sale
             </Badge>
           )}
           {displayStatus === 'sold' && (
-            <Badge className="bg-blue-500 text-white border-0 shadow-lg">
+            <Badge className="bg-accent text-accent-foreground border-0 shadow-lg">
               Sold
             </Badge>
           )}
           {displayStatus === 'not_listed' && isOwner && (
-            <Badge className="bg-gray-500/80 text-white border-0 shadow-lg">
+            <Badge variant="secondary" className="shadow-lg">
               Not Listed
             </Badge>
           )}
@@ -244,31 +237,30 @@ const NFTCard = memo(({
           </button>
         </div>
         
-        {/* Price Display with Live Updates */}
+        {/* Price Display */}
         {(price || livePrice > 0) && (
-          <div className={`mt-3 p-3 rounded-xl ${config.bg} border border-border/30 transition-all duration-300 group-hover:border-primary/30 ${priceFlash === 'up' ? 'ring-2 ring-green-500/50' : priceFlash === 'down' ? 'ring-2 ring-red-500/50' : ''}`}>
+          <div className={`mt-3 p-3 rounded-xl ${config.bg} border border-border/30 transition-all duration-300 group-hover:border-primary/30 ${priceFlash === 'up' ? 'ring-2 ring-primary/50' : priceFlash === 'down' ? 'ring-2 ring-destructive/50' : ''}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground uppercase tracking-wide">Price</span>
                 {isConnected && (
                   <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
-                  <span className={`text-xl font-bold transition-colors duration-300 ${priceFlash === 'up' ? 'text-green-500' : priceFlash === 'down' ? 'text-red-500' : 'gradient-text'}`}>
+                  <span className={`text-xl font-bold transition-colors duration-300 ${priceFlash === 'up' ? 'text-primary' : priceFlash === 'down' ? 'text-destructive' : 'gradient-text'}`}>
                     {livePrice > 0 ? livePrice.toFixed(2) : price}
                   </span>
                   <span className="text-xs font-medium text-muted-foreground">NEX</span>
                 </div>
-                {/* Price Change Badge */}
                 {isConnected && Math.abs(priceChangePercent) > 0.01 && (
                   <Badge 
                     variant="secondary" 
-                    className={`text-xs px-1.5 py-0.5 ${isUp ? 'bg-green-500/10 text-green-500' : isDown ? 'bg-red-500/10 text-red-500' : ''}`}
+                    className={`text-xs px-1.5 py-0.5 ${isUp ? 'bg-primary/10 text-primary' : isDown ? 'bg-destructive/10 text-destructive' : ''}`}
                   >
                     {isUp && <TrendingUp className="w-2.5 h-2.5 mr-0.5" />}
                     {isDown && <TrendingDown className="w-2.5 h-2.5 mr-0.5" />}

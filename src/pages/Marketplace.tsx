@@ -366,11 +366,9 @@ const Marketplace = memo(function Marketplace() {
           </p>
         </div>
 
-        {/* Market Stats & Admin Panel */}
+        {/* Market Stats */}
         <div className="mb-10 animate-fade-in-up stagger-3">
-          <div className="flex justify-end mb-4">
-            <MarketplaceAdminPanel />
-          </div>
+          <MarketplaceAdminPanel />
           <MarketplaceStats />
         </div>
 

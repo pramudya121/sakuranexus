@@ -5,13 +5,14 @@ import SakuraFalling from '@/components/SakuraFalling';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentAccount, formatAddress } from '@/lib/web3/wallet';
 import { buyNFT, makeOffer, acceptOffer, cancelOffer } from '@/lib/web3/nft';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Tag, ShoppingCart, Clock, CheckCircle2, X, Activity, TrendingUp, Share2, Brain, Sparkles } from 'lucide-react';
+import { Loader2, ArrowLeft, Tag, ShoppingCart, Clock, CheckCircle2, X, Activity, TrendingUp, Share2, Brain, Sparkles, User, Hash, Image } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import SocialShareMenu from '@/components/SocialShareMenu';
 import LivePriceIndicator from '@/components/nft/LivePriceIndicator';
@@ -96,7 +97,6 @@ const NFTDetail = () => {
       .select('*')
       .eq('token_id', token_id)
       .maybeSingle();
-
     setNft(data);
   };
 
@@ -107,19 +107,16 @@ const NFTDetail = () => {
       .eq('token_id', token_id)
       .eq('active', true)
       .maybeSingle();
-
     setListing(data);
   };
 
   const fetchOffers = async (token_id: number) => {
-    // Fetch all pending offers for this token, regardless of offer_id
     const { data } = await supabase
       .from('offers')
       .select('*')
       .eq('token_id', token_id)
       .eq('status', 'pending')
       .order('offer_price', { ascending: false });
-
     setOffers(data || []);
   };
 
@@ -130,10 +127,8 @@ const NFTDetail = () => {
       .eq('token_id', token_id)
       .order('created_at', { ascending: false })
       .limit(20);
-
     setActivities(data || []);
 
-    // Generate price history from sales and offers
     const salesData = (data || [])
       .filter((activity) => 
         (activity.activity_type === 'sale' || activity.activity_type === 'offer_accepted') 
@@ -143,36 +138,22 @@ const NFTDetail = () => {
         date: new Date(activity.created_at).toLocaleDateString(),
         price: parseFloat(activity.price || '0'),
       }));
-
     setPriceHistory(salesData);
   };
 
   const handleBuy = async () => {
     if (!listing || !account || !nft) return;
-
     setIsProcessing(true);
     try {
       const result = await buyNFT(listing.listing_id, listing.price, account, nft.token_id);
-      
       if (result.success) {
-        toast({
-          title: 'Purchase Successful!',
-          description: 'NFT transferred to your wallet',
-        });
+        toast({ title: 'Purchase Successful!', description: 'NFT transferred to your wallet' });
         setTimeout(() => navigate('/profile'), 2000);
       } else {
-        toast({
-          title: 'Failed',
-          description: result.error,
-          variant: 'destructive',
-        });
+        toast({ title: 'Failed', description: result.error, variant: 'destructive' });
       }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to purchase NFT',
-        variant: 'destructive',
-      });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to purchase NFT', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
@@ -180,31 +161,18 @@ const NFTDetail = () => {
 
   const handleMakeOffer = async () => {
     if (!offerPrice || !account || !nft) return;
-
     setIsProcessing(true);
     try {
       const result = await makeOffer(nft.token_id, offerPrice, account);
-      
       if (result.success) {
-        toast({
-          title: 'Offer Submitted!',
-          description: 'Your offer has been sent to the owner',
-        });
+        toast({ title: 'Offer Submitted!', description: 'Your offer has been sent to the owner' });
         setOfferPrice('');
         checkAndFetchData();
       } else {
-        toast({
-          title: 'Failed',
-          description: result.error,
-          variant: 'destructive',
-        });
+        toast({ title: 'Failed', description: result.error, variant: 'destructive' });
       }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to make offer',
-        variant: 'destructive',
-      });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to make offer', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
@@ -212,37 +180,20 @@ const NFTDetail = () => {
 
   const handleAcceptOffer = async (offer: Offer) => {
     if (!account || !nft) {
-      toast({
-        title: 'Error',
-        description: 'Please connect wallet and try again.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Please connect wallet and try again.', variant: 'destructive' });
       return;
     }
-
     setIsProcessing(true);
     try {
       const result = await acceptOffer(nft.token_id, offer.offerer_address);
-      
       if (result.success) {
-        toast({
-          title: 'Offer Accepted!',
-          description: 'NFT transferred successfully',
-        });
+        toast({ title: 'Offer Accepted!', description: 'NFT transferred successfully' });
         checkAndFetchData();
       } else {
-        toast({
-          title: 'Failed',
-          description: result.error,
-          variant: 'destructive',
-        });
+        toast({ title: 'Failed', description: result.error, variant: 'destructive' });
       }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to accept offer',
-        variant: 'destructive',
-      });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to accept offer', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
@@ -250,38 +201,20 @@ const NFTDetail = () => {
 
   const handleCancelOffer = async () => {
     if (!account || !nft) {
-      toast({
-        title: 'Error',
-        description: 'Please connect wallet and try again.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Please connect wallet and try again.', variant: 'destructive' });
       return;
     }
-
     setIsProcessing(true);
     try {
-      // cancelOffer expects tokenId, not offer_id
       const result = await cancelOffer(nft.token_id);
-      
       if (result.success) {
-        toast({
-          title: 'Offer Cancelled',
-          description: 'Your offer has been withdrawn',
-        });
+        toast({ title: 'Offer Cancelled', description: 'Your offer has been withdrawn' });
         checkAndFetchData();
       } else {
-        toast({
-          title: 'Failed',
-          description: result.error,
-          variant: 'destructive',
-        });
+        toast({ title: 'Failed', description: result.error, variant: 'destructive' });
       }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to cancel offer',
-        variant: 'destructive',
-      });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to cancel offer', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
@@ -292,7 +225,7 @@ const NFTDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-sakura-soft flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
     );
@@ -300,54 +233,91 @@ const NFTDetail = () => {
 
   if (!nft) {
     return (
-      <div className="min-h-screen bg-gradient-sakura-soft">
+      <div className="min-h-screen bg-background">
         <SakuraFalling />
         <Navigation />
         <div className="container mx-auto px-4 pt-24 pb-12 text-center">
-          <h2 className="text-2xl font-bold">NFT Not Found</h2>
-          <Button onClick={() => navigate('/marketplace')} className="mt-4">
-            Back to Marketplace
-          </Button>
+          <div className="max-w-md mx-auto">
+            <Image className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+            <h2 className="text-2xl font-bold mb-2">NFT Not Found</h2>
+            <p className="text-muted-foreground mb-6">The NFT you're looking for doesn't exist or has been removed.</p>
+            <Button onClick={() => navigate('/marketplace')} className="btn-hero">
+              Back to Marketplace
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-sakura-soft">
+    <div className="min-h-screen bg-background">
       <SakuraFalling />
       <Navigation />
       
       <div className="container mx-auto px-4 pt-24 pb-12">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
+        {/* Back Button */}
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6 gap-2">
+          <ArrowLeft className="w-4 h-4" />
           Back
         </Button>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Image Section */}
-          <Card className="card-hover overflow-hidden">
-            <CardContent className="p-0">
-              <div className="aspect-square bg-gradient-sakura-soft">
-                <img 
-                  src={nft.image_url} 
-                  alt={nft.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid lg:grid-cols-5 gap-8">
+          {/* Image Section - 3 cols */}
+          <div className="lg:col-span-3 space-y-4">
+            <Card className="overflow-hidden border-border/50">
+              <CardContent className="p-0">
+                <div className="aspect-square bg-muted/30 relative">
+                  <img 
+                    src={nft.image_url} 
+                    alt={nft.name}
+                    className="w-full h-full object-cover"
+                  />
+                  {listing && (
+                    <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground border-0 shadow-lg text-sm px-3 py-1">
+                      For Sale
+                    </Badge>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Details Section */}
-          <div className="space-y-6">
-            <Card className="card-hover">
+            {/* Quick Info Cards */}
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="border-border/50">
+                <CardContent className="p-4 text-center">
+                  <Hash className="w-5 h-5 mx-auto text-primary mb-1" />
+                  <p className="text-xs text-muted-foreground">Token ID</p>
+                  <p className="font-bold text-lg">#{nft.token_id}</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50">
+                <CardContent className="p-4 text-center">
+                  <Tag className="w-5 h-5 mx-auto text-primary mb-1" />
+                  <p className="text-xs text-muted-foreground">Offers</p>
+                  <p className="font-bold text-lg">{offers.length}</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50">
+                <CardContent className="p-4 text-center">
+                  <Activity className="w-5 h-5 mx-auto text-primary mb-1" />
+                  <p className="text-xs text-muted-foreground">Trades</p>
+                  <p className="font-bold text-lg">{activities.length}</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Details Section - 2 cols */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Main Info Card */}
+            <Card className="border-border/50">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-3xl font-bold mb-2">{nft.name}</h1>
-                    <p className="text-sm text-muted-foreground">Token ID: #{nft.token_id}</p>
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-3xl font-bold mb-1 truncate">{nft.name}</h1>
+                    <p className="text-sm text-muted-foreground font-mono">Token #{nft.token_id}</p>
                   </div>
-                  {/* Social Share Button */}
                   <SocialShareMenu
                     title={nft.name}
                     description={nft.description || undefined}
@@ -358,38 +328,38 @@ const NFTDetail = () => {
                 </div>
 
                 {nft.description && (
-                  <p className="text-muted-foreground mb-6">{nft.description}</p>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-6">{nft.description}</p>
                 )}
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                {/* Owner */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 mb-4">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Owner</span>
-                    <button 
-                      onClick={() => navigate(`/profile/${nft.owner_address}`)}
-                      className="font-medium hover:text-primary transition-colors cursor-pointer"
-                    >
-                      {formatAddress(nft.owner_address)}
-                    </button>
                   </div>
-
-                  {listing && (
-                    <>
-                      <Separator />
-                      <div className="p-4 rounded-lg bg-gradient-sakura-soft">
-                        <div className="text-sm text-muted-foreground mb-1">Current Price</div>
-                        <LivePriceIndicator
-                          nftId={nft.id}
-                          initialPrice={parseFloat(listing.price)}
-                          showChange={true}
-                          size="lg"
-                        />
-                      </div>
-                    </>
-                  )}
+                  <button 
+                    onClick={() => navigate(`/profile/${nft.owner_address}`)}
+                    className="font-medium font-mono text-sm hover:text-primary transition-colors cursor-pointer"
+                  >
+                    {formatAddress(nft.owner_address)}
+                  </button>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="mt-6 space-y-3">
+                {/* Price */}
+                {listing && (
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
+                    <div className="text-sm text-muted-foreground mb-1">Current Price</div>
+                    <LivePriceIndicator
+                      nftId={nft.id}
+                      initialPrice={parseFloat(listing.price)}
+                      showChange={true}
+                      size="lg"
+                    />
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="space-y-3">
                   {listing && !isOwner && (
                     <Button 
                       onClick={handleBuy}
@@ -399,7 +369,7 @@ const NFTDetail = () => {
                       {isProcessing ? (
                         <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Processing...</>
                       ) : (
-                        <><ShoppingCart className="mr-2 h-5 w-5" />Buy Now</>
+                        <><ShoppingCart className="mr-2 h-5 w-5" />Buy Now - {listing.price} NEX</>
                       )}
                     </Button>
                   )}
@@ -412,15 +382,16 @@ const NFTDetail = () => {
                         placeholder="Enter offer (NEX)"
                         value={offerPrice}
                         onChange={(e) => setOfferPrice(e.target.value)}
+                        className="h-11"
                       />
                       <Button 
                         onClick={handleMakeOffer}
                         disabled={!offerPrice || isProcessing}
                         variant="outline"
-                        className="whitespace-nowrap"
+                        className="whitespace-nowrap h-11"
                       >
                         <Tag className="mr-2 h-4 w-4" />
-                        Make Offer
+                        Offer
                       </Button>
                     </div>
                   )}
@@ -430,7 +401,7 @@ const NFTDetail = () => {
                       onClick={handleCancelOffer}
                       disabled={isProcessing}
                       variant="destructive"
-                      className="w-full"
+                      className="w-full h-11"
                     >
                       {isProcessing ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
@@ -443,68 +414,60 @@ const NFTDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Offers Section - Always show for owners or when offers exist */}
-            <Card className="card-hover">
+            {/* Offers */}
+            <Card className="border-border/50">
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Tag className="w-5 h-5" />
-                  Offers {offers.length > 0 && `(${offers.length})`}
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <Tag className="w-5 h-5 text-primary" />
+                  Offers {offers.length > 0 && <Badge variant="secondary" className="text-xs">{offers.length}</Badge>}
                 </h3>
                 
                 {offers.length === 0 ? (
-                  <div className="text-center py-6">
-                    <Clock className="w-12 h-12 mx-auto text-muted-foreground/50 mb-2" />
-                    <p className="text-muted-foreground">No active offers yet</p>
+                  <div className="text-center py-8">
+                    <Clock className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
+                    <p className="text-sm text-muted-foreground">No active offers</p>
                     {!isOwner && (
-                      <p className="text-sm text-muted-foreground mt-1">Be the first to make an offer!</p>
+                      <p className="text-xs text-muted-foreground mt-1">Be the first to make an offer!</p>
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                  <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
                     {offers.map((offer, index) => {
                       const isMyOffer = account && offer.offerer_address.toLowerCase() === account.toLowerCase();
                       const isHighest = index === 0;
                       return (
                         <div 
                           key={offer.id} 
-                          className={`flex items-center justify-between p-4 rounded-lg transition-all ${
+                          className={`flex items-center justify-between p-3 rounded-xl transition-all ${
                             isHighest 
                               ? 'bg-primary/10 border border-primary/30' 
-                              : 'bg-gradient-sakura-soft hover:bg-gradient-sakura-soft/80'
+                              : 'bg-muted/50 hover:bg-muted/80'
                           }`}
                         >
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-lg">{offer.offer_price} NEX</span>
+                              <span className="font-bold">{offer.offer_price} NEX</span>
                               {isHighest && (
-                                <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                                <Badge variant="secondary" className="text-[10px] bg-primary/20 text-primary">
                                   Highest
-                                </span>
+                                </Badge>
                               )}
                             </div>
-                            <div className="text-sm text-muted-foreground mt-1">
+                            <div className="text-xs text-muted-foreground mt-0.5">
                               by {formatAddress(offer.offerer_address)}
-                              {isMyOffer && <span className="ml-2 text-primary font-semibold">(Your Offer)</span>}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {new Date(offer.created_at).toLocaleString()}
+                              {isMyOffer && <span className="ml-1 text-primary font-semibold">(You)</span>}
                             </div>
                           </div>
-                          <div className="flex gap-2 ml-4">
+                          <div className="flex gap-1.5 ml-3 shrink-0">
                             {isOwner && (
                               <Button 
                                 onClick={() => handleAcceptOffer(offer)}
                                 disabled={isProcessing}
                                 size="sm"
-                                className="btn-hero"
+                                className="btn-hero h-8 text-xs"
                               >
-                                {isProcessing ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <>
-                                    <CheckCircle2 className="w-4 h-4 mr-1" />
-                                    Accept
-                                  </>
+                                {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : (
+                                  <><CheckCircle2 className="w-3 h-3 mr-1" />Accept</>
                                 )}
                               </Button>
                             )}
@@ -514,14 +477,10 @@ const NFTDetail = () => {
                                 disabled={isProcessing}
                                 size="sm"
                                 variant="destructive"
+                                className="h-8 text-xs"
                               >
-                                {isProcessing ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <>
-                                    <X className="w-4 h-4 mr-1" />
-                                    Cancel
-                                  </>
+                                {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : (
+                                  <><X className="w-3 h-3 mr-1" />Cancel</>
                                 )}
                               </Button>
                             )}
@@ -536,63 +495,67 @@ const NFTDetail = () => {
           </div>
         </div>
 
-        {/* Tabs for History, Analytics, and AI */}
+        {/* Tabs */}
         <div className="mt-8">
           <Tabs defaultValue="activity" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="activity">
-                <Activity className="w-4 h-4 mr-2" />
-                Activity
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-6">
+              <TabsTrigger value="activity" className="gap-1.5">
+                <Activity className="w-4 h-4" />
+                <span className="hidden sm:inline">Activity</span>
               </TabsTrigger>
-              <TabsTrigger value="analytics">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Price History
+              <TabsTrigger value="analytics" className="gap-1.5">
+                <TrendingUp className="w-4 h-4" />
+                <span className="hidden sm:inline">Price</span>
               </TabsTrigger>
-              <TabsTrigger value="ai-analysis">
-                <Brain className="w-4 h-4 mr-2" />
-                AI Analysis
+              <TabsTrigger value="ai-analysis" className="gap-1.5">
+                <Brain className="w-4 h-4" />
+                <span className="hidden sm:inline">AI Analysis</span>
               </TabsTrigger>
-              <TabsTrigger value="ai-tools">
-                <Sparkles className="w-4 h-4 mr-2" />
-                AI Tools
+              <TabsTrigger value="ai-tools" className="gap-1.5">
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden sm:inline">AI Tools</span>
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="activity">
-              <Card>
+              <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle>Activity History</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-primary" />
+                    Activity History
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {activities.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">No activity yet</p>
+                    <div className="text-center py-12">
+                      <Activity className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
+                      <p className="text-muted-foreground">No activity yet</p>
+                    </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {activities.map((activity) => (
-                        <div key={activity.id} className="flex items-start gap-4 p-4 rounded-lg bg-gradient-sakura-soft">
-                          <div className="flex-1">
-                            <div className="font-medium capitalize">
+                        <div key={activity.id} className="flex items-start gap-4 p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <Activity className="w-4 h-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium capitalize text-sm">
                               {activity.activity_type.replace('_', ' ')}
                             </div>
-                            <div className="text-sm text-muted-foreground mt-1">
-                              {activity.from_address && (
-                                <span>From: {formatAddress(activity.from_address)}</span>
-                              )}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {activity.from_address && <span>From: {formatAddress(activity.from_address)}</span>}
                               {activity.to_address && (
-                                <>
-                                  {activity.from_address && ' → '}
-                                  <span>To: {formatAddress(activity.to_address)}</span>
-                                </>
+                                <>{activity.from_address && ' → '}To: {formatAddress(activity.to_address)}</>
                               )}
                             </div>
                             {activity.price && (
-                              <div className="text-sm font-semibold mt-1">
-                                Price: {activity.price} NEX
+                              <div className="text-sm font-semibold mt-1 text-primary">
+                                {activity.price} NEX
                               </div>
                             )}
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {new Date(activity.created_at).toLocaleString()}
-                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground shrink-0">
+                            {new Date(activity.created_at).toLocaleDateString()}
                           </div>
                         </div>
                       ))}
@@ -603,34 +566,36 @@ const NFTDetail = () => {
             </TabsContent>
 
             <TabsContent value="analytics">
-              <Card>
+              <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle>Price History & Analytics</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                    Price History & Analytics
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {priceHistory.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">No sales data yet</p>
+                    <div className="text-center py-12">
+                      <TrendingUp className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
+                      <p className="text-muted-foreground">No sales data yet</p>
+                    </div>
                   ) : (
                     <>
                       <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={priceHistory}>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                            <XAxis 
-                              dataKey="date" 
-                              className="text-xs"
-                              stroke="hsl(var(--muted-foreground))"
-                            />
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                             <YAxis 
-                              className="text-xs"
-                              stroke="hsl(var(--muted-foreground))"
+                              stroke="hsl(var(--muted-foreground))" 
+                              fontSize={12}
                               label={{ value: 'Price (NEX)', angle: -90, position: 'insideLeft' }}
                             />
                             <Tooltip 
                               contentStyle={{ 
                                 backgroundColor: 'hsl(var(--card))',
                                 border: '1px solid hsl(var(--border))',
-                                borderRadius: '0.5rem'
+                                borderRadius: '0.75rem'
                               }}
                             />
                             <Line 
@@ -645,21 +610,21 @@ const NFTDetail = () => {
                       </div>
                       
                       <div className="grid grid-cols-3 gap-4 mt-6">
-                        <div className="p-4 rounded-lg bg-gradient-sakura-soft text-center">
-                          <div className="text-sm text-muted-foreground">Total Sales</div>
-                          <div className="text-2xl font-bold mt-1">{priceHistory.length}</div>
+                        <div className="p-4 rounded-xl bg-muted/50 text-center">
+                          <div className="text-xs text-muted-foreground mb-1">Total Sales</div>
+                          <div className="text-2xl font-bold">{priceHistory.length}</div>
                         </div>
-                        <div className="p-4 rounded-lg bg-gradient-sakura-soft text-center">
-                          <div className="text-sm text-muted-foreground">Avg Price</div>
-                          <div className="text-2xl font-bold mt-1">
-                            {(priceHistory.reduce((sum, p) => sum + p.price, 0) / priceHistory.length).toFixed(2)} NEX
+                        <div className="p-4 rounded-xl bg-muted/50 text-center">
+                          <div className="text-xs text-muted-foreground mb-1">Avg Price</div>
+                          <div className="text-2xl font-bold">
+                            {(priceHistory.reduce((sum, p) => sum + p.price, 0) / priceHistory.length).toFixed(2)}
                           </div>
+                          <div className="text-xs text-muted-foreground">NEX</div>
                         </div>
-                        <div className="p-4 rounded-lg bg-gradient-sakura-soft text-center">
-                          <div className="text-sm text-muted-foreground">Last Sale</div>
-                          <div className="text-2xl font-bold mt-1">
-                            {priceHistory[0]?.price.toFixed(2)} NEX
-                          </div>
+                        <div className="p-4 rounded-xl bg-muted/50 text-center">
+                          <div className="text-xs text-muted-foreground mb-1">Last Sale</div>
+                          <div className="text-2xl font-bold">{priceHistory[0]?.price.toFixed(2)}</div>
+                          <div className="text-xs text-muted-foreground">NEX</div>
                         </div>
                       </div>
                     </>
@@ -668,48 +633,27 @@ const NFTDetail = () => {
               </Card>
             </TabsContent>
 
-            {/* AI Analysis Tab */}
             <TabsContent value="ai-analysis">
               <div className="grid md:grid-cols-2 gap-6">
                 <AIRarityScore 
-                  nft={{ 
-                    name: nft.name, 
-                    description: nft.description || undefined, 
-                    image_url: nft.image_url, 
-                    token_id: nft.token_id 
-                  }} 
+                  nft={{ name: nft.name, description: nft.description || undefined, image_url: nft.image_url, token_id: nft.token_id }} 
                 />
                 <AIFakeDetection 
-                  nft={{ 
-                    name: nft.name, 
-                    image_url: nft.image_url, 
-                    owner_address: nft.owner_address 
-                  }} 
+                  nft={{ name: nft.name, image_url: nft.image_url, owner_address: nft.owner_address }} 
                 />
               </div>
             </TabsContent>
 
-            {/* AI Tools Tab */}
             <TabsContent value="ai-tools">
               <div className="grid md:grid-cols-2 gap-6">
                 <AIPricePrediction 
-                  nft={{ 
-                    name: nft.name, 
-                    token_id: nft.token_id, 
-                    price: listing?.price 
-                  }}
+                  nft={{ name: nft.name, token_id: nft.token_id, price: listing?.price }}
                   salesHistory={priceHistory}
                 />
-                <AISentimentAnalysis 
-                  nftOrCollection={{ name: nft.name }} 
-                />
+                <AISentimentAnalysis nftOrCollection={{ name: nft.name }} />
                 {isOwner && (
                   <AIDynamicPricing
-                    nft={{
-                      name: nft.name,
-                      token_id: nft.token_id,
-                      currentPrice: listing?.price,
-                    }}
+                    nft={{ name: nft.name, token_id: nft.token_id, currentPrice: listing?.price }}
                     similarSales={priceHistory}
                   />
                 )}
