@@ -140,7 +140,7 @@ const Dashboard = memo(function Dashboard() {
           
           <div className="flex items-center gap-3">
             <Badge variant={isConnected ? 'default' : 'secondary'} className="gap-1.5 px-3 py-1.5">
-              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-muted-foreground'}`} />
+              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-primary animate-pulse' : 'bg-muted-foreground'}`} />
               {isConnected ? 'Live Data' : 'Offline'}
             </Badge>
             <Button
