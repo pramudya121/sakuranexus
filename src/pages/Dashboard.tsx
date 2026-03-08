@@ -452,7 +452,7 @@ const Dashboard = memo(function Dashboard() {
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{token.name}</p>
                             {token.trending && (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-orange-500/10 border-orange-500/30 text-orange-500">
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-accent/10 border-accent/30 text-accent">
                                 🔥 Hot
                               </Badge>
                             )}
