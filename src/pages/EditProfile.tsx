@@ -188,7 +188,7 @@ const EditProfile = () => {
           Back to Profile
         </Button>
 
-        <Card className="max-w-2xl mx-auto border-border/50 shadow-lg overflow-hidden">
+        <Card className="max-w-2xl mx-auto border-border/50 shadow-lg overflow-hidden mx-0 sm:mx-auto">
           {/* Banner Upload */}
           <div className="relative h-28 sm:h-40 bg-muted">
             {bannerPreview ? (

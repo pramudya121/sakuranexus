@@ -540,9 +540,9 @@ const Profile = () => {
             </Avatar>
 
             {/* Profile Info */}
-            <div className="flex-1 md:mb-4">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-bold">
+            <div className="flex-1 md:mb-4 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
                   {userProfile?.username || 'Unnamed User'}
                 </h1>
                 <UserBadges walletAddress={viewingAddress || account} />
