@@ -372,7 +372,7 @@ const Index = memo(function Index() {
             <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-primary-foreground mb-4 sm:mb-6">
               Ready to Begin? 🌸
             </h2>
-            <p className="text-xl text-primary-foreground/80 mb-10 leading-relaxed">
+            <p className="text-base sm:text-xl text-primary-foreground/80 mb-8 sm:mb-10 leading-relaxed px-2">
               Join thousands of creators and traders on the NEXUSAKURA platform
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
