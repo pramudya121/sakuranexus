@@ -192,7 +192,7 @@ const NFTAnalytics = () => {
           </div>
         </div>
         {change !== undefined && !isLoading && (
-          <div className={`flex items-center gap-1 mt-2 text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+          <div className={`flex items-center gap-1 mt-2 text-sm ${change >= 0 ? 'text-primary' : 'text-destructive'}`}>
             {change >= 0 ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             <span>{Math.abs(change).toFixed(1)}%</span>
             <span className="text-muted-foreground">vs last period</span>
