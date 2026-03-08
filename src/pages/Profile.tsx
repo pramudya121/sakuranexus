@@ -669,11 +669,11 @@ const Profile = () => {
           </Card>
 
           <Card className="card-hover">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Floor</p>
-                  <p className="text-2xl font-bold">{stats.floorPrice}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Floor</p>
+                  <p className="text-xl sm:text-2xl font-bold">{stats.floorPrice}</p>
                   <p className="text-xs text-muted-foreground">NEX</p>
                 </div>
                 <DollarSign className="w-8 h-8 text-accent/50" />
