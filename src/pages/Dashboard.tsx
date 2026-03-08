@@ -169,7 +169,7 @@ const Dashboard = memo(function Dashboard() {
         )}
 
         {/* Quick Stats with BorderBeam */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
             <BorderBeam size={80} duration={10} delay={0} />
             <CardContent className="p-4">
