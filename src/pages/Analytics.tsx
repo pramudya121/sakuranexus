@@ -381,9 +381,9 @@ const Analytics = () => {
                     Activity Breakdown
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-8 items-center">
-                    <ResponsiveContainer width="100%" height={280}>
+                <CardContent className="px-3 sm:px-6 pb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 items-center">
+                    <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
                         <Pie
                           data={activityBreakdown}
