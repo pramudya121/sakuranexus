@@ -115,21 +115,28 @@ const Profile = () => {
   // Re-fetch data whenever this page becomes active (e.g. after minting)
   useEffect(() => {
     checkAndFetchData();
-  }, [location.key]);
+  }, [location.key, paramAddress]);
 
   const checkAndFetchData = async () => {
     const currentAccount = await getCurrentAccount();
     setAccount(currentAccount);
     
-    if (currentAccount) {
+    // Determine which address to display
+    const targetAddress = paramAddress || currentAccount;
+    const ownProfile = !paramAddress || (currentAccount && paramAddress.toLowerCase() === currentAccount.toLowerCase());
+    
+    setViewingAddress(targetAddress);
+    setIsOwnProfile(!!ownProfile);
+    
+    if (targetAddress) {
       await Promise.all([
-        fetchNFTs(currentAccount),
-        fetchCreatedNFTs(currentAccount),
-        fetchWatchlist(currentAccount),
-        fetchActivities(currentAccount),
-        fetchOffers(currentAccount),
-        fetchStats(currentAccount),
-        fetchUserProfile(currentAccount),
+        fetchNFTs(targetAddress),
+        fetchCreatedNFTs(targetAddress),
+        ...(ownProfile ? [fetchWatchlist(targetAddress)] : []),
+        fetchActivities(targetAddress),
+        ...(ownProfile ? [fetchOffers(targetAddress)] : []),
+        fetchStats(targetAddress),
+        fetchUserProfile(targetAddress),
       ]);
     }
     
