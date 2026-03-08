@@ -225,7 +225,12 @@ const MarketplaceAdminPanel = () => {
     return (fee / 100).toFixed(2);
   };
 
-  if (loading) {
+  // Don't render at all if not owner
+  if (!ownerChecked || !isOwner) {
+    return null;
+  }
+
+  if (loading && isOpen) {
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
