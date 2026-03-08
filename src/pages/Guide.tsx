@@ -295,36 +295,36 @@ const Guide = () => {
         </section>
 
         {/* Security Tips */}
-        <section className="mb-16 animate-fade-in-up stagger-3">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-primary" />
+        <section className="mb-10 sm:mb-16 animate-fade-in-up stagger-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-5 sm:mb-8">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <h2 className="text-3xl font-bold">Tips Keamanan</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">Tips Keamanan</h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {[
               {
                 title: 'Jangan Bagikan Private Key',
-                desc: 'Jangan pernah membagikan private key atau seed phrase wallet Anda kepada siapapun. NexusLabs tidak akan pernah meminta informasi ini.',
+                desc: 'Jangan pernah membagikan private key atau seed phrase wallet Anda kepada siapapun.',
               },
               {
                 title: 'Verifikasi Contract Address',
-                desc: 'Selalu pastikan Anda berinteraksi dengan contract address yang benar. Periksa alamat di explorer sebelum konfirmasi transaksi besar.',
+                desc: 'Selalu pastikan Anda berinteraksi dengan contract address yang benar.',
               },
               {
                 title: 'Hati-hati Phishing',
-                desc: 'Pastikan URL website benar (sakuranexus.lovable.app). Jangan klik link mencurigakan yang meminta koneksi wallet.',
+                desc: 'Pastikan URL website benar. Jangan klik link mencurigakan yang meminta koneksi wallet.',
               },
             ].map((tip, i) => (
               <Card key={i} className="border border-warning/20 bg-warning/5">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Shield className="w-5 h-5 text-warning" />
-                    <h4 className="font-semibold">{tip.title}</h4>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-warning flex-shrink-0" />
+                    <h4 className="font-semibold text-sm sm:text-base">{tip.title}</h4>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{tip.desc}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{tip.desc}</p>
                 </CardContent>
               </Card>
             ))}
