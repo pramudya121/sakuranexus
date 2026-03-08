@@ -332,10 +332,10 @@ const Mint = () => {
           </div>
 
           {/* How It Works */}
-          <Card className="mt-8 border-border/50">
-            <CardContent className="p-6 sm:p-8">
-              <h3 className="text-2xl font-bold mb-6 gradient-text">How Minting Works</h3>
-              <div className="grid sm:grid-cols-3 gap-6">
+          <Card className="mt-6 sm:mt-8 border-border/50">
+            <CardContent className="p-4 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 gradient-text">How Minting Works</h3>
+              <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
                 {[
                   { icon: Image, title: 'Upload Image', desc: 'Your image is securely uploaded to decentralized storage', step: 1 },
                   { icon: FileText, title: 'Create Metadata', desc: 'NFT metadata is generated with your name and description', step: 2 },

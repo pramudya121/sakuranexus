@@ -610,22 +610,22 @@ const NFTDetail = () => {
                         </ResponsiveContainer>
                       </div>
                       
-                      <div className="grid grid-cols-3 gap-4 mt-6">
-                        <div className="p-4 rounded-xl bg-muted/50 text-center">
-                          <div className="text-xs text-muted-foreground mb-1">Total Sales</div>
-                          <div className="text-2xl font-bold">{priceHistory.length}</div>
+                      <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-6">
+                        <div className="p-2.5 sm:p-4 rounded-xl bg-muted/50 text-center">
+                          <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">Total Sales</div>
+                          <div className="text-lg sm:text-2xl font-bold">{priceHistory.length}</div>
                         </div>
-                        <div className="p-4 rounded-xl bg-muted/50 text-center">
-                          <div className="text-xs text-muted-foreground mb-1">Avg Price</div>
-                          <div className="text-2xl font-bold">
+                        <div className="p-2.5 sm:p-4 rounded-xl bg-muted/50 text-center">
+                          <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">Avg Price</div>
+                          <div className="text-lg sm:text-2xl font-bold">
                             {(priceHistory.reduce((sum, p) => sum + p.price, 0) / priceHistory.length).toFixed(2)}
                           </div>
-                          <div className="text-xs text-muted-foreground">NEX</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">NEX</div>
                         </div>
-                        <div className="p-4 rounded-xl bg-muted/50 text-center">
-                          <div className="text-xs text-muted-foreground mb-1">Last Sale</div>
-                          <div className="text-2xl font-bold">{priceHistory[0]?.price.toFixed(2)}</div>
-                          <div className="text-xs text-muted-foreground">NEX</div>
+                        <div className="p-2.5 sm:p-4 rounded-xl bg-muted/50 text-center">
+                          <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">Last Sale</div>
+                          <div className="text-lg sm:text-2xl font-bold">{priceHistory[0]?.price.toFixed(2)}</div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">NEX</div>
                         </div>
                       </div>
                     </>
