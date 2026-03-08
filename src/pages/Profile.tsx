@@ -309,20 +309,25 @@ const Profile = () => {
       return;
     }
 
-    const result = await acceptOffer(offer.token_id, offer.offerer_address);
-    
-    if (result.success) {
-      toast({
-        title: 'Success!',
-        description: 'Offer accepted successfully',
-      });
-      checkAndFetchData();
-    } else {
-      toast({
-        title: 'Failed',
-        description: result.error,
-        variant: 'destructive',
-      });
+    setIsProcessing(true);
+    try {
+      const result = await acceptOffer(offer.token_id, offer.offerer_address);
+      
+      if (result.success) {
+        toast({
+          title: 'Offer Accepted! 🎉',
+          description: 'NFT transferred to buyer successfully',
+        });
+        checkAndFetchData();
+      } else {
+        toast({
+          title: 'Failed',
+          description: result.error,
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -336,20 +341,25 @@ const Profile = () => {
       return;
     }
 
-    const result = await cancelOffer(offer.token_id);
-    
-    if (result.success) {
-      toast({
-        title: 'Success!',
-        description: 'Offer cancelled',
-      });
-      checkAndFetchData();
-    } else {
-      toast({
-        title: 'Failed',
-        description: result.error,
-        variant: 'destructive',
-      });
+    setIsProcessing(true);
+    try {
+      const result = await cancelOffer(offer.token_id);
+      
+      if (result.success) {
+        toast({
+          title: 'Success!',
+          description: 'Offer cancelled',
+        });
+        checkAndFetchData();
+      } else {
+        toast({
+          title: 'Failed',
+          description: result.error,
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
