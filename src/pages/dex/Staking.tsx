@@ -8,8 +8,7 @@ import StakingStats from '@/components/dex/StakingStats';
 import RewardsClaimPanel from '@/components/dex/RewardsClaimPanel';
 import StakingCalculator from '@/components/dex/StakingCalculator';
 import RewardsTracker from '@/components/dex/RewardsTracker';
-import { PremiumHeroSection } from '@/components/PremiumHeroSection';
-import { GlowingStarsBackgroundCard } from '@/components/ui/glowing-stars';
+import { Card } from '@/components/ui/card';
 import { Coins, TrendingUp, Shield, Lock, Wallet, Clock, Percent, Calculator, Gift, Sparkles } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -25,19 +24,16 @@ const Staking = memo(() => {
       icon: TrendingUp,
       title: 'High APR',
       description: 'Earn competitive returns on your staked assets',
-      gradient: 'from-emerald-500 to-teal-500',
     },
     {
       icon: Lock,
       title: 'Flexible Lock',
       description: 'Choose from various lock periods to maximize rewards',
-      gradient: 'from-violet-500 to-purple-500',
     },
     {
       icon: Shield,
       title: 'Secure',
       description: 'Smart contract audited for your safety',
-      gradient: 'from-amber-500 to-orange-500',
     },
   ];
 
@@ -54,35 +50,29 @@ const Staking = memo(() => {
       <Navigation />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
-        {/* DEX Navigation */}
         <DEXNavigation />
         
-        {/* Premium Hero Section */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4 animate-fade-in-up">
+        {/* Hero */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
             <Sparkles className="w-4 h-4" />
             TOKEN STAKING
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-3 animate-fade-in-up stagger-1">
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">
             <span className="gradient-text">Stake & Earn</span>
           </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto animate-fade-in-up stagger-2">
-            Stake your tokens to earn additional rewards. 
-            Lock your assets and earn high APR on your holdings.
+          <p className="text-muted-foreground max-w-lg mx-auto">
+            Stake your tokens to earn additional rewards. Lock your assets and earn high APR on your holdings.
           </p>
         </div>
 
-        {/* Statistics Dashboard */}
-        <div className="mb-8">
-          <StakingStats refreshTrigger={refreshTrigger} />
-        </div>
+        {/* Stats */}
+        <StakingStats refreshTrigger={refreshTrigger} />
 
-        {/* Admin Button */}
-        <div className="flex justify-center mb-8">
-          <StakingAdminPanel />
-        </div>
+        {/* Admin Panel - only visible to contract owner */}
+        <StakingAdminPanel />
 
-        {/* Main Content with Tabs */}
+        {/* Main Content */}
         <div className="max-w-6xl mx-auto mb-16">
           <Tabs defaultValue="pools" className="w-full">
             <TabsList className="w-full max-w-lg mx-auto grid grid-cols-4 mb-8">
@@ -91,11 +81,11 @@ const Staking = memo(() => {
                 <span className="hidden sm:inline">Pools</span>
               </TabsTrigger>
               <TabsTrigger value="rewards" className="gap-2">
-                <TrendingUp className="w-4 h-4" />
+                <Gift className="w-4 h-4" />
                 <span className="hidden sm:inline">Rewards</span>
               </TabsTrigger>
               <TabsTrigger value="tracker" className="gap-2">
-                <Gift className="w-4 h-4" />
+                <TrendingUp className="w-4 h-4" />
                 <span className="hidden sm:inline">Tracker</span>
               </TabsTrigger>
               <TabsTrigger value="calculator" className="gap-2">
@@ -130,51 +120,49 @@ const Staking = memo(() => {
 
         {/* How It Works */}
         <div className="max-w-4xl mx-auto mb-16">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-2">How It Works</h2>
-            <p className="text-muted-foreground">Get started with staking in 4 simple steps</p>
-          </div>
-          
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+            How It <span className="gradient-text">Works</span>
+          </h2>
           <div className="grid md:grid-cols-4 gap-4">
             {howItWorks.map((item, index) => {
               const Icon = item.icon;
               return (
-                <div key={index} className="relative text-center p-6 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-elegant">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
-                    {item.step}
-                  </div>
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-muted flex items-center justify-center">
-                    <Icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold mb-1">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                  
-                  {index < howItWorks.length - 1 && (
-                    <div className="hidden md:block absolute top-1/2 -right-2 w-4 h-0.5 bg-border" />
-                  )}
+                <div key={index} className="relative">
+                  <Card className="text-center p-6 border-border/50 hover:border-primary/30 transition-all duration-300 h-full">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
+                      {item.step}
+                    </div>
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-muted flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="font-semibold mb-1">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground">{item.desc}</p>
+                    {index < howItWorks.length - 1 && (
+                      <div className="hidden md:block absolute top-1/2 -right-2 w-4 h-0.5 bg-border" />
+                    )}
+                  </Card>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Features with Glow Effect */}
+        {/* Features */}
         <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+            Why <span className="gradient-text">Stake?</span>
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <GlowingStarsBackgroundCard key={index} className="h-full">
-                  <div className="relative z-10 p-6">
-                    <div className={`w-12 h-12 mb-4 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {feature.description}
-                    </p>
+                <Card key={index} className="group p-6 border-border/50 hover:border-primary/30 transition-all duration-300">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <Icon className="w-6 h-6 text-primary" />
                   </div>
-                </GlowingStarsBackgroundCard>
+                  <h3 className="font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+                </Card>
               );
             })}
           </div>
