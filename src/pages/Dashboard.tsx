@@ -172,7 +172,7 @@ const Dashboard = memo(function Dashboard() {
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Card className="glass border-border/50 hover:shadow-lg transition-shadow relative overflow-hidden">
             <BorderBeam size={80} duration={10} delay={0} />
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <DollarSign className="w-5 h-5 text-primary" />
