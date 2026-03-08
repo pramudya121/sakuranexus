@@ -396,7 +396,7 @@ const Marketplace = memo(function Marketplace() {
                   />
                 </div>
                 
-                {/* Sort Dropdown */}
+                <div className="flex flex-wrap gap-2 items-center">
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-[180px] h-12 rounded-xl border-2 border-border/50 bg-card/50 backdrop-blur-sm">
                     <SelectValue placeholder="Sort by" />
