@@ -87,7 +87,7 @@ const HeroSection = memo(function HeroSection({ stats, isLoaded }: HeroSectionPr
 
           {/* Headline */}
           <div className="animate-fade-in-up stagger-2">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-tight">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-tight">
               <span className="text-foreground">Trade & Collect</span>
               <br />
               <span className="gradient-text">Digital Art</span>
