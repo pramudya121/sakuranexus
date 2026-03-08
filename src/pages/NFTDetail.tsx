@@ -364,7 +364,12 @@ const NFTDetail = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Owner</span>
-                    <span className="font-medium">{formatAddress(nft.owner_address)}</span>
+                    <button 
+                      onClick={() => navigate(`/profile/${nft.owner_address}`)}
+                      className="font-medium hover:text-primary transition-colors cursor-pointer"
+                    >
+                      {formatAddress(nft.owner_address)}
+                    </button>
                   </div>
 
                   {listing && (

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import SakuraFalling from '@/components/SakuraFalling';
 import NFTCard from '@/components/NFTCard';
@@ -79,7 +79,10 @@ interface ActivityItem {
 const Profile = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { walletAddress: paramAddress } = useParams();
   const [account, setAccount] = useState<string | null>(null);
+  const [viewingAddress, setViewingAddress] = useState<string | null>(null);
+  const [isOwnProfile, setIsOwnProfile] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nfts, setNfts] = useState<NFTWithListing[]>([]);
   const [createdNfts, setCreatedNfts] = useState<NFT[]>([]);
@@ -112,21 +115,28 @@ const Profile = () => {
   // Re-fetch data whenever this page becomes active (e.g. after minting)
   useEffect(() => {
     checkAndFetchData();
-  }, [location.key]);
+  }, [location.key, paramAddress]);
 
   const checkAndFetchData = async () => {
     const currentAccount = await getCurrentAccount();
     setAccount(currentAccount);
     
-    if (currentAccount) {
+    // Determine which address to display
+    const targetAddress = paramAddress || currentAccount;
+    const ownProfile = !paramAddress || (currentAccount && paramAddress.toLowerCase() === currentAccount.toLowerCase());
+    
+    setViewingAddress(targetAddress);
+    setIsOwnProfile(!!ownProfile);
+    
+    if (targetAddress) {
       await Promise.all([
-        fetchNFTs(currentAccount),
-        fetchCreatedNFTs(currentAccount),
-        fetchWatchlist(currentAccount),
-        fetchActivities(currentAccount),
-        fetchOffers(currentAccount),
-        fetchStats(currentAccount),
-        fetchUserProfile(currentAccount),
+        fetchNFTs(targetAddress),
+        fetchCreatedNFTs(targetAddress),
+        ...(ownProfile ? [fetchWatchlist(targetAddress)] : []),
+        fetchActivities(targetAddress),
+        ...(ownProfile ? [fetchOffers(targetAddress)] : []),
+        fetchStats(targetAddress),
+        fetchUserProfile(targetAddress),
       ]);
     }
     
@@ -292,8 +302,9 @@ const Profile = () => {
   };
 
   const handleCopyAddress = () => {
-    if (account) {
-      navigator.clipboard.writeText(account);
+    const addr = viewingAddress || account;
+    if (addr) {
+      navigator.clipboard.writeText(addr);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -309,20 +320,25 @@ const Profile = () => {
       return;
     }
 
-    const result = await acceptOffer(offer.token_id, offer.offerer_address);
-    
-    if (result.success) {
-      toast({
-        title: 'Success!',
-        description: 'Offer accepted successfully',
-      });
-      checkAndFetchData();
-    } else {
-      toast({
-        title: 'Failed',
-        description: result.error,
-        variant: 'destructive',
-      });
+    setIsProcessing(true);
+    try {
+      const result = await acceptOffer(offer.token_id, offer.offerer_address);
+      
+      if (result.success) {
+        toast({
+          title: 'Offer Accepted! 🎉',
+          description: 'NFT transferred to buyer successfully',
+        });
+        checkAndFetchData();
+      } else {
+        toast({
+          title: 'Failed',
+          description: result.error,
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -336,20 +352,25 @@ const Profile = () => {
       return;
     }
 
-    const result = await cancelOffer(offer.token_id);
-    
-    if (result.success) {
-      toast({
-        title: 'Success!',
-        description: 'Offer cancelled',
-      });
-      checkAndFetchData();
-    } else {
-      toast({
-        title: 'Failed',
-        description: result.error,
-        variant: 'destructive',
-      });
+    setIsProcessing(true);
+    try {
+      const result = await cancelOffer(offer.token_id);
+      
+      if (result.success) {
+        toast({
+          title: 'Success!',
+          description: 'Offer cancelled',
+        });
+        checkAndFetchData();
+      } else {
+        toast({
+          title: 'Failed',
+          description: result.error,
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -458,7 +479,7 @@ const Profile = () => {
     return `${Math.floor(diffMins / 1440)}d ago`;
   };
 
-  if (!account) {
+  if (!viewingAddress && !account) {
     return (
       <div className="min-h-screen bg-gradient-sakura-soft">
         <SakuraFalling />
@@ -522,11 +543,11 @@ const Profile = () => {
                 <h1 className="text-3xl font-bold">
                   {userProfile?.username || 'Unnamed User'}
                 </h1>
-                <UserBadges walletAddress={account} />
+                <UserBadges walletAddress={viewingAddress || account} />
               </div>
               
               <div className="flex items-center gap-2 text-muted-foreground mb-3">
-                <span className="font-mono text-sm">{formatAddress(account)}</span>
+                <span className="font-mono text-sm">{formatAddress(viewingAddress || account || '')}</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -592,15 +613,17 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Edit Button */}
-            <Button
-              onClick={() => navigate('/profile/edit')}
-              variant="outline"
-              className="md:mb-4"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Profile
-            </Button>
+            {/* Edit Button - only show on own profile */}
+            {isOwnProfile && (
+              <Button
+                onClick={() => navigate('/profile/edit')}
+                variant="outline"
+                className="md:mb-4"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Profile
+              </Button>
+            )}
           </div>
         </div>
 
@@ -659,7 +682,7 @@ const Profile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="collected" className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-6">
+          <TabsList className={`grid w-full max-w-3xl mx-auto ${isOwnProfile ? 'grid-cols-6' : 'grid-cols-3'}`}>
             <TabsTrigger value="collected" className="gap-2">
               <Package className="w-4 h-4" />
               <span className="hidden sm:inline">Collected</span>
@@ -669,22 +692,28 @@ const Profile = () => {
               <Eye className="w-4 h-4" />
               <span className="hidden sm:inline">Created</span>
             </TabsTrigger>
-            <TabsTrigger value="favorited" className="gap-2">
-              <Gift className="w-4 h-4" />
-              <span className="hidden sm:inline">Favorited</span>
-            </TabsTrigger>
+            {isOwnProfile && (
+              <TabsTrigger value="favorited" className="gap-2">
+                <Gift className="w-4 h-4" />
+                <span className="hidden sm:inline">Favorited</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger value="activity" className="gap-2">
               <ActivityIcon className="w-4 h-4" />
               <span className="hidden sm:inline">Activity</span>
             </TabsTrigger>
-            <TabsTrigger value="offers" className="gap-2">
-              <Tag className="w-4 h-4" />
-              <span className="hidden sm:inline">Offers</span>
-            </TabsTrigger>
-            <TabsTrigger value="portfolio" className="gap-2">
-              <Wallet className="w-4 h-4" />
-              <span className="hidden sm:inline">Portfolio</span>
-            </TabsTrigger>
+            {isOwnProfile && (
+              <TabsTrigger value="offers" className="gap-2">
+                <Tag className="w-4 h-4" />
+                <span className="hidden sm:inline">Offers</span>
+              </TabsTrigger>
+            )}
+            {isOwnProfile && (
+              <TabsTrigger value="portfolio" className="gap-2">
+                <Wallet className="w-4 h-4" />
+                <span className="hidden sm:inline">Portfolio</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Collected NFTs */}
@@ -706,10 +735,10 @@ const Profile = () => {
                     owner={nft.owner_address}
                     price={nft.listing?.price}
                     isListed={!!nft.listing?.active}
-                    showListButton={!nft.listing?.active}
-                    showTransferButton={!nft.listing?.active}
-                    showCancelButton={!!nft.listing?.active}
-                    isOwner={true}
+                    showListButton={isOwnProfile && !nft.listing?.active}
+                    showTransferButton={isOwnProfile && !nft.listing?.active}
+                    showCancelButton={isOwnProfile && !!nft.listing?.active}
+                    isOwner={isOwnProfile}
                     nftId={nft.id}
                     walletAddress={account}
                     onList={() => handleListNFT(nft)}
