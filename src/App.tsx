@@ -30,8 +30,6 @@ const PoolDetail = lazy(() => import("./pages/dex/PoolDetail"));
 const TokenAnalytics = lazy(() => import("./pages/dex/TokenAnalytics"));
 const Staking = lazy(() => import("./pages/dex/Staking"));
 const TransactionHistoryPage = lazy(() => import("./pages/dex/TransactionHistoryPage"));
-const NFTAnalytics = lazy(() => import("./pages/NFTAnalytics"));
-const TokenDetail = lazy(() => import("./pages/TokenDetail"));
 const Auctions = lazy(() => import("./pages/Auctions"));
 const AuctionDetail = lazy(() => import("./pages/AuctionDetail"));
 const MyAuctions = lazy(() => import("./pages/MyAuctions"));
