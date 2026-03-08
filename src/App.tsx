@@ -85,7 +85,7 @@ const App = () => (
               <Route path="/dex/history" element={<TransactionHistoryPage />} />
               <Route path="/dex/pool/:pairAddress" element={<PoolDetail />} />
               <Route path="/dex/token/:tokenAddress" element={<TokenAnalytics />} />
-              <Route path="/token/:address" element={<TokenDetail />} />
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

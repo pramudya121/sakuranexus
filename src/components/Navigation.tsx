@@ -77,7 +77,7 @@ const Navigation = () => {
     { path: '/activity', label: 'Activity', icon: Activity },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { path: '/analytics', label: 'Analytics', icon: BarChart3 },
-    { path: '/nft-analytics', label: 'NFT Analytics', icon: BarChart3 },
+    
     { path: '/ai-features', label: 'AI Hub', icon: Brain },
     { path: '/guide', label: 'Guide', icon: BookOpen },
     { path: '/profile', label: 'Profile', icon: User },
