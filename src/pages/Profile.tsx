@@ -906,26 +906,38 @@ const Profile = () => {
                   <div className="space-y-3">
                     {sentOffers.map((offer) => (
                       <Card key={offer.id} className="card-hover">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-4">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-center gap-3 sm:gap-4">
                             {offer.nfts && (
                               <img 
                                 src={offer.nfts.image_url} 
                                 alt={offer.nfts.name}
-                                className="w-12 h-12 rounded-lg object-cover"
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover"
                               />
                             )}
-                            <div className="flex-1">
-                              <p className="font-medium">{offer.nfts?.name}</p>
-                              <p className="text-sm text-muted-foreground">Pending acceptance</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm sm:text-base truncate">{offer.nfts?.name}</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">Pending</p>
+                              <div className="flex items-center justify-between mt-1 sm:hidden">
+                                <p className="font-bold gradient-text text-sm">{offer.offer_price} NEX</p>
+                                <Button 
+                                  onClick={() => handleCancelOffer(offer)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-xs px-3"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right hidden sm:block">
                               <p className="font-bold gradient-text">{offer.offer_price} NEX</p>
                               <p className="text-xs text-muted-foreground">{formatTime(offer.created_at)}</p>
                             </div>
                             <Button 
                               onClick={() => handleCancelOffer(offer)}
                               variant="outline"
+                              className="hidden sm:inline-flex"
                             >
                               Cancel
                             </Button>
